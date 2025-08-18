@@ -3,6 +3,7 @@ package com.goopey.voidsentflame;
 import org.slf4j.Logger;
 
 import com.goopey.voidsentflame.core.init.BlockInit;
+import com.goopey.voidsentflame.core.init.CreativeModeTabInit;
 import com.goopey.voidsentflame.core.init.ItemInit;
 import com.goopey.voidsentflame.datagen.DataGenerators;
 import com.mojang.logging.LogUtils;
@@ -37,7 +38,7 @@ public class VoidsentFlameMod {
         NeoForge.EVENT_BUS.register(this);
 
         // register Init
-        // CreativeModeTabInit.CREATIVE_MODE_TAB.register(modEventBus);
+        CreativeModeTabInit.CREATIVE_MODE_TAB.register(modEventBus);
         ItemInit.ITEMS.register(modEventBus);
         BlockInit.BLOCKS.register(modEventBus);
 
