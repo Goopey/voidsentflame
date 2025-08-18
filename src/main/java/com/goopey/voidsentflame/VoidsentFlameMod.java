@@ -3,10 +3,11 @@ package com.goopey.voidsentflame;
 import org.slf4j.Logger;
 
 import com.goopey.voidsentflame.core.init.BlockInit;
-import com.goopey.voidsentflame.core.init.CreativeModeTabInit;
 import com.goopey.voidsentflame.core.init.ItemInit;
+import com.goopey.voidsentflame.datagen.DataGenerators;
 import com.mojang.logging.LogUtils;
 
+import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -14,7 +15,9 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.registries.RegisterEvent;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(VoidsentFlameMod.MODID)
@@ -30,21 +33,28 @@ public class VoidsentFlameMod {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 
-        // register Init
-        ItemInit.ITEMS.register(modEventBus);
-        BlockInit.BLOCKS.register(modEventBus);
-        CreativeModeTabInit.CREATIVE_MODE_TABS.register(modEventBus);
-
-        // listeners
-        // modEventBus.addListener(DataGenerators::gatherData);
-
         // Register EVENT_BUS
         NeoForge.EVENT_BUS.register(this);
+
+        // register Init
+        // CreativeModeTabInit.CREATIVE_MODE_TAB.register(modEventBus);
+        ItemInit.ITEMS.register(modEventBus);
+        BlockInit.BLOCKS.register(modEventBus);
+
+        // listeners
+        modEventBus.addListener(this::addCreative);
+        // modEventBus.addListener(DataGenerators::gatherDataServer);
+        // modEventBus.addListener(DataGenerators::gatherDataClient);
+
         // Register the item to a creative tab
         // modEventBus.addListener(this::addCreative);
 
         //  Register Config
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+    }
+
+    private void addCreative(BuildCreativeModeTabContentsEvent event) {
+        
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
