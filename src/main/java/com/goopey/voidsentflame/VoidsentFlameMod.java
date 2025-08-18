@@ -44,8 +44,8 @@ public class VoidsentFlameMod {
 
         // listeners
         modEventBus.addListener(this::addCreative);
-        // modEventBus.addListener(DataGenerators::gatherDataServer);
-        // modEventBus.addListener(DataGenerators::gatherDataClient);
+        modEventBus.addListener(DataGenerators::gatherDataServer);
+        modEventBus.addListener(DataGenerators::gatherDataClient);
 
         // Register the item to a creative tab
         // modEventBus.addListener(this::addCreative);
