@@ -2,19 +2,22 @@ package com.goopey.voidsentflame.datagen;
 
 import java.util.concurrent.CompletableFuture;
 
+import com.goopey.voidsentflame.VoidsentFlameMod;
+import com.goopey.voidsentflame.core.init.BlockInit;
+
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.data.PackOutput;
+import net.minecraft.tags.BlockTags;
 import net.neoforged.neoforge.common.data.BlockTagsProvider;
 
 public class ModBlockTagProvider extends BlockTagsProvider {
-  public ModBlockTagProvider(PackOutput output, CompletableFuture<Provider> lookupProvider, String modId) {
-    super(output, lookupProvider, modId);
-    //TODO Auto-generated constructor stub
+  public ModBlockTagProvider(PackOutput output, CompletableFuture<Provider> lookupProvider) {
+    super(output, lookupProvider, VoidsentFlameMod.MODID);
   }
 
   @Override
-  protected void addTags(Provider arg0) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'addTags'");
+  protected void addTags(Provider provider) {
+    tag(BlockTags.MINEABLE_WITH_PICKAXE)
+      .add(BlockInit.VOID_STONE.get());
   }
 }

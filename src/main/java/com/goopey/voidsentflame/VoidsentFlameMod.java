@@ -55,7 +55,7 @@ public class VoidsentFlameMod {
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
-        
+        // To add items to vanilla creative tabs
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {

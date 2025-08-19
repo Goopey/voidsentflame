@@ -14,8 +14,7 @@ public class ModItemTagProvider extends ItemTagsProvider {
   }
 
   @Override
-  protected void addTags(Provider arg0) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'addTags'");
+  protected void addTags(Provider provider) {
+    // TODO: Add Item Tags
   }
 }

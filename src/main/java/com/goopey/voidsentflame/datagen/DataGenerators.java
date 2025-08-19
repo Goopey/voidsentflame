@@ -8,6 +8,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.loot.LootTableProvider;
+import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -26,6 +27,15 @@ public class DataGenerators {
       CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
 
       generator.addProvider(true, new ModModelProvider(packOutput));
+
+      generator.addProvider(true, new LootTableProvider(packOutput, Collections.emptySet(), List.of(new LootTableProvider.SubProviderEntry(ModBlockLootTableProvider::new, LootContextParamSets.BLOCK)), lookupProvider));
+
+      generator.addProvider(true, new ModBlockTagProvider(packOutput, lookupProvider));
+      generator.addProvider(true, new ModItemTagProvider(packOutput, lookupProvider));
+      
+      generator.addProvider(true, new ModDataMapProvider(packOutput, lookupProvider));
+
+      generator.addProvider(true, new ModRecipeProvider.Run(packOutput, lookupProvider));
     } catch(RuntimeException e) {
       VoidsentFlameMod.LOGGER.error("Failed to generate data", e);
     }
@@ -37,12 +47,15 @@ public class DataGenerators {
       PackOutput packOutput = generator.getPackOutput();
       CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
 
-      generator.addProvider(true, new LootTableProvider(packOutput, Collections.emptySet(),
-              List.of(new LootTableProvider.SubProviderEntry(ModBlockLootTableProvider::new, LootContextParamSets.BLOCK)), lookupProvider));
+      // ??? - what's up with server datagen
+      // Am I stupid or does it do nothing?
+
+      // ===== generator.addProvider(true, new LootTableProvider(packOutput, Collections.emptySet(),
+      // =====         List.of(new LootTableProvider.SubProviderEntry(ModBlockLootTableProvider::new, LootContextParamSets.BLOCK)), lookupProvider));
       // generator.addProvider(true, new ModRecipeProvider(packOutput, lookupProvider));
 
-      // BlockTagsProvider blockTagsProvider = new ModBlockTagProvider(packOutput, lookupProvider);
-      // generator.addProvider(true, blockTagsProvider);
+      // ===== BlockTagsProvider blockTagsProvider = new ModBlockTagProvider(packOutput, lookupProvider);
+      // ===== generator.addProvider(true, blockTagsProvider);
       // generator.addProvider(true, new ModItemTagProvider(packOutput, lookupProvider, blockTagsProvider.contentsGetter()));
 
       // generator.addProvider(true, new ModDataMapProvider(packOutput, lookupProvider));
