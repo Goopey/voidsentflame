@@ -19,11 +19,12 @@ public class CreativeModeTabInit {
       .title(Component.translatable("creativetab.voidsentflame.voidsentflame_items"))
       .displayItems((itemDisplayParameters, output) -> {
         output.accept(ItemInit.RUNIC_FRUIT);
+        output.accept(ItemInit.RUBICON_IGNITER);
       }).build());
 
   public static final DeferredHolder<CreativeModeTab,CreativeModeTab> VOIDSENTFLAME_BLOCK_TAB = CREATIVE_MODE_TAB.register("voidsentflame_blocks_tab",
     () -> CreativeModeTab.builder().icon(() -> new ItemStack(BlockInit.VOID_STONE.get()))
-      .withTabsBefore(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "voidsentflame_items"))
+      .withTabsBefore(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "voidsentflame_items_tab"))
       .title(Component.translatable("creativetab.voidsentflame.voidsentflame_blocks"))
       .displayItems((itemDisplayParameters, output) -> {
         output.accept(BlockInit.VOID_STONE.get());

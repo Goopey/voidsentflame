@@ -1,8 +1,8 @@
 {
-  "itemGroup.voidsentflame": "Example Mod Tab",
-  "block.voidsentflame.void_stone": "Void Stone",
-  "item.voidsentflame.void_stone": "Void Stone",
-  "item.voidsentflame.runic_fruit": "Runic Fruit",
+  "block.voidsentflame.void_stone_block": "Void Stone",
+  "item.voidsentflame.void_stone_block": "Void Stone",
+  "item.voidsentflame.runic_fruit_item": "Runic Fruit",
+  "item.voidsentflame.rubicon_igniter_item": "Rubicon Igniter",
 
   "creativetab.voidsentflame.voidsentflame_items": "Voidsent Flame Items",
   "creativetab.voidsentflame.voidsentflame_blocks": "Voidsent Flame Blocks",

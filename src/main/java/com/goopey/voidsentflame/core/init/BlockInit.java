@@ -1,20 +1,16 @@
 package com.goopey.voidsentflame.core.init;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
 
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
-import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -23,8 +19,10 @@ public class BlockInit {
   public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(VoidsentFlameMod.MODID);
 
   public static final DeferredHolder<Block, Block> VOID_STONE = 
-    register("void_stone", blockProperties -> new Block(blockProperties), BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(1.5F).sound(SoundType.AMETHYST).requiresCorrectToolForDrops());
+    register("void_stone_block", blockProperties -> new Block(blockProperties), BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(1.5F).sound(SoundType.AMETHYST).requiresCorrectToolForDrops());
 
+  public static final DeferredHolder<Block, Block> RUBICON_PORTAL = 
+    register("rubicon_portal_block", blockProperties -> new Block(blockProperties), BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL));
   /**
    * Default function used to register a block and its item counterpart.
    * This particular variant creates blockItems without any particular properties.
