@@ -27,10 +27,10 @@
       "aquifers_enabled": true,
       "ore_veins_enabled": false,
       "default_block": {
-        "Name": "voidsentflame:void_stone"
+        "Name": "voidsentflame:void_stone_block"
       },
       "default_fluid": {
-        "Name": "voidsentflame:rubicon_air"
+        "Name": "minecraft:air"
       },
       "spawn_target": [],
       "noise": {
@@ -406,14 +406,14 @@
                           "then_run": {
                             "type": "minecraft:block",
                             "result_state": {
-                              "Name": "voidsentflame:rubicon_air"
+                              "Name": "minecraft:air"
                             }
                           }
                         },
                         {
                           "type": "minecraft:block",
                           "result_state": {
-                            "Name": "voidsentflame:rubicon_air"
+                            "Name": "minecrafte:air"
                           }
                         }
                       ]
@@ -431,7 +431,7 @@
                     "then_run": {
                       "type": "minecraft:block",
                       "result_state": {
-                        "Name": "voidsentflame:rubicon_air"
+                        "Name": "minecraft:air"
                       }
                     }
                   }

@@ -3,6 +3,7 @@ package com.goopey.voidsentflame.core.init;
 import java.util.function.Function;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
+import com.goopey.voidsentflame.block.RubiconAirBlock;
 
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -10,6 +11,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -19,10 +21,15 @@ public class BlockInit {
   public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(VoidsentFlameMod.MODID);
 
   public static final DeferredHolder<Block, Block> VOID_STONE = 
-    register("void_stone_block", blockProperties -> new Block(blockProperties), BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(1.5F).sound(SoundType.AMETHYST).requiresCorrectToolForDrops());
+    register("void_stone_block", blockProperties -> new Block(blockProperties), BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(6F, 30F).sound(SoundType.STONE).requiresCorrectToolForDrops());
 
   public static final DeferredHolder<Block, Block> RUBICON_PORTAL = 
     register("rubicon_portal_block", blockProperties -> new Block(blockProperties), BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL));
+
+  public static final DeferredHolder<Block, Block> RUBICON_AIR =
+    register("rubicon_air_block", blockProperties -> new RubiconAirBlock(blockProperties), 
+    BlockBehaviour.Properties.of().sound(SoundType.EMPTY).strength(-1, 3600000).noCollission().noOcclusion().isRedstoneConductor((bs, br, bp) -> false).replaceable().instrument(NoteBlockInstrument.WITHER_SKELETON));
+    
   /**
    * Default function used to register a block and its item counterpart.
    * This particular variant creates blockItems without any particular properties.
