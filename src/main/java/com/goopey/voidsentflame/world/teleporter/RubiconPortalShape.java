@@ -150,7 +150,7 @@ public class RubiconPortalShape {
 				if (!isEmpty(blockstate)) {
 					return i;
 				}
-				if (blockstate.getBlock() == BlockInit.RUBICON_PORTAL.get()) {
+				if (blockstate.getBlock() == BlockInit.RUBICON_PORTAL_BLOCK.get()) {
 					p_374330_.increment();
 				}
 			}
@@ -159,7 +159,7 @@ public class RubiconPortalShape {
 	}
 
 	private static boolean isEmpty(BlockState p_77718_) {
-		return p_77718_.isAir() || p_77718_.getBlock() == BlockInit.RUBICON_PORTAL.get();
+		return p_77718_.isAir() || p_77718_.getBlock() == BlockInit.RUBICON_PORTAL_BLOCK.get();
 	}
 
 	public boolean isValid() {
@@ -167,7 +167,7 @@ public class RubiconPortalShape {
 	}
 
 	public void createPortalBlocks(LevelAccessor p_374419_) {
-		BlockState blockstate = BlockInit.RUBICON_PORTAL.get().defaultBlockState().setValue(NetherPortalBlock.AXIS, this.axis);
+		BlockState blockstate = BlockInit.RUBICON_PORTAL_BLOCK.get().defaultBlockState().setValue(NetherPortalBlock.AXIS, this.axis);
 		BlockPos.betweenClosed(this.bottomLeft, this.bottomLeft.relative(Direction.UP, this.height - 1).relative(this.rightDir, this.width - 1)).forEach(p_374024_ -> p_374419_.setBlock(p_374024_, blockstate, 18));
 	}
 

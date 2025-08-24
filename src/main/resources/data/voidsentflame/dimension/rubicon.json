@@ -30,7 +30,7 @@
         "Name": "voidsentflame:void_stone_block"
       },
       "default_fluid": {
-        "Name": "minecraft:air"
+        "Name": "voidsentflame:rubicon_air_block"
       },
       "spawn_target": [],
       "noise": {
@@ -406,14 +406,14 @@
                           "then_run": {
                             "type": "minecraft:block",
                             "result_state": {
-                              "Name": "minecraft:air"
+                              "Name": "voidsentflame:rubicon_air_block"
                             }
                           }
                         },
                         {
                           "type": "minecraft:block",
                           "result_state": {
-                            "Name": "minecrafte:air"
+                            "Name": "voidsentflame:rubicon_air_block"
                           }
                         }
                       ]
@@ -431,7 +431,7 @@
                     "then_run": {
                       "type": "minecraft:block",
                       "result_state": {
-                        "Name": "minecraft:air"
+                        "Name": "voidsentflame:rubicon_air_block"
                       }
                     }
                   }

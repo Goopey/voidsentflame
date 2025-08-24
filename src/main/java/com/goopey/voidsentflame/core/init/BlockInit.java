@@ -4,6 +4,7 @@ import java.util.function.Function;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.block.RubiconAirBlock;
+import com.goopey.voidsentflame.block.RubiconPortalBlock;
 
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -20,16 +21,16 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class BlockInit {
   public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(VoidsentFlameMod.MODID);
 
-  public static final DeferredHolder<Block, Block> VOID_STONE = 
+  public static final DeferredHolder<Block, Block> VOID_STONE_BLOCK = 
     register("void_stone_block", blockProperties -> new Block(blockProperties), BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(6F, 30F).sound(SoundType.STONE).requiresCorrectToolForDrops());
 
-  public static final DeferredHolder<Block, Block> RUBICON_PORTAL = 
-    register("rubicon_portal_block", blockProperties -> new Block(blockProperties), BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL));
+  public static final DeferredBlock<RubiconPortalBlock> RUBICON_PORTAL_BLOCK = 
+    register("rubicon_portal_block", blockProperties -> new RubiconPortalBlock(blockProperties), BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL).noLootTable());
 
-  public static final DeferredHolder<Block, Block> RUBICON_AIR =
+  public static final DeferredBlock<RubiconAirBlock> RUBICON_AIR_BLOCK =
     register("rubicon_air_block", blockProperties -> new RubiconAirBlock(blockProperties), 
-    BlockBehaviour.Properties.of().sound(SoundType.EMPTY).strength(-1, 3600000).noCollission().noOcclusion().isRedstoneConductor((bs, br, bp) -> false).replaceable().instrument(NoteBlockInstrument.WITHER_SKELETON));
-    
+    BlockBehaviour.Properties.of().sound(SoundType.EMPTY).strength(-1, 3600000).noCollission().noOcclusion().isRedstoneConductor((bs, br, bp) -> false).replaceable().instrument(NoteBlockInstrument.WITHER_SKELETON).noLootTable());
+
   /**
    * Default function used to register a block and its item counterpart.
    * This particular variant creates blockItems without any particular properties.

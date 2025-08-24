@@ -12,10 +12,13 @@ import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.item.AirItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.block.AirBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.LootTable.Builder;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
@@ -31,7 +34,7 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
   @Override
   protected void generate() {
     // blocks which drop themselves
-    dropSelf(BlockInit.VOID_STONE.get());
+    dropSelf(BlockInit.VOID_STONE_BLOCK.get());
   }
 
   protected LootTable.Builder createMultipleDrops(Block pBlock, Item pItem, float minDrops, float maxDrops) {

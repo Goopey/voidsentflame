@@ -18,6 +18,6 @@ public class ModBlockTagProvider extends BlockTagsProvider {
   @Override
   protected void addTags(Provider provider) {
     tag(BlockTags.MINEABLE_WITH_PICKAXE)
-      .add(BlockInit.VOID_STONE.get());
+      .add(BlockInit.VOID_STONE_BLOCK.get());
   }
 }
