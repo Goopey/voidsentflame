@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 
 import com.goopey.voidsentflame.core.init.BlockInit;
 import com.goopey.voidsentflame.core.init.CreativeModeTabInit;
+import com.goopey.voidsentflame.core.init.FluidInit;
+import com.goopey.voidsentflame.core.init.FluidTypesInit;
 import com.goopey.voidsentflame.core.init.ItemInit;
 import com.goopey.voidsentflame.datagen.DataGenerators;
 import com.mojang.logging.LogUtils;
@@ -41,6 +43,8 @@ public class VoidsentFlameMod {
         CreativeModeTabInit.CREATIVE_MODE_TAB.register(modEventBus);
         ItemInit.ITEMS.register(modEventBus);
         BlockInit.BLOCKS.register(modEventBus);
+        FluidInit.REGISTRY.register(modEventBus);
+        FluidTypesInit.REGISTRY.register(modEventBus);
 
         // listeners
         modEventBus.addListener(this::addCreative);
