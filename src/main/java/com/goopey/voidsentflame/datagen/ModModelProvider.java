@@ -41,11 +41,13 @@ public class ModModelProvider extends ModelProvider {
     createPortalBlocks(pBModel);
     pBModel.createTrivialCube(BlockInit.VOID_STONE_BLOCK.get());
     pBModel.createAirLikeBlock(BlockInit.RUBICON_AIR_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
+    pBModel.createAirLikeBlock(BlockInit.VOID_FLUID_BLOCK.get(), BlockInit.VOID_FLUID_BLOCK.asItem());
   }
 
   private void createItems(ItemModelGenerators pIModels) {
     pIModels.generateFlatItem(ItemInit.RUNIC_FRUIT_ITEM.get(), ModelTemplates.FLAT_ITEM);
     pIModels.generateFlatItem(ItemInit.RUBICON_IGNITER_ITEM.get(), ModelTemplates.FLAT_ITEM);
+    pIModels.generateFlatItem(ItemInit.VOID_FLUID_BUCKET.get(), ModelTemplates.FLAT_ITEM);
   }
 
   /**
@@ -56,6 +58,10 @@ public class ModModelProvider extends ModelProvider {
 
   private void createPortalBlocks(BlockModelGenerators pBModel) {
     createPortalBlock(pBModel, BlockInit.RUBICON_PORTAL_BLOCK.get());
+  }
+
+  private void createFluidBlocks(BlockModelGenerators pBModel) {
+
   }
 
   /**
