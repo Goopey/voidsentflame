@@ -1,0 +1,14 @@
+{
+  "feature": "voidsentflame:void_sea",
+  "placement": [
+    {
+      "type": "minecraft:height_range",
+      "height": {
+        "type": "minecraft:constant",
+        "value": {
+          "absolute": -64
+        }
+      }
+    }
+  ]
+}

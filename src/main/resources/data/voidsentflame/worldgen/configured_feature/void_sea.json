@@ -1,0 +1,7 @@
+{
+  "type": "voidsentflame:structure_feature",
+  "config": {
+    "structure": "voidsentflame:void_sea_structure",
+    "ignored_blocks": "minecraft:air"
+  }
+}

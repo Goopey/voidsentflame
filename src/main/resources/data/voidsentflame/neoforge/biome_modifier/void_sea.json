@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "voidsentflame:the_crucible",
+  "features": "voidsentflame:void_sea",
+  "step": "raw_generation"
+}

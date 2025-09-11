@@ -8,9 +8,9 @@ import com.goopey.voidsentflame.core.init.FluidInit;
 import com.goopey.voidsentflame.core.init.FluidTypesInit;
 import com.goopey.voidsentflame.core.init.ItemInit;
 import com.goopey.voidsentflame.datagen.DataGenerators;
+import com.goopey.voidsentflame.world.features.StructureFeature;
 import com.mojang.logging.LogUtils;
 
-import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -21,7 +21,6 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
-import net.neoforged.neoforge.registries.RegisterEvent;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(VoidsentFlameMod.MODID)
@@ -47,6 +46,7 @@ public class VoidsentFlameMod {
         BlockInit.BLOCKS.register(modEventBus);
         FluidInit.REGISTRY.register(modEventBus);
         FluidTypesInit.REGISTRY.register(modEventBus);
+        StructureFeature.REGISTRY.register(modEventBus);
 
         // listeners
         modEventBus.addListener(this::addCreative);
