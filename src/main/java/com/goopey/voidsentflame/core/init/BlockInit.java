@@ -32,7 +32,8 @@ public class BlockInit {
     register("rubicon_air_block", blockProperties -> new RubiconAirBlock(blockProperties), 
     BlockBehaviour.Properties.of().sound(SoundType.EMPTY).strength(-1, 3600000).noCollission().noOcclusion().isRedstoneConductor((bs, br, bp) -> false).replaceable().instrument(NoteBlockInstrument.WITHER_SKELETON).noLootTable());
 
-  public static final DeferredBlock<VoidFluidBlock> VOID_FLUID_BLOCK = register("void_fluid_liquid_block", blockProperties -> new VoidFluidBlock(blockProperties), BlockBehaviour.Properties.of());
+  public static final DeferredBlock<VoidFluidBlock> VOID_FLUID_BLOCK = register("void_fluid", blockProperties -> new VoidFluidBlock(blockProperties), BlockBehaviour.Properties.of());
+  
   /**
    * Default function used to register a block and its item counterpart.
    * This particular variant creates blockItems without any particular properties.

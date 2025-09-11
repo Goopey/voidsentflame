@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.core.init.BlockInit;
+import com.goopey.voidsentflame.core.init.FluidInit;
 import com.goopey.voidsentflame.core.init.ItemInit;
 import com.mojang.math.Quadrant;
 
@@ -24,6 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.random.Weighted;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.NetherPortalBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
@@ -41,7 +43,7 @@ public class ModModelProvider extends ModelProvider {
     createPortalBlocks(pBModel);
     pBModel.createTrivialCube(BlockInit.VOID_STONE_BLOCK.get());
     pBModel.createAirLikeBlock(BlockInit.RUBICON_AIR_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
-    pBModel.createAirLikeBlock(BlockInit.VOID_FLUID_BLOCK.get(), BlockInit.VOID_FLUID_BLOCK.asItem());
+    pBModel.createNonTemplateModelBlock(BlockInit.VOID_FLUID_BLOCK.get());
   }
 
   private void createItems(ItemModelGenerators pIModels) {
@@ -60,9 +62,9 @@ public class ModModelProvider extends ModelProvider {
     createPortalBlock(pBModel, BlockInit.RUBICON_PORTAL_BLOCK.get());
   }
 
-  private void createFluidBlocks(BlockModelGenerators pBModel) {
-
-  }
+  // private void createFluidBlocks(BlockModelGenerators pBModel) {
+  //   createFluidBlock(pBModel, BlockInit.VOID_FLUID_BLOCK.get());
+  // }
 
   /**
    * ######################################################
@@ -84,6 +86,10 @@ public class ModModelProvider extends ModelProvider {
             plainVariant(ModelLocationUtils.getModelLocation(block, "_ew"))
           )));
   }
+
+  // private void createFluidBlock(BlockModelGenerators pBModel, LiquidBlock block) {
+    
+  // }
 
   /**
    * ######################################################

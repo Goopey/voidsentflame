@@ -1,0 +1,6 @@
+{
+  "textures": {
+	"particle": "voidsentflame:block/void_fluid"
+  },
+  "render_type": "minecraft:cutout"
+}

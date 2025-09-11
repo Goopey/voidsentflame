@@ -21,19 +21,31 @@ public class VoidFluid extends BaseFlowingFluid {
 		() -> FluidInit.FLOWING_VOID_FLUID.get()).explosionResistance(1000000000f).tickRate(15).slopeFindDistance(1).bucket(() -> ItemInit.VOID_FLUID_BUCKET.get())
 		.block(() -> (LiquidBlock) BlockInit.VOID_FLUID_BLOCK.get());
 	
-  public VoidFluid(Properties properties) {
+  protected VoidFluid(Properties properties) {
     super(PROPERTIES);
   }
+
+	@Override
+	public int getAmount(FluidState arg0) {
+		throw new UnsupportedOperationException("Use Source or Flowing");
+	}
+
+	@Override
+	public boolean isSource(FluidState arg0) {
+		throw new UnsupportedOperationException("Use Source or Flowing");
+	}
 
   public static class Source extends VoidFluid {
 		public Source() {
 			super(PROPERTIES);
 		}
 
+		@Override
 		public int getAmount(FluidState state) {
 			return 8;
 		}
 
+		@Override
 		public boolean isSource(FluidState state) {
 			return true;
 		}
@@ -49,22 +61,14 @@ public class VoidFluid extends BaseFlowingFluid {
 			builder.add(LEVEL);
 		}
 
+		@Override
 		public int getAmount(FluidState state) {
 			return state.getValue(LEVEL);
 		}
 
+		@Override
 		public boolean isSource(FluidState state) {
 			return false;
 		}
-	}
-
-	@Override
-	public int getAmount(FluidState arg0) {
-		throw new UnsupportedOperationException("Use Source or Flowing");
-	}
-
-	@Override
-	public boolean isSource(FluidState arg0) {
-		throw new UnsupportedOperationException("Use Source or Flowing");
 	}
 }
