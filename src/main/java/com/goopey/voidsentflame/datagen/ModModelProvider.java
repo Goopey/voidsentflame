@@ -1,5 +1,7 @@
 package com.goopey.voidsentflame.datagen;
 
+import java.util.Arrays;
+
 import javax.annotation.Nonnull;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
@@ -30,6 +32,10 @@ import net.minecraft.world.level.block.NetherPortalBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 public class ModModelProvider extends ModelProvider {
+  public static final VariantMutator X_ROT_90 = VariantMutator.X_ROT.withValue(Quadrant.R90);
+  public static final VariantMutator Y_ROT_90 = VariantMutator.Y_ROT.withValue(Quadrant.R90);
+  public static final VariantMutator Y_ROT_180 = VariantMutator.Y_ROT.withValue(Quadrant.R180);
+
   public ModModelProvider(PackOutput output) {
     super(output, VoidsentFlameMod.MODID);
   }
@@ -39,14 +45,15 @@ public class ModModelProvider extends ModelProvider {
     createItems(itemModels);
   }
 
-  private void createBlocks(BlockModelGenerators pBModel) {
+  private static void createBlocks(BlockModelGenerators pBModel) {
     createPortalBlocks(pBModel);
-    pBModel.createTrivialCube(BlockInit.VOID_STONE_BLOCK.get());
+    createXYRandomOrientationBlocks(pBModel);
+
     pBModel.createAirLikeBlock(BlockInit.RUBICON_AIR_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
     pBModel.createNonTemplateModelBlock(BlockInit.VOID_FLUID_BLOCK.get());
   }
 
-  private void createItems(ItemModelGenerators pIModels) {
+  private static void createItems(ItemModelGenerators pIModels) {
     pIModels.generateFlatItem(ItemInit.RUNIC_FRUIT_ITEM.get(), ModelTemplates.FLAT_ITEM);
     pIModels.generateFlatItem(ItemInit.RUBICON_IGNITER_ITEM.get(), ModelTemplates.FLAT_ITEM);
     pIModels.generateFlatItem(ItemInit.VOID_FLUID_BUCKET.get(), ModelTemplates.FLAT_ITEM);
@@ -58,8 +65,12 @@ public class ModModelProvider extends ModelProvider {
    * ##################################################################
    */
 
-  private void createPortalBlocks(BlockModelGenerators pBModel) {
+  private static void createPortalBlocks(BlockModelGenerators pBModel) {
     createPortalBlock(pBModel, BlockInit.RUBICON_PORTAL_BLOCK.get());
+  }
+
+  private static void createXYRandomOrientationBlocks(BlockModelGenerators pBModel) {
+    createXYRandomOrientationBlock(pBModel, BlockInit.VOID_STONE_BLOCK.get());
   }
 
   // private void createFluidBlocks(BlockModelGenerators pBModel) {
@@ -72,7 +83,7 @@ public class ModModelProvider extends ModelProvider {
    * ######################################################
    */
 
-  private void createPortalBlock(BlockModelGenerators pBModel, NetherPortalBlock block) {
+  private static void createPortalBlock(BlockModelGenerators pBModel, NetherPortalBlock block) {
     pBModel.blockStateOutput.accept(
       MultiVariantGenerator
         .dispatch(block)
@@ -87,9 +98,21 @@ public class ModModelProvider extends ModelProvider {
           )));
   }
 
-  // private void createFluidBlock(BlockModelGenerators pBModel, LiquidBlock block) {
-    
-  // }
+  private static void createMirrorRandomOrientationBlock(BlockModelGenerators pBModel, Block block) {
+    ResourceLocation cubeLoc = TexturedModel.CUBE.create(block, pBModel.modelOutput);
+    ResourceLocation cubeLocMirrored = TexturedModel.CUBE_MIRRORED.create(block, pBModel.modelOutput);
+    Variant variant = plainModel(cubeLoc);
+    Variant variant1 = plainModel(cubeLocMirrored);
+    pBModel.blockStateOutput.accept(MultiVariantGenerator.dispatch(block, createRotatedVariants(variant, variant1)));
+    pBModel.registerSimpleItemModel(block, cubeLoc);
+  }
+
+  private static void createXYRandomOrientationBlock(BlockModelGenerators pBModel, Block block) {
+    ResourceLocation cubeLoc = TexturedModel.CUBE.create(block, pBModel.modelOutput);
+    Variant variant = plainModel(cubeLoc);
+    pBModel.blockStateOutput.accept(MultiVariantGenerator.dispatch(block, createXYRotatedVariants(variant)));
+    pBModel.registerSimpleItemModel(block, cubeLoc);
+  }
 
   /**
    * ######################################################
@@ -99,5 +122,24 @@ public class ModModelProvider extends ModelProvider {
 
   public static MultiVariant plainVariant(ResourceLocation id) {
     return BlockModelGenerators.variant(BlockModelGenerators.plainModel(id));
+  }
+
+  public static Variant plainModel(ResourceLocation modelLocation) {
+    return new Variant(modelLocation);
+  }
+
+  public static MultiVariant createRotatedVariants(Variant variant, Variant mirroredVariant) {
+    return BlockModelGenerators.variants(variant, mirroredVariant, variant.with(Y_ROT_180), mirroredVariant.with(Y_ROT_180));
+  }
+
+  public static MultiVariant createXYRotatedVariants(Variant variant) {
+    return BlockModelGenerators.variants(
+      variant, 
+      variant.with(X_ROT_90), 
+      variant.with(Y_ROT_90),
+      variant.with(X_ROT_90).with(Y_ROT_90), 
+      variant.with(Y_ROT_180),
+      variant.with(Y_ROT_180).with(X_ROT_90)
+    );
   }
 }
