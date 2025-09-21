@@ -1,12 +1,9 @@
 package com.goopey.voidsentflame.datagen;
 
-import java.util.Arrays;
-
 import javax.annotation.Nonnull;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.core.init.BlockInit;
-import com.goopey.voidsentflame.core.init.FluidInit;
 import com.goopey.voidsentflame.core.init.ItemInit;
 import com.mojang.math.Quadrant;
 
@@ -26,10 +23,7 @@ import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.random.Weighted;
-import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.NetherPortalBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
