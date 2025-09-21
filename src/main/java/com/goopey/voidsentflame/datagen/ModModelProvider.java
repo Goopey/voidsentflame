@@ -18,10 +18,12 @@ import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.client.data.models.blockstates.PropertyDispatch;
 import net.minecraft.client.data.models.model.ModelLocationUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
+import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.data.models.model.TexturedModel;
 import net.minecraft.client.renderer.block.model.Variant;
 import net.minecraft.client.renderer.block.model.VariantMutator;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.random.Weighted;
@@ -99,16 +101,38 @@ public class ModModelProvider extends ModelProvider {
   }
 
   private static void createMirrorRandomOrientationBlock(BlockModelGenerators pBModel, Block block) {
-    ResourceLocation cubeLoc = TexturedModel.CUBE.create(block, pBModel.modelOutput);
-    ResourceLocation cubeLocMirrored = TexturedModel.CUBE_MIRRORED.create(block, pBModel.modelOutput);
+    ResourceLocation blockKey = BuiltInRegistries.BLOCK.getKey(block);
+    ResourceLocation texture = ResourceLocation.fromNamespaceAndPath("voidsentflame", "block/" + blockKey.getPath());
+    
+    ResourceLocation cubeLoc = TexturedModel.CUBE.updateTemplate(
+      template -> template.extend().requiredTextureSlot(TextureSlot.PARTICLE).build()
+    ).updateTexture(
+      mapping -> mapping.put(TextureSlot.PARTICLE, texture)
+    ).create(block, pBModel.modelOutput);
+    
+    ResourceLocation cubeLocMirrored = TexturedModel.CUBE_MIRRORED.updateTemplate(
+      template -> template.extend().requiredTextureSlot(TextureSlot.PARTICLE).build()
+    ).updateTexture(
+      mapping -> mapping.put(TextureSlot.PARTICLE, texture)
+    ).create(block, pBModel.modelOutput);
+
     Variant variant = plainModel(cubeLoc);
     Variant variant1 = plainModel(cubeLocMirrored);
+    
     pBModel.blockStateOutput.accept(MultiVariantGenerator.dispatch(block, createRotatedVariants(variant, variant1)));
     pBModel.registerSimpleItemModel(block, cubeLoc);
   }
 
   private static void createXYRandomOrientationBlock(BlockModelGenerators pBModel, Block block) {
-    ResourceLocation cubeLoc = TexturedModel.CUBE.create(block, pBModel.modelOutput);
+    ResourceLocation blockKey = BuiltInRegistries.BLOCK.getKey(block);
+    ResourceLocation texture = ResourceLocation.fromNamespaceAndPath("voidsentflame", "block/" + blockKey.getPath());
+    
+    ResourceLocation cubeLoc = TexturedModel.CUBE.updateTemplate(
+      template -> template.extend().requiredTextureSlot(TextureSlot.PARTICLE).build()
+    ).updateTexture(
+      mapping -> mapping.put(TextureSlot.PARTICLE, texture)
+    ).create(block, pBModel.modelOutput);
+
     Variant variant = plainModel(cubeLoc);
     pBModel.blockStateOutput.accept(MultiVariantGenerator.dispatch(block, createXYRotatedVariants(variant)));
     pBModel.registerSimpleItemModel(block, cubeLoc);
