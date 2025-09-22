@@ -68,17 +68,17 @@
         "ridges": "minecraft:overworld/ridges",
         "initial_density_without_jaggedness": "voidsentflame:rubicon/initial_density_without_jaggedness",
         "final_density": {
-          "type": "minecraft:range_choice", "input": { 
-            "type": "minecraft:abs", "argument": { 
-              "type": "moredfs:x" 
-            } 
-          }, "min_inclusive": 0, "max_exclusive": 200, "when_out_of_range": 0, "when_in_range": { 
-            "type" : "minecraft:range_choice", "input": { 
-              "type": "minecraft:abs", "argument": { 
-                "type": "moredfs:z"
-              }
-            }, "min_inclusive": 0, "max_exclusive": 200, "when_out_of_range": 0, "when_in_range": "voidsentflame:rubicon/biomes/crucible_3d_noise"
-          }
+          "type": "minecraft:range_choice", 
+          "input": {
+            "type": "moredfs:distance",
+            "distance_metric": {
+              "type": "chebyshev"
+            },
+            "point1": [{"type": "moredfs:x"}, {"type": "moredfs:z"}],
+            "point2": [0, 0]
+          },
+          "min_inclusive": 0, "max_exclusive": 200,
+          "when_out_of_range": 0, "when_in_range": "voidsentflame:rubicon/biomes/crucible_3d_noise"
         },
         "vein_toggle": {
           "type": "minecraft:interpolated",
