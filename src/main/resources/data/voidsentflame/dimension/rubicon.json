@@ -75,14 +75,12 @@
             "min_inclusive": 180, "max_exclusive": 190,
             "when_out_of_range":0, "when_in_range": {
               "type": "minecraft:add", "argument1": 0, "argument2": {
-                "type": "moredfs:subtract", "argument1": {
+                "type": "minecraft:add", "argument1": {
                   "type": "minecraft:y_clamped_gradient", "from_y": -64, "to_y": 320, "from_value": 28, "to_value": -356
                 }, "argument2": {
-                  "type": "moredfs:negate", "argument": {
-                    "type": "minecraft:mul", "argument1": 10, "argument2": {
-                      "type": "minecraft:abs", "argument": {
-                        "type": "minecraft:add", "argument1": -190, "argument2": "voidsentflame:chebyshev_distance" 
-                      }
+                  "type": "minecraft:mul", "argument1": 10, "argument2": {
+                    "type": "minecraft:abs", "argument": {
+                      "type": "minecraft:add", "argument1": -190, "argument2": "voidsentflame:chebyshev_distance" 
                     }
                   }
                 }
