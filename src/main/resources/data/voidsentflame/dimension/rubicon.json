@@ -68,17 +68,19 @@
         "ridges": "minecraft:overworld/ridges",
         "initial_density_without_jaggedness": "voidsentflame:rubicon/initial_density_without_jaggedness",
         "final_density": {
-          "type": "minecraft:range_choice", 
-          "input": {
-            "type": "moredfs:distance",
-            "distance_metric": {
-              "type": "chebyshev"
-            },
-            "point1": [{"type": "moredfs:x"}, {"type": "moredfs:z"}],
-            "point2": [0, 0]
-          },
-          "min_inclusive": 0, "max_exclusive": 200,
-          "when_out_of_range": 0, "when_in_range": "voidsentflame:rubicon/biomes/crucible_3d_noise"
+          "type": "minecraft:range_choice", "input": "voidsentflame:chebyshev_distance",
+          "min_inclusive": 0, "max_exclusive": 180,
+          "when_in_range": "voidsentflame:rubicon/biomes/crucible_3d_noise", "when_out_of_range": {
+            "type": "minecraft:range_choice", "input": "voidsentflame:chebyshev_distance",
+            "min_inclusive": 180, "max_exclusive": 190,
+            "when_out_of_range":0, "when_in_range": {
+              "type": "minecraft:add", "argument1": 0, "argument2": {
+                "type": "moredfs:subtract", "argument1": {
+                  "type": "minecraft:y_clamped_gradient", "from_y": -64, "to_y": 320, "from_value": 328, "to_value": -56
+                }, "argument2": "voidsentflame:chebyshev_distance"
+              }
+            }
+          }
         },
         "vein_toggle": {
           "type": "minecraft:interpolated",

@@ -1,0 +1,8 @@
+{
+  "type": "moredfs:distance",
+  "distance_metric": {
+    "type": "chebyshev"
+  },
+  "point1": [{"type": "moredfs:x"}, {"type": "moredfs:z"}],
+  "point2": [0, 0]
+}
