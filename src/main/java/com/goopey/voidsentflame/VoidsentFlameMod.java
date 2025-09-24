@@ -2,6 +2,7 @@ package com.goopey.voidsentflame;
 
 import org.slf4j.Logger;
 
+import com.goopey.voidsentflame.core.init.BlockEntityInit;
 import com.goopey.voidsentflame.core.init.BlockInit;
 import com.goopey.voidsentflame.core.init.CreativeModeTabInit;
 import com.goopey.voidsentflame.core.init.FluidInit;
@@ -47,6 +48,7 @@ public class VoidsentFlameMod {
         FluidInit.REGISTRY.register(modEventBus);
         FluidTypesInit.REGISTRY.register(modEventBus);
         StructureFeature.REGISTRY.register(modEventBus);
+        BlockEntityInit.BLOCK_ENTITY.register(modEventBus);
 
         // listeners
         modEventBus.addListener(this::addCreative);

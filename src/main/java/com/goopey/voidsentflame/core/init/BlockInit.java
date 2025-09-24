@@ -6,6 +6,7 @@ import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.block.RubiconAirBlock;
 import com.goopey.voidsentflame.block.RubiconPortalBlock;
 import com.goopey.voidsentflame.block.VoidFluidBlock;
+import com.goopey.voidsentflame.block.VoidSeaLayerBlock;
 
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -35,8 +36,7 @@ public class BlockInit {
 
   public static final DeferredBlock<VoidFluidBlock> VOID_FLUID_BLOCK = register("void_fluid", blockProperties -> new VoidFluidBlock(blockProperties), BlockBehaviour.Properties.of());
   
-  public static final DeferredBlock<Block> VOID_SEA_LAYER_BLOCK = register("void_sea_layer_block", blockProperties -> new Block(blockProperties), 
-    BlockBehaviour.Properties.of().noCollission().noTerrainParticles().noLootTable().pushReaction(PushReaction.IGNORE).destroyTime(-1).explosionResistance(1000000));
+  public static final DeferredBlock<Block> VOID_SEA_LAYER_BLOCK = register("void_sea_layer_block", blockProperties -> new VoidSeaLayerBlock(blockProperties), BlockBehaviour.Properties.of());
   /**
    * Default function used to register a block and its item counterpart.
    * This particular variant creates blockItems without any particular properties.
