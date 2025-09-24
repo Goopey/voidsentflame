@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -34,6 +35,8 @@ public class BlockInit {
 
   public static final DeferredBlock<VoidFluidBlock> VOID_FLUID_BLOCK = register("void_fluid", blockProperties -> new VoidFluidBlock(blockProperties), BlockBehaviour.Properties.of());
   
+  public static final DeferredBlock<Block> VOID_SEA_LAYER_BLOCK = register("void_sea_layer_block", blockProperties -> new Block(blockProperties), 
+    BlockBehaviour.Properties.of().noCollission().noTerrainParticles().noLootTable().pushReaction(PushReaction.IGNORE).destroyTime(-1).explosionResistance(1000000));
   /**
    * Default function used to register a block and its item counterpart.
    * This particular variant creates blockItems without any particular properties.

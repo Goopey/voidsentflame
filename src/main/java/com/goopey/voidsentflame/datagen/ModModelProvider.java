@@ -19,10 +19,13 @@ import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.data.models.model.TexturedModel;
 import net.minecraft.client.renderer.block.model.Variant;
 import net.minecraft.client.renderer.block.model.VariantMutator;
+import net.minecraft.client.resources.model.BlockStateModelLoader;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.NetherPortalBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -45,6 +48,7 @@ public class ModModelProvider extends ModelProvider {
     createPortalBlocks(pBModel);
     createXYRandomOrientationBlocks(pBModel);
 
+    getExistingModelFile(pBModel, BlockInit.VOID_SEA_LAYER_BLOCK.get());
     pBModel.createAirLikeBlock(BlockInit.RUBICON_AIR_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
     pBModel.createNonTemplateModelBlock(BlockInit.VOID_FLUID_BLOCK.get());
   }
@@ -78,6 +82,12 @@ public class ModModelProvider extends ModelProvider {
    *                    MODEL METHODS
    * ######################################################
    */
+
+  private static void getExistingModelFile(BlockModelGenerators pBModel, Block block) {
+    ResourceLocation model = ModelLocationUtils.getModelLocation(block);
+    Variant variant = plainModel(model);
+    pBModel.blockStateOutput.accept(MultiVariantGenerator.dispatch(block, new MultiVariant(WeightedList.of(variant))));
+  }
 
   private static void createPortalBlock(BlockModelGenerators pBModel, NetherPortalBlock block) {
     pBModel.blockStateOutput.accept(
