@@ -1,0 +1,13 @@
+{
+  "block.voidsentflame.void_stone_block": "Void Stone",
+  "item.voidsentflame.void_stone_block": "Void Stone",
+  "item.voidsentflame.runic_fruit_item": "Runic Fruit",
+  "item.voidsentflame.rubicon_igniter_item": "Rubicon Igniter",
+
+  "creativetab.voidsentflame.voidsentflame_items": "Voidsent Flame Items",
+  "creativetab.voidsentflame.voidsentflame_blocks": "Voidsent Flame Blocks",
+
+  "voidsentflame.configuration.title": "Example Mod Configs",
+  "voidsentflame.configuration.section.voidsentflame.common.toml": "Example Mod Configs",
+  "voidsentflame.configuration.section.voidsentflame.common.toml.title": "Example Mod Configs"
+}
