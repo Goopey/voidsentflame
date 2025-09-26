@@ -27,6 +27,7 @@ public class DataGenerators {
       CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
 
       generator.addProvider(true, new ModModelProvider(packOutput));
+      generator.addProvider(true, new ModSpriteSourceProvider(packOutput, lookupProvider));
 
       generator.addProvider(true, new LootTableProvider(packOutput, Collections.emptySet(), List.of(new LootTableProvider.SubProviderEntry(ModBlockLootTableProvider::new, LootContextParamSets.BLOCK)), lookupProvider));
 

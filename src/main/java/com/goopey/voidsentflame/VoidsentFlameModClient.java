@@ -1,5 +1,8 @@
 package com.goopey.voidsentflame;
 
+import com.goopey.voidsentflame.client.VoidSeaLayerBlockEntityRenderer;
+import com.goopey.voidsentflame.core.init.BlockEntityInit;
+
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -7,6 +10,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterEntitySpectatorShadersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
@@ -29,5 +33,13 @@ public class VoidsentFlameModClient {
         // Some client setup code
         VoidsentFlameMod.LOGGER.info("HELLO FROM CLIENT SETUP");
         VoidsentFlameMod.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+    }
+
+    @SubscribeEvent
+    public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(
+            BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), 
+            VoidSeaLayerBlockEntityRenderer::new
+        );
     }
 }
