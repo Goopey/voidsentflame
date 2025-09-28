@@ -40,7 +40,7 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
 
         poseStack.pushPose();
         poseStack.pushPose();
-        poseStack.scale(1f, 1f, 1f);
+        poseStack.scale(0.5f, 0.5f, 0.5f);
         poseStack.translate(1f, 2.8f, 1f);
         float angle = ((millis / 45) % 360);
         poseStack.mulPose(Axis.YP.rotationDegrees(angle));
