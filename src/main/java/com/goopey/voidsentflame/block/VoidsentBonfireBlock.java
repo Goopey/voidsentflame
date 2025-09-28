@@ -2,7 +2,7 @@ package com.goopey.voidsentflame.block;
 
 import javax.annotation.Nullable;
 
-import com.goopey.voidsentflame.block.blockentity.VoidSeaLayerBlockEntity;
+import com.goopey.voidsentflame.block.blockentity.VoidsentBonfireBlockEntity;
 import com.goopey.voidsentflame.core.init.FluidInit;
 import com.mojang.serialization.MapCodec;
 
@@ -16,10 +16,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 
-public class VoidSeaLayerBlock extends BaseEntityBlock {
-	public static final MapCodec<VoidSeaLayerBlock> CODEC = simpleCodec(VoidSeaLayerBlock::new);  
+public class VoidsentBonfireBlock extends BaseEntityBlock {
+	public static final MapCodec<VoidsentBonfireBlock> CODEC = simpleCodec(VoidsentBonfireBlock::new);  
 
-	public VoidSeaLayerBlock(BlockBehaviour.Properties properties) {
+	public VoidsentBonfireBlock(BlockBehaviour.Properties properties) {
 		super(properties.mapColor(MapColor.COLOR_YELLOW).strength(1000000000f).hasPostProcess((bs, br, bp) -> true).emissiveRendering((bs, br, bp) -> true).lightLevel(s -> 15)
 			.noCollission().noLootTable().pushReaction(PushReaction.DESTROY).sound(SoundType.EMPTY).destroyTime(Block.INDESTRUCTIBLE).explosionResistance(1000000));
 	}
@@ -37,6 +37,6 @@ public class VoidSeaLayerBlock extends BaseEntityBlock {
 	@Override
 	@Nullable
 	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-		return new VoidSeaLayerBlockEntity(pos, state);
+		return new VoidsentBonfireBlockEntity(pos, state);
 	}
 }

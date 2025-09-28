@@ -8,8 +8,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Half;
 
-public class VoidSeaLayerBlockEntity extends BlockEntity {
-   public VoidSeaLayerBlockEntity(BlockPos pos, BlockState blockState) {
+public class VoidsentBonfireBlockEntity extends BlockEntity {
+   public VoidsentBonfireBlockEntity(BlockPos pos, BlockState blockState) {
       super(BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), pos, blockState);
    }
 

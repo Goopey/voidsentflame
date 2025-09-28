@@ -4,7 +4,7 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
-import com.goopey.voidsentflame.block.blockentity.VoidSeaLayerBlockEntity;
+import com.goopey.voidsentflame.block.blockentity.VoidsentBonfireBlockEntity;
 import com.goopey.voidsentflame.core.init.ItemInit;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -25,14 +25,14 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
-public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<VoidSeaLayerBlockEntity> {
+public class VoidsentBonfireBlockEntityRenderer implements BlockEntityRenderer<VoidsentBonfireBlockEntity> {
   public static final ResourceLocation LIGHT = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/light_circle_block");
 
-  public VoidSeaLayerBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
+  public VoidsentBonfireBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
   }
   
   @Override
-  public void render(VoidSeaLayerBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, Vec3 cameraPos) {
+  public void render(VoidsentBonfireBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, Vec3 cameraPos) {
     ItemStack stack = new ItemStack(ItemInit.RUNIC_FRUIT_ITEM.get());
     if (!stack.isEmpty()) {
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
