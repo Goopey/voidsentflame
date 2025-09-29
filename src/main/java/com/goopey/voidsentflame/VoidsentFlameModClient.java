@@ -36,10 +36,7 @@ public class VoidsentFlameModClient {
     }
 
     @SubscribeEvent
-    public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(
-            BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), 
-            VoidSeaLayerBlockEntityRenderer::new
-        );
+    public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), VoidSeaLayerBlockEntityRenderer::new);
     }
 }

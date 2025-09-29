@@ -48,7 +48,7 @@ public class ModModelProvider extends ModelProvider {
     createPortalBlocks(pBModel);
     createXYRandomOrientationBlocks(pBModel);
 
-    getExistingModelFile(pBModel, BlockInit.VOID_SEA_LAYER_BLOCK.get());
+    pBModel.createAirLikeBlock(BlockInit.VOID_SEA_LAYER_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
     pBModel.createAirLikeBlock(BlockInit.RUBICON_AIR_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
     pBModel.createNonTemplateModelBlock(BlockInit.VOID_FLUID_BLOCK.get());
   }

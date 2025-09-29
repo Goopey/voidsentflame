@@ -1,9 +1,10 @@
 package com.goopey.voidsentflame.block;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.swing.Renderer;
 
 import com.goopey.voidsentflame.block.blockentity.VoidSeaLayerBlockEntity;
-import com.goopey.voidsentflame.core.init.FluidInit;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.world.level.material.PushReaction;
@@ -15,6 +16,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 
 public class VoidSeaLayerBlock extends BaseEntityBlock {
 	public static final MapCodec<VoidSeaLayerBlock> CODEC = simpleCodec(VoidSeaLayerBlock::new);  
@@ -25,7 +27,7 @@ public class VoidSeaLayerBlock extends BaseEntityBlock {
 	}
 
 	@Override
-	public int getLightBlock(BlockState state) {
+	public int getLightBlock(@Nonnull BlockState state) {
 		return 15;
 	}
 
@@ -36,7 +38,7 @@ public class VoidSeaLayerBlock extends BaseEntityBlock {
 
 	@Override
 	@Nullable
-	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) {
 		return new VoidSeaLayerBlockEntity(pos, state);
 	}
 }
