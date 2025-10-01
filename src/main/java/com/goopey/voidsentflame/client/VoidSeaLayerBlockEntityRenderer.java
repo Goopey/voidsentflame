@@ -2,42 +2,24 @@ package com.goopey.voidsentflame.client;
 
 import java.util.function.Function;
 
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.block.blockentity.VoidSeaLayerBlockEntity;
-import com.goopey.voidsentflame.core.init.ItemInit;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.QuadCollection;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
-import net.neoforged.neoforge.client.textures.UnitTextureAtlasSprite;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MaterialMapper;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import software.bernie.geckolib.model.GeoModel;
-import software.bernie.geckolib.renderer.GeoBlockRenderer;
 
 public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<VoidSeaLayerBlockEntity> {
   private static final int SUBDIV = 16;
