@@ -15,7 +15,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -128,7 +127,6 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
   }
 
   private float getCachedHeight(double wx, double wz, double t, Map<Long, Float> cache) {
-    // long key = (((long)Double.doubleToRawLongBits(wx)) << 32) ^ Double.doubleToRawLongBits(wz);
     long key = (long) (Math.floor((wx + wz) * FLOOR_RANGE) / FLOOR_RANGE);
     return cache.computeIfAbsent(key, k -> waveHeight(wx, wz, t));
   }
