@@ -1,5 +1,7 @@
 package com.goopey.voidsentflame.client;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.joml.Matrix4f;
@@ -22,8 +24,9 @@ import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 
 public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<VoidSeaLayerBlockEntity> {
-  private static final int SUBDIV = 16;
+  private static final int SUBDIV = 4;
   private static final float AMPLITUDE = 0.5f;
+  private static final float FLOOR_RANGE = 4f;
   private static final float FREQUENCY = 0.5f;
   private static final float SPEED = 0.05f;
   private TextureAtlasSprite SPRITE;
@@ -42,11 +45,13 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
     double dz = blockEntity.getBlockPos().getZ() + 8 - cameraPos.z;
     double distSq = dx * dx + dz * dz;
 
-    return distSq < 16384;
+    return true;
   }
 
   @Override
   public void render(VoidSeaLayerBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, Vec3 cameraPos) {    
+    Map<Long, Float> heightCache = new HashMap<>();
+    
     long gameTime = Minecraft.getInstance().level.getGameTime();
     double t = gameTime + partialTick;
 
@@ -86,10 +91,10 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
             double wz3 = basePos.getZ() + z1;
 
             // heights = sin wave
-            float h0 = waveHeight(wx0, wz0, t);
-            float h1 = waveHeight(wx1, wz1, t);
-            float h2 = waveHeight(wx2, wz2, t);
-            float h3 = waveHeight(wx3, wz3, t);
+            float h0 = getCachedHeight(wx0, wz0, t, heightCache);
+            float h1 = getCachedHeight(wx1, wz1, t, heightCache);
+            float h2 = getCachedHeight(wx2, wz2, t, heightCache);
+            float h3 = getCachedHeight(wx3, wz3, t, heightCache);
 
             // compute UV coords (u0,v0 etc)
             float u0 = this.SPRITE.getU0();
@@ -120,6 +125,12 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
     }
 
     poseStack.popPose();
+  }
+
+  private float getCachedHeight(double wx, double wz, double t, Map<Long, Float> cache) {
+    // long key = (((long)Double.doubleToRawLongBits(wx)) << 32) ^ Double.doubleToRawLongBits(wz);
+    long key = (long) (Math.floor((wx + wz) * FLOOR_RANGE) / FLOOR_RANGE);
+    return cache.computeIfAbsent(key, k -> waveHeight(wx, wz, t));
   }
 
   private float waveHeight(double wx, double wz, double t) {
