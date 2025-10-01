@@ -46,14 +46,13 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
   }
 
   @Override
-  public void render(VoidSeaLayerBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, Vec3 cameraPos) {
+  public void render(VoidSeaLayerBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, Vec3 cameraPos) {    
     long gameTime = Minecraft.getInstance().level.getGameTime();
     double t = gameTime + partialTick;
 
     BlockPos basePos = blockEntity.getBlockPos();
 
-    // We'll draw only the top surface (you could also optionally draw underside)
-    RenderType renderType = RenderType.solid();  // or solid, depending on textures
+    RenderType renderType = RenderType.solid();
     VertexConsumer builder = bufferSource.getBuffer(renderType);
 
     poseStack.pushPose();
@@ -71,20 +70,20 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
         for (int sx = 0; sx < SUBDIV; sx++) {
           for (int sz = 0; sz < SUBDIV; sz++) {
             // compute fractional positions 0..1
-            float fx0 = ix + (float)sx / SUBDIV;
-            float fz0 = iz + (float)sz / SUBDIV;
-            float fx1 = ix + (float)(sx+1) / SUBDIV;
-            float fz1 = iz + (float)(sz+1) / SUBDIV;
+            float x0 = ix + (float)sx / SUBDIV;
+            float z0 = iz + (float)sz / SUBDIV;
+            float x1 = ix + (float)(sx+1) / SUBDIV;
+            float z1 = iz + (float)(sz+1) / SUBDIV;
 
             // world positions for wave sample
-            double wx0 = basePos.getX() + fx0;
-            double wz0 = basePos.getZ() + fz0;
-            double wx1 = basePos.getX() + fx1;
-            double wz1 = basePos.getZ() + fz0;
-            double wx2 = basePos.getX() + fx1;
-            double wz2 = basePos.getZ() + fz1;
-            double wx3 = basePos.getX() + fx0;
-            double wz3 = basePos.getZ() + fz1;
+            double wx0 = basePos.getX() + x0;
+            double wz0 = basePos.getZ() + z0;
+            double wx1 = basePos.getX() + x1;
+            double wz1 = basePos.getZ() + z0;
+            double wx2 = basePos.getX() + x1;
+            double wz2 = basePos.getZ() + z1;
+            double wx3 = basePos.getX() + x0;
+            double wz3 = basePos.getZ() + z1;
 
             // heights = sin wave
             float h0 = waveHeight(wx0, wz0, t);
@@ -92,24 +91,29 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
             float h2 = waveHeight(wx2, wz2, t);
             float h3 = waveHeight(wx3, wz3, t);
 
-            // Query the block under each cell to get texture/UV
-            // BlockState st = Minecraft.getInstance().level.getBlockState(basePos.offset(ix, -1, iz));
-
-            // compute UV coords (u0,v0 etc) — here simple full face mapping
+            // compute UV coords (u0,v0 etc)
             float u0 = this.SPRITE.getU0();
             float v0 = this.SPRITE.getV0();
             float u1 = this.SPRITE.getU1();
             float v1 = this.SPRITE.getV1();
 
-            // first triangle (v2, v1, v0)
-            putVertex(builder, mat, fx0, h0, fz0, u0, v0, packedLight, packedOverlay, pose);
-            putVertex(builder, mat, fx0, h3, fz1, u0, v1, packedLight, packedOverlay, pose);
-            putVertex(builder, mat, fx1, h2, fz1, u1, v1, packedLight, packedOverlay, pose);
+            // top surface
+            putVertex(builder, mat, x0, h0, z0, u0, v0, packedLight, packedOverlay, pose);
+            putVertex(builder, mat, x0, h3, z1, u0, v1, packedLight, packedOverlay, pose);
+            putVertex(builder, mat, x1, h2, z1, u1, v1, packedLight, packedOverlay, pose);
 
-            // second triangle (v3, v2, v0)
-            putVertex(builder, mat, fx1, h2, fz1, u1, v1, packedLight, packedOverlay, pose);
-            putVertex(builder, mat, fx1, h1, fz0, u1, v0, packedLight, packedOverlay, pose);
-            putVertex(builder, mat, fx0, h0, fz0, u0, v0, packedLight, packedOverlay, pose);
+            putVertex(builder, mat, x1, h2, z1, u1, v1, packedLight, packedOverlay, pose);
+            putVertex(builder, mat, x1, h1, z0, u1, v0, packedLight, packedOverlay, pose);
+            putVertex(builder, mat, x0, h0, z0, u0, v0, packedLight, packedOverlay, pose);
+
+            // bottom surface
+            reversePutVertex(builder, mat, x0, h0, z0, u0, v0, packedLight, packedOverlay, pose);
+            reversePutVertex(builder, mat, x0, h3, z1, u0, v1, packedLight, packedOverlay, pose);
+            reversePutVertex(builder, mat, x1, h2, z1, u1, v1, packedLight, packedOverlay, pose);
+
+            reversePutVertex(builder, mat, x1, h2, z1, u1, v1, packedLight, packedOverlay, pose);
+            reversePutVertex(builder, mat, x1, h1, z0, u1, v0, packedLight, packedOverlay, pose);
+            reversePutVertex(builder, mat, x0, h0, z0, u0, v0, packedLight, packedOverlay, pose);
           }
         }
       }
@@ -124,6 +128,15 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
   }
 
   private void putVertex(VertexConsumer builder, Matrix4f mat, float x, float y, float z, float u, float v, int light, int overlay, PoseStack.Pose pose) {
+    builder.addVertex(mat, x, y, z)
+      .setColor(1f, 1f, 1f, 1f)
+      .setUv(u, v)
+      .setOverlay(overlay)
+      .setLight(light)
+      .setNormal(pose, 0, 1, 0);
+  }
+
+  private void reversePutVertex(VertexConsumer builder, Matrix4f mat, float x, float y, float z, float u, float v, int light, int overlay, PoseStack.Pose pose) {
     builder.addVertex(mat, x, y, z)
       .setColor(1f, 1f, 1f, 1f)
       .setUv(u, v)
