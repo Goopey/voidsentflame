@@ -7,15 +7,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
-import software.bernie.geckolib.animatable.GeoBlockEntity;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animatable.manager.AnimatableManager;
-import software.bernie.geckolib.animatable.processing.AnimationController;
-import software.bernie.geckolib.constant.DefaultAnimations;
-import software.bernie.geckolib.util.GeckoLibUtil;
-
-public class VoidSeaLayerBlockEntity extends BlockEntity implements GeoBlockEntity {
-	public final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+public class VoidSeaLayerBlockEntity extends BlockEntity {
+   public static final int WIDTH = 16;
+   public static final int LENGTH = 16;
+   public static final int HEIGHT_OFFSET = 24;
 
    public VoidSeaLayerBlockEntity(BlockPos pos, BlockState blockState) {
       super(BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), pos, blockState);
@@ -29,20 +24,4 @@ public class VoidSeaLayerBlockEntity extends BlockEntity implements GeoBlockEnti
    public BlockEntityType<?> getType() {
       return BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get();
    }
-
-   //##################################
-	//				GECKOLIB STUFF
-	//##################################
-
-	@Override
-	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-		controllers.add(new AnimationController<>(animTest -> {
-			return animTest.setAndContinue(DefaultAnimations.IDLE);
-		}));
-	}
-
-   @Override
-	public AnimatableInstanceCache getAnimatableInstanceCache() {
-		return this.cache;
-	}
 }

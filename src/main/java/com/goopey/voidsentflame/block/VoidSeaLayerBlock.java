@@ -2,7 +2,6 @@ package com.goopey.voidsentflame.block;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.swing.Renderer;
 
 import com.goopey.voidsentflame.block.blockentity.VoidSeaLayerBlockEntity;
 import com.mojang.serialization.MapCodec;
@@ -13,10 +12,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.RenderShape;
 
 public class VoidSeaLayerBlock extends BaseEntityBlock {
 	public static final MapCodec<VoidSeaLayerBlock> CODEC = simpleCodec(VoidSeaLayerBlock::new);  
@@ -40,5 +41,10 @@ public class VoidSeaLayerBlock extends BaseEntityBlock {
 	@Nullable
 	public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) {
 		return new VoidSeaLayerBlockEntity(pos, state);
+	}
+
+	@Override
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+		return null;
 	}
 }

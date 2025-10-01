@@ -11,6 +11,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterEntitySpectatorShadersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
@@ -38,5 +39,9 @@ public class VoidsentFlameModClient {
     @SubscribeEvent
     public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), VoidSeaLayerBlockEntityRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterGeometryLoaders(ModelEvent.ModifyBakingResult event) {
     }
 }
