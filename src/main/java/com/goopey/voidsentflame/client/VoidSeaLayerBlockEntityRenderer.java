@@ -8,33 +8,67 @@ import org.joml.Matrix4f;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.block.blockentity.VoidSeaLayerBlockEntity;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.resource.RenderTargetDescriptor;
+import com.mojang.blaze3d.shaders.ShaderType;
+import com.mojang.blaze3d.systems.GpuDevice;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.AddressMode;
+import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.fml.earlydisplay.render.RenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.ShaderDefines;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 
 public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<VoidSeaLayerBlockEntity> {
+  // Render Triangles
   private static final int SUBDIV = 4;
   private static final float AMPLITUDE = 0.5f;
-  private static final float FLOOR_RANGE = 4f;
+  private static final float FLOOR_RANGE = 8f;
   private static final float FREQUENCY = 0.5f;
   private static final float SPEED = 0.05f;
   private TextureAtlasSprite SPRITE;
+  private static String SPRITE_NAME = "void_fluid";
   
+  // Shader Stuff
+  private static String GPU_TEXTURE_NAME = "void_waves";
+  private final GpuDevice gpu;
+  // private final RenderPipeline distortPipeline;
+  // private final RenderPipeline postPipeline;
+  private final GpuTexture distortTexture;
+
   public VoidSeaLayerBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
-    ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/void_fluid");
+    ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/"+ SPRITE_NAME);
     ResourceLocation atlasLocation = Sheets.BLOCKS_MAPPER.apply(res).atlasLocation();
     Function<ResourceLocation, TextureAtlasSprite> atlas = Minecraft.getInstance().getTextureAtlas(atlasLocation);
     this.SPRITE = atlas.apply(res);
+
+    this.gpu = RenderSystem.getDevice();
+    this.distortTexture = gpu.createTexture(GPU_TEXTURE_NAME, 1, TextureFormat.RGBA8, 16, 16, 1, 1);
+  //   this.distortPipeline = RenderPipelines.register(
+  //     RenderPipeline.builder(null);
+  //   ).;
+  }
+
+  @Override
+  public int getViewDistance() {
+    return 4096;
   }
 
   @Override
@@ -48,21 +82,30 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
   }
 
   @Override
+  public boolean shouldRenderOffScreen() {
+    return true;
+  }
+
+  @Override
   public void render(VoidSeaLayerBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, Vec3 cameraPos) {    
     Map<Long, Float> heightCache = new HashMap<>();
-    
+
     long gameTime = Minecraft.getInstance().level.getGameTime();
     double t = gameTime + partialTick;
 
     BlockPos basePos = blockEntity.getBlockPos();
-
     RenderType renderType = RenderType.solid();
     VertexConsumer builder = bufferSource.getBuffer(renderType);
-
+  
     poseStack.pushPose();
     // translate origin to block entity bottom corner
     // set height to 5 blocks
     poseStack.translate(0, 5, 0);
+
+    // Shader stuff
+    // GpuDevice gpuDevice = RenderSystem.getDevice();
+    // GpuTexture gpuTexture = gpuDevice.createTexture(GPU_TEXTURE_NAME, 1, TextureFormat.RGBA8, 16, 16, 1, 1);
+    // gpuTexture.setAddressMode(AddressMode.REPEAT, AddressMode.REPEAT);
 
     Matrix4f mat = poseStack.last().pose();
     PoseStack.Pose pose = poseStack.last();
@@ -121,7 +164,7 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
           }
         }
       }
-    }
+    };
 
     poseStack.popPose();
   }
