@@ -1,4 +1,4 @@
-package com.goopey.voidsentflame.client;
+package com.goopey.voidsentflame.client.render;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,28 +67,8 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
     this.SPRITE = atlas.apply(res);
 
     this.gpu = RenderSystem.getDevice();
-    // this.distortPipeline = RenderPipeline.builder().withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/distort_mask"))
-    //   .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort_mask.vert"))
-    //   .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort_mask.frag"))
-    //   .withVertexFormat(RenderPipelines.ENTITY_TRANSLUCENT.getVertexFormat(), RenderPipelines.ENTITY_TRANSLUCENT.getVertexFormatMode())
-    //   .withUniform("u_modelViewProj", UniformType.UNIFORM_BUFFER)
-    //   .withUniform("u_strength", UniformType.UNIFORM_BUFFER)
-    //   .withUniform("u_fade", UniformType.UNIFORM_BUFFER)
-    //   .withBlend(BlendFunction.TRANSLUCENT)   // or translucent blending
-    //   .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-    //   .withCull(false)
-    //   .build();
-    // this.postPipeline = RenderPipeline.builder()
-    //   .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/post_distort"))
-    //   .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "fullscreen_quad.vert"))
-    //   .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "post_distort.frag"))
-    //   .withSampler("u_scene")
-    //   .withSampler("u_distortMask")
-    //   .withUniform("u_time", UniformType.UNIFORM_BUFFER)
-    //   .withBlend(null)
-    //   .withDepthTestFunction(DepthTestFunction.GREATER_DEPTH_TEST)
-    //   .withCull(false)
-    //   .build();
+    setupPipelines();
+    setupQuad();
   }
 
   //#####################################################
@@ -278,7 +258,7 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
     );
   }
 
-  private void setupQuad(GpuDevice device) {
+  private void setupQuad() {
     float[] quadVerts = new float[] {
         -1f, -1f,  0f, 1f,
         -1f,  1f,  0f, 0f,
@@ -288,7 +268,7 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
         1f, -1f,  1f, 1f
     };
 
-    // this.quadBuffer = device.createBuffer(BufferUsage.VERTEX, quadVerts.length * 4);
+    // this.quadBuffer = gpu.createBuffer(, quadVerts.length * 4);
     // this.quadBuffer.upload(0, quadVerts);
   }
 }
