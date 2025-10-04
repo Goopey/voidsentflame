@@ -1,6 +1,6 @@
 package com.goopey.voidsentflame;
 
-import com.goopey.voidsentflame.client.VoidSeaLayerBlockEntityRenderer;
+import com.goopey.voidsentflame.client.render.VoidSeaLayerBlockEntityRenderer;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 
 import net.minecraft.client.Minecraft;
@@ -34,7 +34,7 @@ public class VoidsentFlameModClient {
     }
 
     @SubscribeEvent
-    public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
+    public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), VoidSeaLayerBlockEntityRenderer::new);
     }
 }
