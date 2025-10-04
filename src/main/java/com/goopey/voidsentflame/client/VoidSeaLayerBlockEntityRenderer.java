@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.OptionalInt;
 import java.util.function.Function;
 
+import javax.annotation.Nonnull;
+
 import org.joml.Matrix4f;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
@@ -22,13 +24,11 @@ import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.AddressMode;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -36,12 +36,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.fml.earlydisplay.render.RenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderDefines;
+import net.minecraft.client.renderer.ShaderManager;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 
@@ -52,15 +51,19 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
   private static final float FLOOR_RANGE = 8f;
   private static final float FREQUENCY = 0.5f;
   private static final float SPEED = 0.05f;
+  private static final float HEIGHT = 21.5f;
   private TextureAtlasSprite SPRITE;
   private static String SPRITE_NAME = "void_fluid";
+
+  // Render Distance
+  private static int RENDER_DISTANCE = 128;
   
   // Shader Stuff
   private static String GPU_TEXTURE_NAME = "void_waves";
-  // private final GpuDevice gpu;
+  private final GpuDevice gpu;
   // private final RenderPipeline distortPipeline;
   // private final RenderPipeline postPipeline;
-  // private final GpuTexture distortTexture;
+  private final GpuTexture distortTexture;
 
   public VoidSeaLayerBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/"+ SPRITE_NAME);
@@ -68,8 +71,8 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
     Function<ResourceLocation, TextureAtlasSprite> atlas = Minecraft.getInstance().getTextureAtlas(atlasLocation);
     this.SPRITE = atlas.apply(res);
 
-    // this.gpu = RenderSystem.getDevice();
-    // this.distortTexture = gpu.createTexture(GPU_TEXTURE_NAME, 1, TextureFormat.RGBA8, 16, 16, 1, 1);
+    this.gpu = RenderSystem.getDevice();
+    this.distortTexture = gpu.createTexture(GPU_TEXTURE_NAME, 1, TextureFormat.RGBA8, 16, 16, 1, 1);
     // this.distortPipeline = RenderPipeline.builder().withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/distort_mask"))
     //   .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort_mask.vert"))
     //   .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort_mask.frag"))
@@ -92,8 +95,6 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
     //   .withDepthTestFunction(DepthTestFunction.GREATER_DEPTH_TEST)
     //   .withCull(false)
     //   .build();
-
-      // RenderPipelines.
   }
 
   //#####################################################
@@ -102,12 +103,25 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
   
   @Override
   public int getViewDistance() {
-    return 4096;
+    return RENDER_DISTANCE;
   }
 
   @Override
-  public AABB getRenderBoundingBox(VoidSeaLayerBlockEntity blockEntity) {
-    return AABB.INFINITE;
+  public AABB getRenderBoundingBox(@Nonnull VoidSeaLayerBlockEntity blockEntity) {
+    return new AABB(
+      -RENDER_DISTANCE, Double.NEGATIVE_INFINITY, -RENDER_DISTANCE, 
+      RENDER_DISTANCE, Double.POSITIVE_INFINITY, RENDER_DISTANCE
+    );
+  }
+
+  @Override
+  public boolean shouldRender(@Nonnull VoidSeaLayerBlockEntity blockEntity, @Nonnull Vec3 cameraPos) {
+    BlockPos pos = blockEntity.getBlockPos();
+    float x = pos.getX() - (float) cameraPos.x;
+    float z = pos.getZ() - (float) cameraPos.z;
+    float distSq = x * x + z * z;
+    
+    return distSq < (this.getViewDistance() * this.getViewDistance());
   }
   
   @Override
@@ -120,7 +134,7 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
   //#####################################################
   
   @Override
-  public void render(VoidSeaLayerBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, Vec3 cameraPos) {    
+  public void render(@Nonnull VoidSeaLayerBlockEntity blockEntity, float partialTick, @Nonnull PoseStack poseStack, @Nonnull MultiBufferSource bufferSource, int packedLight, int packedOverlay, @Nonnull Vec3 cameraPos) {    
     Map<Long, Float> heightCache = new HashMap<>();
     
     long gameTime = Minecraft.getInstance().level.getGameTime();
@@ -129,17 +143,12 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
     BlockPos basePos = blockEntity.getBlockPos();
     RenderType renderType = RenderType.solid();
     VertexConsumer builder = bufferSource.getBuffer(renderType);
-    
+
     poseStack.pushPose();
-    // translate origin to block entity bottom corner
+
     // set height to 5 blocks
-    poseStack.translate(0, 5, 0);
-    
-    // Shader stuff
-    // GpuDevice gpuDevice = RenderSystem.getDevice();
-    // GpuTexture gpuTexture = gpuDevice.createTexture(GPU_TEXTURE_NAME, 1, TextureFormat.RGBA8, 16, 16, 1, 1);
-    // gpuTexture.setAddressMode(AddressMode.REPEAT, AddressMode.REPEAT);
-    
+    poseStack.translate(0, HEIGHT, 0);
+
     Matrix4f mat = poseStack.last().pose();
     PoseStack.Pose pose = poseStack.last();
     
