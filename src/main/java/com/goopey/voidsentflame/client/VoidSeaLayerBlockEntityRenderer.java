@@ -12,23 +12,19 @@ import org.joml.Matrix4f;
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.block.blockentity.VoidSeaLayerBlockEntity;
 import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.DepthTestFunction;
-import com.mojang.blaze3d.resource.RenderTargetDescriptor;
-import com.mojang.blaze3d.shaders.ShaderType;
 import com.mojang.blaze3d.shaders.UniformType;
-import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
-import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.textures.TextureFormat;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -38,9 +34,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.ShaderDefines;
-import net.minecraft.client.renderer.ShaderManager;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 
@@ -60,10 +55,10 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
   
   // Shader Stuff
   private static String GPU_TEXTURE_NAME = "void_waves";
-  private final GpuDevice gpu;
-  // private final RenderPipeline distortPipeline;
-  // private final RenderPipeline postPipeline;
-  private final GpuTexture distortTexture;
+  private GpuDevice gpu;
+  private RenderPipeline distortPipeline;
+  private RenderPipeline wavePipeline;
+  private GpuBuffer quadBuffer;
 
   public VoidSeaLayerBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/"+ SPRITE_NAME);
@@ -72,7 +67,6 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
     this.SPRITE = atlas.apply(res);
 
     this.gpu = RenderSystem.getDevice();
-    this.distortTexture = gpu.createTexture(GPU_TEXTURE_NAME, 1, TextureFormat.RGBA8, 16, 16, 1, 1);
     // this.distortPipeline = RenderPipeline.builder().withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/distort_mask"))
     //   .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort_mask.vert"))
     //   .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort_mask.frag"))
@@ -252,22 +246,49 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
   //                  RENDER PIPELINE 
   //#####################################################
 
-  private void gpuInit() {
-    
+  private void setupPipelines() {
+    // Build wave pipeline
+    this.wavePipeline = RenderPipelines.register(RenderPipeline.builder()
+      .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "wave_pipeline"))
+      .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "wave"))
+      .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "wave"))
+      .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
+      .withUniform("modelViewProj", UniformType.UNIFORM_BUFFER)
+      .withUniform("time", UniformType.UNIFORM_BUFFER)
+      .withSampler("tex")
+      .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
+      .build()
+    );
+
+    // Build distortion pipeline
+    this.distortPipeline = RenderPipelines.register(RenderPipeline.builder()
+      .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort_pipeline"))
+      .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort"))
+      .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort"))
+      .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
+      .withUniform("waveCenter", UniformType.UNIFORM_BUFFER)
+      .withUniform("radius", UniformType.UNIFORM_BUFFER)
+      .withUniform("time", UniformType.UNIFORM_BUFFER)
+      .withUniform("screenSize", UniformType.UNIFORM_BUFFER)
+      .withSampler("sceneTex")
+      .withSampler("sceneDepth")
+      .withBlend(BlendFunction.TRANSLUCENT)
+      .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+      .build()
+    );
   }
 
-  private Matrix4f computeMVP(PoseStack stack, VoidSeaLayerBlockEntity blockEntity) {
-    // Multiply stack last pose * projection etc -> a 4x4
-    // (Your existing logic for transforming your mesh)
-    return stack.last().pose();  // placeholder
-  }
+  private void setupQuad(GpuDevice device) {
+    float[] quadVerts = new float[] {
+        -1f, -1f,  0f, 1f,
+        -1f,  1f,  0f, 0f,
+        1f,  1f,  1f, 0f,
+        -1f, -1f,  0f, 1f,
+        1f,  1f,  1f, 0f,
+        1f, -1f,  1f, 1f
+    };
 
-  private void drawCustomMesh(RenderPass pass, VoidSeaLayerBlockEntity blockEntity) {
-    // Suppose you have a vertex buffer & index buffer for your custom geometry,
-    // you must bind them and pass layout matching the vertex format used by distortPipeline.
-    // For example:
-    // pass.setVertexBuffer(0, myVertexBuffer);
-    // pass.setIndexBuffer(myIndexBuffer);
-    // pass.drawIndexed(0, indexCount, 1);
+    // this.quadBuffer = device.createBuffer(BufferUsage.VERTEX, quadVerts.length * 4);
+    // this.quadBuffer.upload(0, quadVerts);
   }
 }
