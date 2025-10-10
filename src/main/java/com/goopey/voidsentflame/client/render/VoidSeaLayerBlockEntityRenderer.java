@@ -121,6 +121,8 @@ public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<Void
   
   @Override
   public void render(@Nonnull VoidSeaLayerBlockEntity blockEntity, float partialTick, @Nonnull PoseStack poseStack, @Nonnull MultiBufferSource bufferSource, int packedLight, int packedOverlay, @Nonnull Vec3 cameraPos) {    
+    //TODO : Cleanup Code
+    
     // Map<Long, Float> heightCache = new HashMap<>();
 
     // // VoidsentFlameMod.LOGGER.info("Packed Light:["+packedLight+"]      Packed Overlay:["+packedOverlay+"]");
