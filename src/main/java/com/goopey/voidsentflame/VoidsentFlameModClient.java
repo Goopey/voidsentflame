@@ -1,6 +1,7 @@
 package com.goopey.voidsentflame;
 
 import com.goopey.voidsentflame.client.render.VoidSeaLayerBlockEntityRenderer;
+import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 
 import net.minecraft.client.Minecraft;
@@ -11,6 +12,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
@@ -36,5 +38,11 @@ public class VoidsentFlameModClient {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), VoidSeaLayerBlockEntityRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void onRenderLevel(RenderLevelStageEvent.AfterEntities event) {
+        VoidSeaRenderer voidSeaRenderer = new VoidSeaRenderer();
+        voidSeaRenderer.render(event);
     }
 }
