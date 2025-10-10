@@ -27,7 +27,11 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.waypoints.TrackedWaypoint.Camera;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -39,7 +43,11 @@ public class VoidSeaRenderer {
   private static final float FLOOR_RANGE = 8f;
   private static final float FREQUENCY = 0.5f;
   private static final float SPEED = 0.05f;
-  private static final float HEIGHT = 21.5f;
+
+  // World Position
+  private static final float HEIGHT = -42.5f;
+  private static final float WIDTH = 16f;
+  private static final float OFFSET = 8f;
   
   // Sprite Stuff
   private TextureAtlasSprite SPRITE;
@@ -54,9 +62,16 @@ public class VoidSeaRenderer {
   // Cache Stuff
   private Map<Long, Float> cachedHeight;
 
+  // Dimension Stuff
+  private ResourceKey<Level> rubicon;
+  private static final String rubiconLocation = "voidsentflame:rubicon";
+
   public VoidSeaRenderer() {
     // Cache
     this.cachedHeight = new HashMap<>();
+
+    // Dimension Stuff
+    this.rubicon = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(rubiconLocation));
 
     // Sprite
     ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/"+ SPRITE_NAME);
@@ -75,7 +90,9 @@ public class VoidSeaRenderer {
   }
 
   public void render(RenderLevelStageEvent.AfterEntities event) {
-    // VoidsentFlameMod.LOGGER.info("Running");
+    // Check if in Rubicon
+    Level level = event.getLevel();
+    if (level.dimension() != this.rubicon) { return; }
 
     // Level Renderer
     LevelRenderer levelRenderer = event.getLevelRenderer();
@@ -99,14 +116,14 @@ public class VoidSeaRenderer {
 
   public void renderSea(double gameTime, @Nonnull VertexConsumer builder, @Nonnull PoseStack poseStack, @Nonnull MultiBufferSource bufferSource, int packedLight, int packedOverlay, @Nonnull Vec3 cameraPos) {
     // set height to 5 blocks
-    poseStack.translate(0, -5, 0);
+    poseStack.translate(0, HEIGHT - cameraPos.y(), 0);
 
     Matrix4f mat = poseStack.last().pose();
     PoseStack.Pose pose = poseStack.last();
     
     // iterate across grid
-    for (int ix = 0; ix < VoidSeaLayerBlockEntity.WIDTH; ix++) {
-      for (int iz = 0; iz < VoidSeaLayerBlockEntity.LENGTH; iz++) {
+    for (int ix = 0; ix < WIDTH; ix++) {
+      for (int iz = 0; iz < WIDTH; iz++) {
         // inside each block, subdivide
         for (int sx = 0; sx < SUBDIV; sx++) {
           for (int sz = 0; sz < SUBDIV; sz++) {
@@ -117,14 +134,14 @@ public class VoidSeaRenderer {
             float z1 = iz + (float)(sz+1) / SUBDIV;
             
             // world positions for wave sample
-            double wx0 = cameraPos.x() + x0;
-            double wz0 = cameraPos.z() + z0;
-            double wx1 = cameraPos.x() + x1;
-            double wz1 = cameraPos.z() + z0;
-            double wx2 = cameraPos.x() + x1;
-            double wz2 = cameraPos.z() + z1;
-            double wx3 = cameraPos.x() + x0;
-            double wz3 = cameraPos.z() + z1;
+            double wx0 = cameraPos.x() + x0 - OFFSET;
+            double wz0 = cameraPos.z() + z0 - OFFSET;
+            double wx1 = cameraPos.x() + x1 - OFFSET;
+            double wz1 = cameraPos.z() + z0 - OFFSET;
+            double wx2 = cameraPos.x() + x1 - OFFSET;
+            double wz2 = cameraPos.z() + z1 - OFFSET;
+            double wx3 = cameraPos.x() + x0 - OFFSET;
+            double wz3 = cameraPos.z() + z1 - OFFSET;
             
             // heights = sin wave
             float h0 = getCachedHeight(wx0, wz0, gameTime, this.cachedHeight);
@@ -133,10 +150,11 @@ public class VoidSeaRenderer {
             float h3 = getCachedHeight(wx3, wz3, gameTime, this.cachedHeight);
             
             // compute UV coords (u0,v0 etc)
-            float u0 = this.SPRITE.getU0();
-            float v0 = this.SPRITE.getV0();
-            float u1 = this.SPRITE.getU1();
-            float v1 = this.SPRITE.getV1();
+            // In terms of fractional positions 0..1. We don't want mixels.
+            float u0 = this.SPRITE.getU((float)sx / SUBDIV);
+            float v0 = this.SPRITE.getV((float)sz / SUBDIV);
+            float u1 = this.SPRITE.getU((float)(sx+1) / SUBDIV);
+            float v1 = this.SPRITE.getV((float)(sz+1) / SUBDIV);
             
             // top surface
             putVertex(builder, mat, x0, h0, z0, u0, v0, packedLight, packedOverlay, pose);
