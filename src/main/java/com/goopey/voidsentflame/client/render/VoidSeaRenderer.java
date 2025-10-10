@@ -46,8 +46,8 @@ public class VoidSeaRenderer {
 
   // World Position
   private static final float HEIGHT = -42.5f;
-  private static final float WIDTH = 16f;
-  private static final float OFFSET = 8f;
+  private static final int WIDTH = 32;
+  private static final int OFFSET = 16;
   
   // Sprite Stuff
   private TextureAtlasSprite SPRITE;
@@ -120,10 +120,10 @@ public class VoidSeaRenderer {
 
     Matrix4f mat = poseStack.last().pose();
     PoseStack.Pose pose = poseStack.last();
-    
+
     // iterate across grid
-    for (int ix = 0; ix < WIDTH; ix++) {
-      for (int iz = 0; iz < WIDTH; iz++) {
+    for (int ix = -OFFSET; ix < WIDTH - OFFSET; ix++) {
+      for (int iz = -OFFSET; iz < WIDTH - OFFSET; iz++) {
         // inside each block, subdivide
         for (int sx = 0; sx < SUBDIV; sx++) {
           for (int sz = 0; sz < SUBDIV; sz++) {
@@ -134,14 +134,14 @@ public class VoidSeaRenderer {
             float z1 = iz + (float)(sz+1) / SUBDIV;
             
             // world positions for wave sample
-            double wx0 = cameraPos.x() + x0 - OFFSET;
-            double wz0 = cameraPos.z() + z0 - OFFSET;
-            double wx1 = cameraPos.x() + x1 - OFFSET;
-            double wz1 = cameraPos.z() + z0 - OFFSET;
-            double wx2 = cameraPos.x() + x1 - OFFSET;
-            double wz2 = cameraPos.z() + z1 - OFFSET;
-            double wx3 = cameraPos.x() + x0 - OFFSET;
-            double wz3 = cameraPos.z() + z1 - OFFSET;
+            double wx0 = cameraPos.x() + x0;
+            double wz0 = cameraPos.z() + z0;
+            double wx1 = cameraPos.x() + x1;
+            double wz1 = cameraPos.z() + z0;
+            double wx2 = cameraPos.x() + x1;
+            double wz2 = cameraPos.z() + z1;
+            double wx3 = cameraPos.x() + x0;
+            double wz3 = cameraPos.z() + z1;
             
             // heights = sin wave
             float h0 = getCachedHeight(wx0, wz0, gameTime, this.cachedHeight);
