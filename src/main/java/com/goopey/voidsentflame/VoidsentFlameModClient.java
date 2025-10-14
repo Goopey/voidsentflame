@@ -1,7 +1,9 @@
 package com.goopey.voidsentflame;
 
+import com.goopey.voidsentflame.client.VoidSeaUnbakedModelLoader;
 import com.goopey.voidsentflame.client.render.VoidSeaLayerBlockEntityRenderer;
 import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
+import com.goopey.voidsentflame.core.StandaloneModelRegistry;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 
 import net.minecraft.client.Minecraft;
@@ -12,6 +14,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
@@ -42,7 +45,16 @@ public class VoidsentFlameModClient {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent.AfterEntities event) {
-        VoidSeaRenderer voidSeaRenderer = new VoidSeaRenderer();
-        voidSeaRenderer.render(event);
+        VoidSeaRenderer.getInstance().render(event);
+    }
+
+    @SubscribeEvent
+    public static void registerLoaders(ModelEvent.RegisterLoaders event) {
+        event.register(VoidSeaUnbakedModelLoader.ID, VoidSeaUnbakedModelLoader.INSTANCE);
+    }
+
+    @SubscribeEvent
+    public static void registerStandaloneModels(ModelEvent.RegisterStandalone event) {
+        StandaloneModelRegistry.registerStandaloneModels(event);
     }
 }
