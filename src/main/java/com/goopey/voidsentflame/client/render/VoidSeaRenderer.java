@@ -1,5 +1,9 @@
 package com.goopey.voidsentflame.client.render;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -11,6 +15,7 @@ import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.platform.PolygonMode;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -49,7 +54,7 @@ public class VoidSeaRenderer {
 
   // World Position
   private static final float HEIGHT = -42.5f;
-  private static final int OFFSET = 4096;
+  private static final int OFFSET = 2048;
   private static final int VIEW_DISTANCE_SCALE = 16;
   
   // Sprite/Model Stuff
@@ -57,20 +62,12 @@ public class VoidSeaRenderer {
   private static String SPRITE_NAME = "void_fluid";
   
   // Shader Stuff
-  private RenderType EXAMPLE_RENDER;
+  private RenderType distortRender;
   private static final int PACKED_LIGHT = 15728880;
   public RenderPipeline.Snippet voidSeaTerrainSnippet;
   public RenderPipeline.Snippet voidSeaFogMatricesSnippet;
   public RenderPipeline.Snippet voidSeaFogSnippet;
   public RenderPipeline.Snippet voidSeaMatricesSnippet;
-  // private static final RenderPipeline DISTORT_PIPELINE = RenderPipelines.register(
-  //     RenderPipeline.builder(
-  //       new RenderPipeline.Snippet[]{RenderPipelines.TERRAIN_SNIPPET})
-  //       .withLocation("pipeline/solid")
-  //       .withoutStencilTest()
-  //       .withCull(false)
-  //       .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
-  //       .build());
   public RenderPipeline distortPipeline;
   private static final int PACKED_OVERLAY = 655360;
 
@@ -78,10 +75,6 @@ public class VoidSeaRenderer {
   
   // Cache Stuff
   private Map<Float, BakedQuad> cachedQuad;
-
-  static {
-    // VOID_SEA_TERRAIN_SNIPPET = 
-  }
 
   // Dimension Stuff
   private static final ResourceKey<Level> RUBICON = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("voidsentflame:rubicon"));
@@ -106,32 +99,18 @@ public class VoidSeaRenderer {
     this.distortPipeline = RenderPipelines.register(
       RenderPipeline.builder(
         new RenderPipeline.Snippet[]{this.voidSeaTerrainSnippet})
-        .withLocation("pipeline/solid")
-        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort_vert"))
-        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort_frag"))
+        // sets a pipeline name, not an actual file
+        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/distort"))
+        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_vert"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_frag"))
         .withColorWrite(true, false)
         .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .build());
-    // this.distortPipeline = RenderPipelines.register(RenderPipeline.builder()
-    //   .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "distort_pipeline"))
-    //   .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "shaders/distort_vert"))
-    //   .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "shaders/distort_frag"))
-    //   .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
-    //   .withUniform("waveCenter", UniformType.UNIFORM_BUFFER)
-    //   .withUniform("radius", UniformType.UNIFORM_BUFFER)
-    //   .withUniform("time", UniformType.UNIFORM_BUFFER)
-    //   .withUniform("screenSize", UniformType.UNIFORM_BUFFER)
-    //   .withSampler("sceneTex")
-    //   .withSampler("sceneDepth")
-    //   .withBlend(BlendFunction.TRANSLUCENT)
-    //   .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-    //   .build()
-    // );
 
     // Renderer
-    this.EXAMPLE_RENDER = RenderType.create(
-      "example2:example2", 4192, 
+    this.distortRender = RenderType.create(
+      VoidsentFlameMod.MODID + ":distort_render", 4192, 
       false, false, 
       this.distortPipeline, RenderType.CompositeState.builder()
         .setLightmapState(LightmapStateShard.LIGHTMAP)
@@ -162,7 +141,7 @@ public class VoidSeaRenderer {
     Camera camera = event.getCamera();
     double viewDistance = levelRenderer.getLastViewDistance();
     MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-    VertexConsumer builder = bufferSource.getBuffer(this.EXAMPLE_RENDER);
+    VertexConsumer builder = bufferSource.getBuffer(this.distortRender);
 
     // Time
     long gameTime = Minecraft.getInstance().level.getGameTime();
