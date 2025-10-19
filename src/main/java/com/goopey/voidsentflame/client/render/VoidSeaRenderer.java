@@ -12,6 +12,7 @@ import java.util.function.Function;
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.block.blockentity.VoidSeaLayerBlockEntity;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
@@ -25,6 +26,7 @@ import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderStateShard;
@@ -68,10 +70,9 @@ public class VoidSeaRenderer {
   public RenderPipeline.Snippet voidSeaFogMatricesSnippet;
   public RenderPipeline.Snippet voidSeaFogSnippet;
   public RenderPipeline.Snippet voidSeaMatricesSnippet;
+  public RenderPipeline.Snippet voidSeaGlobalsFogMatricesSnippet;
   public RenderPipeline distortPipeline;
   private static final int PACKED_OVERLAY = 655360;
-
-  // Render Pipeline Stuff
   
   // Cache Stuff
   private Map<Float, BakedQuad> cachedQuad;
@@ -96,9 +97,19 @@ public class VoidSeaRenderer {
       .withSampler("Sampler0").withSampler("Sampler2")
       .withVertexFormat(DefaultVertexFormat.BLOCK, Mode.QUADS)
       .buildSnippet();
+    this.voidSeaGlobalsFogMatricesSnippet = RenderPipeline.builder(new RenderPipeline.Snippet[]{this.voidSeaTerrainSnippet})
+      .withUniform("Globals", UniformType.UNIFORM_BUFFER)
+      .buildSnippet();
+
+    // MappableRingBuffer timeUbo = new MappableRingBuffer(
+    //   () -> "Time Ubo", 
+    //   GpuBuffer.USAGE_UNIFORM, 
+    //   new Std140SizeCalculator().putFloat().get()
+    // );
+
     this.distortPipeline = RenderPipelines.register(
       RenderPipeline.builder(
-        new RenderPipeline.Snippet[]{this.voidSeaTerrainSnippet})
+        new RenderPipeline.Snippet[]{this.voidSeaGlobalsFogMatricesSnippet})
         // sets a pipeline name, not an actual file
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/distort"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_vert"))

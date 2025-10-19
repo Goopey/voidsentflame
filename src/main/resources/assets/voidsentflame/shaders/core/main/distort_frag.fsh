@@ -2,6 +2,7 @@
 
 #moj_import <minecraft:fog.glsl>
 #moj_import <minecraft:dynamictransforms.glsl>
+#moj_import <minecraft:globals.glsl>
 
 uniform sampler2D Sampler0;
 
@@ -13,12 +14,19 @@ in vec2 texCoord0;
 out vec4 fragColor;
 
 void main() {
-//    vec4 color = texture(Sampler0, texCoord0) * vertexColor * ColorModulator;
-//#ifdef ALPHA_CUTOUT
-//    if (color.a < ALPHA_CUTOUT) {
-//        discard;
-//    }
-//#endif
-//    fragColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
-    fragColor = vec4(1.0, 1.0, 0.0, 1.0);
+    // Wave parameters
+    float waveSpeed = 16.0;     // Speed of wave animation
+    float waveStrength = 0.2; // How strong the wave distortion is
+    float waveFrequency = 10.0; // How many waves there are
+
+    // Apply sine wave to texture coordinates
+    float offsetX = sin(texCoord0.y + GameTime * waveSpeed) * waveStrength;
+    float offsetY = cos(texCoord0.x + GameTime * waveSpeed) * waveStrength;
+
+    vec2 distortedCoord = texCoord0 + vec2(offsetX, offsetY);
+
+    // Sample the texture with distorted coordinates
+    vec4 color = texture2D(Sampler0, distortedCoord);
+
+    fragColor = color;
 }
