@@ -4,37 +4,32 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
-import com.goopey.voidsentflame.block.blockentity.VoidSeaLayerBlockEntity;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.Std140SizeCalculator;
-import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
-import com.mojang.blaze3d.platform.PolygonMode;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderStateShard.LightmapStateShard;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.ShaderManager;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.registries.Registries;
@@ -49,14 +44,17 @@ public class VoidSeaRenderer {
   // Singleton Instance
   private static final VoidSeaRenderer INSTANCE = new VoidSeaRenderer();
 
-  // Render Triangles
+  // Render Waves
   private static final float AMPLITUDE = 0.5f;
   private static final float FREQUENCY = 0.5f;
   private static final float SPEED = 0.05f;
+  
+  // Render Triangles
+  private static final int SUBDIVISIONS = 128;
 
   // World Position
   private static final float HEIGHT = -42.5f;
-  private static final int OFFSET = 2048;
+  private static final int OFFSET = 256;
   private static final int VIEW_DISTANCE_SCALE = 16;
   
   // Sprite/Model Stuff
@@ -64,18 +62,18 @@ public class VoidSeaRenderer {
   private static String SPRITE_NAME = "void_fluid";
   
   // Shader Stuff
-  private RenderType distortRender;
   private static final int PACKED_LIGHT = 15728880;
+  private static final int PACKED_OVERLAY = 655360;
+  private RenderType distortRender;
   public RenderPipeline.Snippet voidSeaTerrainSnippet;
   public RenderPipeline.Snippet voidSeaFogMatricesSnippet;
   public RenderPipeline.Snippet voidSeaFogSnippet;
   public RenderPipeline.Snippet voidSeaMatricesSnippet;
   public RenderPipeline.Snippet voidSeaGlobalsFogMatricesSnippet;
   public RenderPipeline distortPipeline;
-  private static final int PACKED_OVERLAY = 655360;
   
   // Cache Stuff
-  private Map<Float, BakedQuad> cachedQuad;
+  private Map<Float, List<BakedQuad>> cachedQuads;
 
   // Dimension Stuff
   private static final ResourceKey<Level> RUBICON = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("voidsentflame:rubicon"));
@@ -86,7 +84,7 @@ public class VoidSeaRenderer {
 
   private VoidSeaRenderer() {
     // Cache
-    this.cachedQuad = new HashMap<>();
+    this.cachedQuads = new HashMap<>();
 
     // Render Pipeline
     this.voidSeaMatricesSnippet = RenderPipeline.builder(new RenderPipeline.Snippet[0]).withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER).withUniform("Projection", UniformType.UNIFORM_BUFFER).buildSnippet();
@@ -114,6 +112,9 @@ public class VoidSeaRenderer {
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/distort"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_frag"))
+        .withVertexFormat(
+          VertexFormat.builder().add("UV0", VertexFormatElement.UV0).add("Position", VertexFormatElement.POSITION).build(), 
+          VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
         .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
@@ -153,11 +154,12 @@ public class VoidSeaRenderer {
     double viewDistance = levelRenderer.getLastViewDistance();
     MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
     VertexConsumer builder = bufferSource.getBuffer(this.distortRender);
+    // BufferBuilder bufferBuilder = Tesselator.getInstance().begin(Mode.QUADS, VertexFormat.builder().build());
 
     // Time
     long gameTime = Minecraft.getInstance().level.getGameTime();
     double t = gameTime + event.getPartialTick().getGameTimeDeltaTicks();
-    
+
     // Start Rendering
     poseStack.pushPose();
     // Set height to bottom of world
@@ -165,7 +167,10 @@ public class VoidSeaRenderer {
     poseStack.scale((float) (viewDistance/VIEW_DISTANCE_SCALE), 1f, (float) (viewDistance/VIEW_DISTANCE_SCALE));
 
     // red, blue, green and alpha go from 0..1
-    builder.putBulkData(poseStack.last(), getCachedQuad(0, this.cachedQuad, poseStack), 1, 1, 1, 1, PACKED_LIGHT, OFFSET);
+    // builder.putBulkData(poseStack.last(), getCachedQuad(0, this.cachedQuad, poseStack), 1, 1, 1, 1, PACKED_LIGHT, OFFSET);
+    for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME)) {
+      builder.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, PACKED_LIGHT, OFFSET);
+    }
 
     poseStack.popPose();
   }
@@ -174,17 +179,27 @@ public class VoidSeaRenderer {
   //            HELPER METHODS
   //############################################
 
-  private BakedQuad preBakeQuad(PoseStack poseStack) {
+  /**
+   * Helper method to generate a single quad at a specific position within a subdivided grid.
+   * 
+   * @param poseStack the PoseStack needed to add vertices to the quad
+   * @param xSubPos the x position within the subdivision. Goes from 0 to 1.
+   * @param zSubPos the z position within the subdivision. Goes from 0 to 1.
+   * @param increment the amount needed to get the next subdivided coordinate.
+   * @return BakedQuad a single BakedQuad which will be rendered in the world
+   */
+  private BakedQuad preBakeQuad(PoseStack poseStack, String name, float xSubPos, float zSubPos, float increment) {
     PoseStack.Pose pose = poseStack.last();
-    TextureAtlasSprite sprite = getSprite();
+    TextureAtlasSprite sprite = getSprite(name);
 
     QuadBakingVertexConsumer builder = new QuadBakingVertexConsumer();
     builder.setHasAmbientOcclusion(false);
+
     // set positions of vertices
-    float x0 = -OFFSET;
-    float z0 = -OFFSET;
-    float x1 = OFFSET;
-    float z1 = OFFSET;
+    float x0 = OFFSET * xSubPos;
+    float z0 = OFFSET * zSubPos;
+    float x1 = OFFSET * (xSubPos + increment);
+    float z1 = OFFSET * (zSubPos + increment);
     
     float h0, h1, h2, h3 = h2 = h1 = h0 = 0;
 
@@ -202,19 +217,46 @@ public class VoidSeaRenderer {
   }
 
   /**
-   * Method used to cache bakedQuad to improve performance.
+   * Helper method to generate a large, subdivided grid of quads.
    * 
-   * @param key the key needed to recuperate the cached object.
-   * @param cache the map which caches a bakedQuad to a specific key
-   * @return the BakedQuad
+   * @param poseStack the PoseStack needed to add vertices to the quad
+   * @return List<BakedQuad> A list of BakedQuads to render.
    */
-  private BakedQuad getCachedQuad(float key, Map<Float, BakedQuad> cache, PoseStack poseStack) {
-    return cache.computeIfAbsent(key, k -> preBakeQuad(poseStack));
+  private List<BakedQuad> preBakeQuads(PoseStack poseStack, String spriteName) {
+    List<BakedQuad> list = new ArrayList<BakedQuad>();
+
+    float increment = 1.f/(float)SUBDIVISIONS;
+
+    for (float x = -1f; x < 1f; x += increment) {
+      for (float y = -1f; y < 1f; y += increment) {
+        list.add(preBakeQuad(poseStack, spriteName, x, y, increment));
+      }
+    }
+
+    return list;
   }
 
-  private TextureAtlasSprite getSprite() {
+  /**
+   * Caches quads using a given key and returns them.
+   * 
+   * @param key the key to get the object from the cache
+   * @param cache the map which contains variables mapped to keys
+   * @param poseStack the PoseStack needed to add vertices to the quads
+   * @param spriteName the name of the Sprite needed to texture the quads
+   * @return the cached list of quads
+   */
+  private List<BakedQuad> getCachedQuads(float key, Map<Float, List<BakedQuad>> cache, PoseStack poseStack, String spriteName) {
+    return cache.computeIfAbsent(key, k -> preBakeQuads(poseStack, spriteName));
+  }
+
+  /**
+   * Helper method which gets a sprite from the block TextureAtlas using it's name.
+   * 
+   * @return TextureAtlasSprite A Sprite in the TextureAtlas
+   */
+  private TextureAtlasSprite getSprite(String spriteName) {
     if (this.SPRITE == null) {
-      ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/"+ SPRITE_NAME);
+      ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/"+ spriteName);
       ResourceLocation atlasLocation = Sheets.BLOCKS_MAPPER.apply(res).atlasLocation();
       Function<ResourceLocation, TextureAtlasSprite> atlas = Minecraft.getInstance().getTextureAtlas(atlasLocation);
       this.SPRITE = atlas.apply(res);
@@ -224,7 +266,7 @@ public class VoidSeaRenderer {
   }
 
   /**
-   * 
+   * TODO comment
    * @param wx the x position in the wave
    * @param wz the z position in the wave
    * @param t the time

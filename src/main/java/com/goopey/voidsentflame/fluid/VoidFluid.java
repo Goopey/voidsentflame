@@ -13,8 +13,6 @@ import net.minecraft.world.level.material.FluidState;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.block.LiquidBlock;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.particles.ParticleOptions;
 
 public class VoidFluid extends BaseFlowingFluid {
 	public static final BaseFlowingFluid.Properties PROPERTIES = new BaseFlowingFluid.Properties(() -> FluidTypesInit.VOID_FLUID_TYPE.get(), () -> FluidInit.VOID_FLUID.get(),
