@@ -14,12 +14,6 @@ in vec2 texCoord0;
 
 out vec4 fragColor;
 
-const vec2 u_uvScale = vec2(4.0, 4.0);
-const vec3 u_baseColor = vec3(0.02, 0.02, 0.02);
-const vec3 u_rippleColor = vec3(1.0, 0.84, 0.0);
-const float u_rippleStrength = 0.05;
-const float u_scrollSpeed = 0.15;
-
 //void main() {
 //    // Basic ripple distortion via normal map scrolling
 //    vec2 scrollUV = texCoord0 * u_uvScale + vec2(GameTime * u_scrollSpeed, GameTime * u_scrollSpeed);

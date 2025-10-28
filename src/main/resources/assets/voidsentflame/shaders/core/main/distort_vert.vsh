@@ -24,34 +24,23 @@ vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
     return texture(lightMap, clamp(uv / 256.0, vec2(0.5 / 16.0), vec2(15.5 / 16.0)));
 }
 
-// void main() {
-//     vec3 pos = Position + ModelOffset;
-//     gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
-
-//     sphericalVertexDistance = fog_spherical_distance(pos);
-//     cylindricalVertexDistance = fog_cylindrical_distance(pos);
-//     vertexColor = Color * minecraft_sample_lightmap(Sampler2, UV2);
-//     texCoord0 = UV0;
-// }
-
 void main() {
     vec3 pos = Position + ModelOffset;
-    // float x = pos.x;
-    // float z = pos.z;
+    float x = pos.x;
+    float z = pos.z;
 
-    // float r2 = sphereRadius * sphereRadius;
-    // float xz2 = x*x + z*z;
-    // float y = 0.0;
-    // if (xz2 < r2) {
-    //     y = sqrt(r2 - xz2);
-    // }
+    float r2 = sphereRadius * sphereRadius;
+    float xz2 = x*x + z*z;
+    float y = 0.0;
+    if (xz2 < r2) {
+        y = sqrt(r2 - xz2);
+    }
 
-    // vec3 displacedPosition = vec3(x, pos.y + y, z);
+    vec3 displacedPosition = vec3(x, pos.y + y, z);
     
     texCoord0 = UV0;
     vertexColor = Color * minecraft_sample_lightmap(Sampler2, UV2);
-    sphericalVertexDistance = fog_spherical_distance(pos);
-    cylindricalVertexDistance = fog_cylindrical_distance(pos);
-    // texCoord0 = gl_Vertex.xy;
-    gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
+    sphericalVertexDistance = fog_spherical_distance(displacedPosition);
+    cylindricalVertexDistance = fog_cylindrical_distance(displacedPosition);
+    gl_Position = ProjMat * ModelViewMat * vec4(displacedPosition, 1.0);
 }

@@ -1,15 +1,10 @@
 package com.goopey.voidsentflame.client.render;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -50,7 +45,8 @@ public class VoidSeaRenderer {
   private static final float SPEED = 0.05f;
   
   // Render Triangles
-  private static final int SUBDIVISIONS = 128;
+  private static final int QUAD_SIZE = 4;
+  private static final float PADDING = 1.1f;
 
   // World Position
   private static final float HEIGHT = -42.5f;
@@ -154,7 +150,6 @@ public class VoidSeaRenderer {
     double viewDistance = levelRenderer.getLastViewDistance();
     MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
     VertexConsumer builder = bufferSource.getBuffer(this.distortRender);
-    // BufferBuilder bufferBuilder = Tesselator.getInstance().begin(Mode.QUADS, VertexFormat.builder().build());
 
     // Time
     long gameTime = Minecraft.getInstance().level.getGameTime();
@@ -167,8 +162,7 @@ public class VoidSeaRenderer {
     poseStack.scale((float) (viewDistance/VIEW_DISTANCE_SCALE), 1f, (float) (viewDistance/VIEW_DISTANCE_SCALE));
 
     // red, blue, green and alpha go from 0..1
-    // builder.putBulkData(poseStack.last(), getCachedQuad(0, this.cachedQuad, poseStack), 1, 1, 1, 1, PACKED_LIGHT, OFFSET);
-    for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME)) {
+    for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
       builder.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, PACKED_LIGHT, OFFSET);
     }
 
@@ -182,13 +176,17 @@ public class VoidSeaRenderer {
   /**
    * Helper method to generate a single quad at a specific position within a subdivided grid.
    * 
-   * @param poseStack the PoseStack needed to add vertices to the quad
+   * @param poseStack the PoseStack needed to add vertices to the quad.
    * @param xSubPos the x position within the subdivision. Goes from 0 to 1.
-   * @param zSubPos the z position within the subdivision. Goes from 0 to 1.
+   * @param ySubPos the z position within the subdivision. Goes from 0 to 1.
    * @param increment the amount needed to get the next subdivided coordinate.
-   * @return BakedQuad a single BakedQuad which will be rendered in the world
+   * @param subdivisions int needed to define how many times the quad is divided.
+   * @param lodMaxLevelStep the max amount of times the quads can be combined.
+   * @param lodStepSize the amount of quads that get combined.
+   * 
+   * @return BakedQuad a single BakedQuad which will be rendered in the world.
    */
-  private BakedQuad preBakeQuad(PoseStack poseStack, String name, float xSubPos, float zSubPos, float increment) {
+  private BakedQuad preBakeQuad(PoseStack poseStack, String name, int size, float xSubPos, float ySubPos) {
     PoseStack.Pose pose = poseStack.last();
     TextureAtlasSprite sprite = getSprite(name);
 
@@ -196,10 +194,10 @@ public class VoidSeaRenderer {
     builder.setHasAmbientOcclusion(false);
 
     // set positions of vertices
-    float x0 = OFFSET * xSubPos;
-    float z0 = OFFSET * zSubPos;
-    float x1 = OFFSET * (xSubPos + increment);
-    float z1 = OFFSET * (zSubPos + increment);
+    float x0 = xSubPos;
+    float z0 = ySubPos;
+    float x1 = xSubPos + size;
+    float z1 = ySubPos + size;
     
     float h0, h1, h2, h3 = h2 = h1 = h0 = 0;
 
@@ -215,21 +213,28 @@ public class VoidSeaRenderer {
 
     return builder.bakeQuad();
   }
+  
 
   /**
    * Helper method to generate a large, subdivided grid of quads.
    * 
-   * @param poseStack the PoseStack needed to add vertices to the quad
+   * @param poseStack the PoseStack needed to add vertices to the quad.
+   * @param spriteName the name needed to get the sprite to texture the quad.
+   * @param size int which defines how large a quad can potentially be. The resulting quad will be 2x in length and height.
+   * @param subdivisions int needed to define how many times the quad is divided.
+   * @param lodMaxLevelStep the max amount of times the quads can be combined.
+   * @param quadSize the amount of quads that get combined.
+   * 
    * @return List<BakedQuad> A list of BakedQuads to render.
    */
-  private List<BakedQuad> preBakeQuads(PoseStack poseStack, String spriteName) {
+  private List<BakedQuad> preBakeQuads(PoseStack poseStack, String spriteName, int size, int quadSize, float padding) {
     List<BakedQuad> list = new ArrayList<BakedQuad>();
-
-    float increment = 1.f/(float)SUBDIVISIONS;
-
-    for (float x = -1f; x < 1f; x += increment) {
-      for (float y = -1f; y < 1f; y += increment) {
-        list.add(preBakeQuad(poseStack, spriteName, x, y, increment));
+    
+    for (int x = -size; x < size; x+=quadSize) {
+      for (int y = -size; y < size; y+=quadSize) {
+        if (Math.sqrt(x * x + y * y) < size * padding) {
+          list.add(preBakeQuad(poseStack, spriteName, quadSize, x - 0.5f, y - 0.5f));
+        }
       }
     }
 
@@ -239,14 +244,19 @@ public class VoidSeaRenderer {
   /**
    * Caches quads using a given key and returns them.
    * 
-   * @param key the key to get the object from the cache
-   * @param cache the map which contains variables mapped to keys
-   * @param poseStack the PoseStack needed to add vertices to the quads
-   * @param spriteName the name of the Sprite needed to texture the quads
-   * @return the cached list of quads
+   * @param key the key to get the object from the cache.
+   * @param cache the map which contains variables mapped to keys.
+   * @param poseStack the PoseStack needed to add vertices to the quads.
+   * @param spriteName the name of the Sprite needed to texture the quads.
+   * @param size int which defines how large the quad is supposed to be. Forms a square 2x in length.
+   * @param subdivisions int which defines how many times the quad is divided.
+   * @param lodMaxLevelStep the max amount of times the quads can be combined.
+   * @param quadSize the amount of quads that get combined.
+   * 
+   * @return the cached list of quads.
    */
-  private List<BakedQuad> getCachedQuads(float key, Map<Float, List<BakedQuad>> cache, PoseStack poseStack, String spriteName) {
-    return cache.computeIfAbsent(key, k -> preBakeQuads(poseStack, spriteName));
+  private List<BakedQuad> getCachedQuads(float key, Map<Float, List<BakedQuad>> cache, PoseStack poseStack, String spriteName, int size, int quadSize, float padding) {
+    return cache.computeIfAbsent(key, k -> preBakeQuads(poseStack, spriteName, size, quadSize, padding));
   }
 
   /**
