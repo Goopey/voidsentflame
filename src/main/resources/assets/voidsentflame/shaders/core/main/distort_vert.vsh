@@ -18,6 +18,7 @@ out float cylindricalVertexDistance;
 out vec4 vertexColor;
 out vec2 texCoord0;
 
+const float sphereRadius2 = 256.0;
 const float sphereRadius = 16.0;
 
 vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
@@ -29,14 +30,14 @@ void main() {
     float x = pos.x;
     float z = pos.z;
 
-    float r2 = sphereRadius * sphereRadius;
+    float r2 = sphereRadius2 * sphereRadius2;
     float xz2 = x*x + z*z;
     float y = 0.0;
     if (xz2 < r2) {
         y = sqrt(r2 - xz2);
     }
 
-    vec3 displacedPosition = vec3(x, pos.y + y, z);
+    vec3 displacedPosition = vec3(x, pos.y + y/sphereRadius - sphereRadius, z);
     
     texCoord0 = UV0;
     vertexColor = Color * minecraft_sample_lightmap(Sampler2, UV2);
