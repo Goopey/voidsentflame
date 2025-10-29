@@ -45,7 +45,7 @@ public class VoidSeaRenderer {
   private static final float SPEED = 0.05f;
   
   // Render Triangles
-  private static final int QUAD_SIZE = 4;
+  private static final int QUAD_SIZE = 3;
   private static final float PADDING = 1.1f;
 
   // World Position
