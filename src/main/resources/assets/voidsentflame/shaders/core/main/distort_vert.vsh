@@ -30,8 +30,9 @@ const float sphereCurvature = 1.25;
 
 // waves constants
 const float waveFrequency = 0.15;
-const float waveAmplitude = 2.0;
+const float waveAmplitude = 1.5;
 const float secondsPerDay = 1200.00;
+const float timeFrequency = 4.0;
 
 vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
     return texture(lightMap, clamp(uv / 256.0, vec2(0.5 / 16.0), vec2(15.5 / 16.0)));
@@ -50,7 +51,7 @@ void main() {
 
     float time = GameTime * secondsPerDay;
     float curvature = (y * sphereCurvature)/sphereRadius - sphereCurvature * sphereRadius;
-    float waves = sin((x - z + time) * waveFrequency) * waveAmplitude;
+    float waves = sin((x - z + timeFrequency * time) * waveFrequency) * waveAmplitude - waveAmplitude;
 
     vec3 displacedPosition = vec3(x, pos.y + curvature + waves, z);
     
