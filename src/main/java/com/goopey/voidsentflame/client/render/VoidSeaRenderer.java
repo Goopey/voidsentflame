@@ -4,13 +4,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.function.Function;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
+import com.goopey.voidsentflame.core.TextureManager;
+import com.goopey.voidsentflame.core.VFGpuTextureView;
+import com.goopey.voidsentflame.core.VFRenderPipelines;
 import com.goopey.voidsentflame.core.VFRenderTypes;
 import com.goopey.voidsentflame.util.VFRenderConsts;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -91,18 +101,41 @@ public class VoidSeaRenderer {
     MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
     VertexConsumer builder = bufferSource.getBuffer(VFRenderTypes.VOID_SEA_DISTORT_RENDER);
     
-    // Start Rendering
-    poseStack.pushPose();
-    // Set height to bottom of world
-    poseStack.translate(0, HEIGHT-cameraPos.y, 0);
-    poseStack.scale((float) (viewDistance/VIEW_DISTANCE_SCALE), 1f, (float) (viewDistance/VIEW_DISTANCE_SCALE));
+    // for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
+      RenderSystem.AutoStorageIndexBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+      GpuBuffer vertexBuffer = RenderSystem.getQuadVertexBuffer();
+      GpuBuffer indexBuffer = indices.getBuffer(6);
 
-    // red, blue, green and alpha go from 0..1
-    for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
-      builder.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, VFRenderConsts.RUBICON_PACKED_LIGHT, OFFSET);
-    }
+      NativeImage img = new NativeImage(16, 16, false);
+      TextureAtlasSprite sprite = getSprite(SPRITE_NAME);
+      TextureManager manager = new TextureManager();
+      manager.writeToTexture(sprite.contents().getOriginalImage());
+      GpuTextureView view = new VFGpuTextureView(manager.getTexture());
 
-    poseStack.popPose();
+      try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "testPass", view, OptionalInt.empty())) {
+        pass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
+        pass.setVertexBuffer(0, vertexBuffer);
+        pass.setIndexBuffer(indexBuffer, indices.type());
+        pass.bindSampler("Sampler0", RenderSystem.getShaderTexture(0));
+
+        pass.draw(0, 6);;
+      }
+
+      view.close();
+    // }
+
+    // // Start Rendering
+    // poseStack.pushPose();
+    // // Set height to bottom of world
+    // poseStack.translate(0, HEIGHT-cameraPos.y, 0);
+    // poseStack.scale((float) (viewDistance/VIEW_DISTANCE_SCALE), 1f, (float) (viewDistance/VIEW_DISTANCE_SCALE));
+
+    // // red, blue, green and alpha go from 0..1
+    // for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
+    //   builder.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, VFRenderConsts.RUBICON_PACKED_LIGHT, OFFSET);
+    // }
+
+    // poseStack.popPose();
   }
 
   //############################################
