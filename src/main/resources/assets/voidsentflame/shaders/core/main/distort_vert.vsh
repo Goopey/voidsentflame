@@ -16,11 +16,15 @@ in vec3 Normal;
 uniform sampler2D Sampler2;
 uniform sampler2D Sampler0;
 
+// world position
+uniform vec3 ChunkOffset;
+
 // basic outputs, fog, texture coordinates and color
 out float sphericalVertexDistance;
 out float cylindricalVertexDistance;
 out vec4 vertexColor;
 out vec2 texCoord0;
+out vec4 normal;
 
 // curvature constants
 const float sphereRadius4 = 65536.0;

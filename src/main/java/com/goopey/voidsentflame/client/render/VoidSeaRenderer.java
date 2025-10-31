@@ -7,31 +7,22 @@ import java.util.Map;
 import java.util.function.Function;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
-import com.mojang.blaze3d.shaders.UniformType;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.goopey.voidsentflame.core.VFRenderTypes;
+import com.goopey.voidsentflame.util.VFRenderConsts;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
-import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.RenderStateShard;
-import net.minecraft.client.renderer.RenderStateShard.LightmapStateShard;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.waypoints.TrackedWaypoint.Camera;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
 
@@ -58,15 +49,7 @@ public class VoidSeaRenderer {
   private static String SPRITE_NAME = "void_fluid";
   
   // Shader Stuff
-  private static final int PACKED_LIGHT = 15728880;
-  private static final int PACKED_OVERLAY = 655360;
-  private RenderType distortRender;
-  public RenderPipeline.Snippet voidSeaTerrainSnippet;
-  public RenderPipeline.Snippet voidSeaFogMatricesSnippet;
-  public RenderPipeline.Snippet voidSeaFogSnippet;
-  public RenderPipeline.Snippet voidSeaMatricesSnippet;
-  public RenderPipeline.Snippet voidSeaGlobalsFogMatricesSnippet;
-  public RenderPipeline distortPipeline;
+  // public PostPass distortPostPass;
   
   // Cache Stuff
   private Map<Float, List<BakedQuad>> cachedQuads;
@@ -81,49 +64,6 @@ public class VoidSeaRenderer {
   private VoidSeaRenderer() {
     // Cache
     this.cachedQuads = new HashMap<>();
-
-    // Render Pipeline
-    this.voidSeaMatricesSnippet = RenderPipeline.builder(new RenderPipeline.Snippet[0]).withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER).withUniform("Projection", UniformType.UNIFORM_BUFFER).buildSnippet();
-    this.voidSeaFogSnippet = RenderPipeline.builder(new RenderPipeline.Snippet[0]).withUniform("Fog", UniformType.UNIFORM_BUFFER).buildSnippet();
-    this.voidSeaFogMatricesSnippet = RenderPipeline.builder(new RenderPipeline.Snippet[]{this.voidSeaMatricesSnippet, this.voidSeaFogSnippet}).buildSnippet();
-    this.voidSeaTerrainSnippet = RenderPipeline.builder(new RenderPipeline.Snippet[]{this.voidSeaFogMatricesSnippet})
-      .withVertexShader("core/terrain").withFragmentShader("core/terrain")
-      .withSampler("Sampler0").withSampler("Sampler2")
-      .withVertexFormat(DefaultVertexFormat.BLOCK, Mode.QUADS)
-      .buildSnippet();
-    this.voidSeaGlobalsFogMatricesSnippet = RenderPipeline.builder(new RenderPipeline.Snippet[]{this.voidSeaTerrainSnippet})
-      .withUniform("Globals", UniformType.UNIFORM_BUFFER)
-      .buildSnippet();
-
-    // MappableRingBuffer timeUbo = new MappableRingBuffer(
-    //   () -> "Time Ubo", 
-    //   GpuBuffer.USAGE_UNIFORM, 
-    //   new Std140SizeCalculator().putFloat().get()
-    // );
-
-    this.distortPipeline = RenderPipelines.register(
-      RenderPipeline.builder(
-        new RenderPipeline.Snippet[]{this.voidSeaGlobalsFogMatricesSnippet})
-        // sets a pipeline name, not an actual file
-        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/distort"))
-        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_vert"))
-        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_frag"))
-        .withVertexFormat(
-          VertexFormat.builder().add("UV0", VertexFormatElement.UV0).add("Position", VertexFormatElement.POSITION).build(), 
-          VertexFormat.Mode.QUADS)
-        .withColorWrite(true, false)
-        .withCull(false)
-        .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
-        .build());
-
-    // Renderer
-    this.distortRender = RenderType.create(
-      VoidsentFlameMod.MODID + ":distort_render", 4192, 
-      false, false, 
-      this.distortPipeline, RenderType.CompositeState.builder()
-        .setLightmapState(LightmapStateShard.LIGHTMAP)
-        .setTextureState(RenderStateShard.BLOCK_SHEET_MIPPED)
-        .createCompositeState(false));
   }
 
   public static VoidSeaRenderer getInstance() {
@@ -146,24 +86,20 @@ public class VoidSeaRenderer {
     // Level Renderer
     LevelRenderer levelRenderer = event.getLevelRenderer();
     PoseStack poseStack = event.getPoseStack();
-    Camera camera = event.getCamera();
+    Vec3 cameraPos = event.getCamera().position();
     double viewDistance = levelRenderer.getLastViewDistance();
     MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-    VertexConsumer builder = bufferSource.getBuffer(this.distortRender);
-
-    // Time
-    long gameTime = Minecraft.getInstance().level.getGameTime();
-    double t = gameTime + event.getPartialTick().getGameTimeDeltaTicks();
-
+    VertexConsumer builder = bufferSource.getBuffer(VFRenderTypes.VOID_SEA_DISTORT_RENDER);
+    
     // Start Rendering
     poseStack.pushPose();
     // Set height to bottom of world
-    poseStack.translate(0, HEIGHT-camera.position().y, 0);
+    poseStack.translate(0, HEIGHT-cameraPos.y, 0);
     poseStack.scale((float) (viewDistance/VIEW_DISTANCE_SCALE), 1f, (float) (viewDistance/VIEW_DISTANCE_SCALE));
 
     // red, blue, green and alpha go from 0..1
     for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
-      builder.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, PACKED_LIGHT, OFFSET);
+      builder.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, VFRenderConsts.RUBICON_PACKED_LIGHT, OFFSET);
     }
 
     poseStack.popPose();
@@ -206,10 +142,10 @@ public class VoidSeaRenderer {
     float u1 = sprite.getU(1);
     float v1 = sprite.getV(1);
     
-    putVertex(builder, x0, h0, z0, u0, v0, PACKED_LIGHT, PACKED_OVERLAY, pose);
-    putVertex(builder, x0, h1, z1, u0, v1, PACKED_LIGHT, PACKED_OVERLAY, pose);
-    putVertex(builder, x1, h2, z1, u1, v1, PACKED_LIGHT, PACKED_OVERLAY, pose);
-    putVertex(builder, x1, h3, z0, u1, v0, PACKED_LIGHT, PACKED_OVERLAY, pose);
+    putVertex(builder, x0, h0, z0, u0, v0, VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, pose);
+    putVertex(builder, x0, h1, z1, u0, v1, VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, pose);
+    putVertex(builder, x1, h2, z1, u1, v1, VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, pose);
+    putVertex(builder, x1, h3, z0, u1, v0, VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, pose);
 
     return builder.bakeQuad();
   }
