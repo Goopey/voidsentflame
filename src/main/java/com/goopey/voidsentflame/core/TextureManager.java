@@ -1,17 +1,21 @@
 package com.goopey.voidsentflame.core;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.AddressMode;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
 
+import net.neoforged.neoforge.client.blaze3d.validation.ValidationGpuDevice;
+import net.neoforged.neoforge.client.blaze3d.validation.ValidationGpuTexture;
+
 public class TextureManager {
   private final GpuTexture texture;
 
-  public TextureManager() {
-    this.texture = RenderSystem.getDevice().createTexture(
+  public TextureManager(ValidationGpuDevice device) {
+    this.texture = device.createTexture(
       "", 
       // usage
       GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_RENDER_ATTACHMENT, 
@@ -34,8 +38,8 @@ public class TextureManager {
     return this.texture;
   }
 
-  public void writeToTexture(NativeImage image) {
-    RenderSystem.getDevice().createCommandEncoder().writeToTexture(
+  public void writeToTexture(CommandEncoder encoder, NativeImage image) {
+    encoder.writeToTexture(
       this.getTexture(), image, 0, 0, 0, 16, 16, 0, 0, 0);
   }
 

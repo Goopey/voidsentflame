@@ -9,15 +9,18 @@ import java.util.function.Function;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.core.TextureManager;
-import com.goopey.voidsentflame.core.VFGpuTextureView;
 import com.goopey.voidsentflame.core.VFRenderPipelines;
 import com.goopey.voidsentflame.core.VFRenderTypes;
 import com.goopey.voidsentflame.util.VFRenderConsts;
 import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.opengl.GlCommandEncoder;
+import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -33,6 +36,10 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.blaze3d.validation.ValidationCommandEncoder;
+import net.neoforged.neoforge.client.blaze3d.validation.ValidationGpuDevice;
+import net.neoforged.neoforge.client.blaze3d.validation.ValidationGpuTexture;
+import net.neoforged.neoforge.client.blaze3d.validation.ValidationRenderPass;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
 
@@ -102,30 +109,38 @@ public class VoidSeaRenderer {
     VertexConsumer builder = bufferSource.getBuffer(VFRenderTypes.VOID_SEA_DISTORT_RENDER);
     
     // for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
-      RenderSystem.AutoStorageIndexBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
-      GpuBuffer vertexBuffer = RenderSystem.getQuadVertexBuffer();
-      GpuBuffer indexBuffer = indices.getBuffer(6);
+      // poseStack.pushPose();
+      
+    RenderSystem.AutoStorageIndexBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+    GpuBuffer vertexBuffer = RenderSystem.getQuadVertexBuffer();
+    GpuBuffer indexBuffer = indices.getBuffer(6);
 
-      NativeImage img = new NativeImage(16, 16, false);
-      TextureAtlasSprite sprite = getSprite(SPRITE_NAME);
-      TextureManager manager = new TextureManager();
-      manager.writeToTexture(sprite.contents().getOriginalImage());
-      GpuTextureView view = new VFGpuTextureView(manager.getTexture());
+    TextureAtlasSprite sprite = getSprite(SPRITE_NAME);
+    
+    ValidationGpuDevice vDevice = new ValidationGpuDevice(RenderSystem.getDevice(), false);
+    TextureManager manager = new TextureManager(vDevice);
+    CommandEncoder encoder = vDevice.createCommandEncoder();
+    manager.writeToTexture(encoder, sprite.contents().getOriginalImage());
+    GpuTextureView view = vDevice.createTextureView(manager.getTexture());
+    
+    try (RenderPass pass = encoder.createRenderPass(() -> "testPass", view, OptionalInt.of(0xFFFFFF00))) {
+      BufferBuilder builder2 = new BufferBuilder(new ByteBufferBuilder(4 * OFFSET * OFFSET + 64, 4 * OFFSET * OFFSET +  64), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
 
-      try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "testPass", view, OptionalInt.empty())) {
-        pass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
-        pass.setVertexBuffer(0, vertexBuffer);
-        pass.setIndexBuffer(indexBuffer, indices.type());
-        pass.bindSampler("Sampler0", RenderSystem.getShaderTexture(0));
-
-        pass.draw(0, 6);;
+      pass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
+      pass.setVertexBuffer(0, vertexBuffer);
+      pass.setIndexBuffer(indexBuffer, indices.type());
+      pass.bindSampler("Sampler0", RenderSystem.getShaderTexture(0));
+      
+      for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
+        builder2.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, VFRenderConsts.RUBICON_PACKED_LIGHT, OFFSET);
+        pass.draw(0, 6);
       }
-
-      view.close();
-    // }
-
-    // // Start Rendering
+    }
+    
+    view.close();
+      
     // poseStack.pushPose();
+    // // Start Rendering
     // // Set height to bottom of world
     // poseStack.translate(0, HEIGHT-cameraPos.y, 0);
     // poseStack.scale((float) (viewDistance/VIEW_DISTANCE_SCALE), 1f, (float) (viewDistance/VIEW_DISTANCE_SCALE));
