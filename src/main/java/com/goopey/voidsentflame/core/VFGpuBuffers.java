@@ -18,13 +18,24 @@ public class VFGpuBuffers {
     
   }
 
-  public enum VFGpuBuffersNames {
+  // Vanilla UBO names
+  public enum GpuBuffersNames {
     DYNAMIC_TRANSFORM("DynamicTransforms"),
     MATRIX("Matrix"),
     PROJECTION("Projection"),
     FOG("Fog"),
     GLOBALS("Globals"),
-    LIGHT("Light"),
+    LIGHT("Light");
+
+    public String name;
+    
+    private GpuBuffersNames(String name) {
+      this.name = name;
+    }
+  }
+
+  // Custom UBO names
+  public enum VFGpuBuffersNames {
     WORLD_POS("WorldPos");
 
     public String name;

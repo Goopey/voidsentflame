@@ -20,10 +20,10 @@ public class VFRenderPipelines {
 
   static {
     GLOBALS_TERRAIN_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.TERRAIN_SNIPPET})
-      .withUniform(VFGpuBuffers.VFGpuBuffersNames.GLOBALS.name(), UniformType.UNIFORM_BUFFER)
+      .withUniform(VFGpuBuffers.GpuBuffersNames.GLOBALS.name(), UniformType.UNIFORM_BUFFER)
       .buildSnippet();
     WORLD_POS_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
-      .withUniform("ChunkOffset", UniformType.UNIFORM_BUFFER)
+      .withUniform(VFGpuBuffers.VFGpuBuffersNames.WORLD_POS.name(), UniformType.UNIFORM_BUFFER)
       .buildSnippet();
 
     VOID_SEA_DISTORT = RenderPipelines.register(
