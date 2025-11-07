@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 
+import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.ResourceLocation;
 
@@ -19,7 +20,7 @@ public class VFRenderPipelines {
 
   static {
     GLOBALS_TERRAIN_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.TERRAIN_SNIPPET})
-      .withUniform("Globals", UniformType.UNIFORM_BUFFER)
+      .withUniform(VFGpuBuffers.VFGpuBuffersNames.GLOBALS.name(), UniformType.UNIFORM_BUFFER)
       .buildSnippet();
     WORLD_POS_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
       .withUniform("ChunkOffset", UniformType.UNIFORM_BUFFER)
