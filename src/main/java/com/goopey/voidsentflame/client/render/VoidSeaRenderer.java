@@ -13,6 +13,8 @@ import com.goopey.voidsentflame.core.VFRenderPipelines;
 import com.goopey.voidsentflame.core.VFRenderTypes;
 import com.goopey.voidsentflame.util.VFRenderConsts;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.Std140Builder;
+import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.opengl.GlCommandEncoder;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -27,6 +29,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.Sheets;
@@ -66,7 +69,15 @@ public class VoidSeaRenderer {
   private static String SPRITE_NAME = "void_fluid";
   
   // Shader Stuff
-  // public PostPass distortPostPass;
+  // TODO : Test
+  private static final int BUFFER_SIZE = 4 * OFFSET * OFFSET + 64;
+  private final MappableRingBuffer ubo = new MappableRingBuffer(
+    () -> "Test UBO", 
+    GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE, 
+    new Std140SizeCalculator()
+      .putVec3()
+      .get()
+  );
   
   // Cache Stuff
   private Map<Float, List<BakedQuad>> cachedQuads;
@@ -122,14 +133,23 @@ public class VoidSeaRenderer {
     CommandEncoder encoder = vDevice.createCommandEncoder();
     manager.writeToTexture(encoder, sprite.contents().getOriginalImage());
     GpuTextureView view = vDevice.createTextureView(manager.getTexture());
-    
+
+    // TODO : Test
+    this.ubo.rotate();
+    try (GpuBuffer.MappedView bufferView = encoder.mapBuffer(this.ubo.currentBuffer(), false, true)) {
+      Std140Builder.intoBuffer(bufferView.data())
+        .putVec3(cameraPos.toVector3f());
+    }
+
     try (RenderPass pass = encoder.createRenderPass(() -> "testPass", view, OptionalInt.of(0xFFFFFF00))) {
-      BufferBuilder builder2 = new BufferBuilder(new ByteBufferBuilder(4 * OFFSET * OFFSET + 64, 4 * OFFSET * OFFSET +  64), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
+      BufferBuilder builder2 = new BufferBuilder(new ByteBufferBuilder(BUFFER_SIZE, BUFFER_SIZE), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
 
       pass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
       pass.setVertexBuffer(0, vertexBuffer);
       pass.setIndexBuffer(indexBuffer, indices.type());
       pass.bindSampler("Sampler0", RenderSystem.getShaderTexture(0));
+      pass.setUniform("DynamicTransforms", this.ubo.currentBuffer());
+      pass.setUniform("testBuffer", this.ubo.currentBuffer());
       
       for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
         builder2.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, VFRenderConsts.RUBICON_PACKED_LIGHT, OFFSET);
