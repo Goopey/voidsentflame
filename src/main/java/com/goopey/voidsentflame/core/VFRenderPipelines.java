@@ -1,15 +1,14 @@
 package com.goopey.voidsentflame.core;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
+import com.goopey.voidsentflame.core.VFGpuBuffers.GpuBuffersNames;
+import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.shaders.UniformType;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 
-import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.ResourceLocation;
 
@@ -20,10 +19,10 @@ public class VFRenderPipelines {
 
   static {
     GLOBALS_TERRAIN_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.TERRAIN_SNIPPET})
-      .withUniform(VFGpuBuffers.GpuBuffersNames.GLOBALS.name(), UniformType.UNIFORM_BUFFER)
+      .withUniform(GpuBuffersNames.GLOBALS.name, UniformType.UNIFORM_BUFFER)
       .buildSnippet();
     WORLD_POS_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
-      .withUniform(VFGpuBuffers.VFGpuBuffersNames.WORLD_POS.name(), UniformType.UNIFORM_BUFFER)
+      .withUniform(VFGpuBuffersNames.WORLD_POS.name, UniformType.UNIFORM_BUFFER)
       .buildSnippet();
 
     VOID_SEA_DISTORT = RenderPipelines.register(

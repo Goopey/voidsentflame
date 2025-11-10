@@ -7,15 +7,20 @@ import java.util.Map;
 import java.util.OptionalInt;
 import java.util.function.Function;
 
+import org.joml.Vector3f;
+import org.joml.Vector4f;
+
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.core.TextureManager;
+import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.goopey.voidsentflame.core.VFRenderPipelines;
-import com.goopey.voidsentflame.core.VFRenderTypes;
+import com.goopey.voidsentflame.core.VFGpuBuffers.GpuBuffersNames;
+import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
 import com.goopey.voidsentflame.util.VFRenderConsts;
 import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.Std140Builder;
-import com.mojang.blaze3d.buffers.Std140SizeCalculator;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.opengl.GlCommandEncoder;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -28,9 +33,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MappableRingBuffer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -41,8 +44,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.blaze3d.validation.ValidationCommandEncoder;
 import net.neoforged.neoforge.client.blaze3d.validation.ValidationGpuDevice;
-import net.neoforged.neoforge.client.blaze3d.validation.ValidationGpuTexture;
-import net.neoforged.neoforge.client.blaze3d.validation.ValidationRenderPass;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
 
@@ -70,14 +71,9 @@ public class VoidSeaRenderer {
   
   // Shader Stuff
   // TODO : Test
-  private static final int BUFFER_SIZE = 4 * OFFSET * OFFSET + 64;
-  private final MappableRingBuffer ubo = new MappableRingBuffer(
-    () -> "Test UBO", 
-    GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE, 
-    new Std140SizeCalculator()
-      .putVec3()
-      .get()
-  );
+  // Around 4'194'304
+  private static final int BUFFER_SIZE = 64 * OFFSET * OFFSET + 512;
+  private final MappableRingBuffer worldPosUbo;
   
   // Cache Stuff
   private Map<Float, List<BakedQuad>> cachedQuads;
@@ -92,6 +88,7 @@ public class VoidSeaRenderer {
   private VoidSeaRenderer() {
     // Cache
     this.cachedQuads = new HashMap<>();
+    this.worldPosUbo = VFGpuBuffers.VFWorldPosUbo.apply(0);
   }
 
   public static VoidSeaRenderer getInstance() {
@@ -112,52 +109,66 @@ public class VoidSeaRenderer {
     if (level.dimension() != RUBICON) { return; }
 
     // Level Renderer
-    LevelRenderer levelRenderer = event.getLevelRenderer();
+    // LevelRenderer levelRenderer = event.getLevelRenderer();
     PoseStack poseStack = event.getPoseStack();
     Vec3 cameraPos = event.getCamera().position();
-    double viewDistance = levelRenderer.getLastViewDistance();
-    MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-    VertexConsumer builder = bufferSource.getBuffer(VFRenderTypes.VOID_SEA_DISTORT_RENDER);
-    
-    // for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
-      // poseStack.pushPose();
+    TextureAtlasSprite sprite = getSprite(SPRITE_NAME);
+    // Matrix4f modelViewMatrix = event.getModelViewMatrix();
+    // double viewDistance = levelRenderer.getLastViewDistance();
+    // MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+    // VertexConsumer builder = bufferSource.getBuffer(VFRenderTypes.VOID_SEA_DISTORT_RENDER);
       
     RenderSystem.AutoStorageIndexBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
     GpuBuffer vertexBuffer = RenderSystem.getQuadVertexBuffer();
     GpuBuffer indexBuffer = indices.getBuffer(6);
 
-    TextureAtlasSprite sprite = getSprite(SPRITE_NAME);
-    
     ValidationGpuDevice vDevice = new ValidationGpuDevice(RenderSystem.getDevice(), false);
-    TextureManager manager = new TextureManager(vDevice);
     CommandEncoder encoder = vDevice.createCommandEncoder();
+
+    TextureManager manager = new TextureManager(vDevice);
     manager.writeToTexture(encoder, sprite.contents().getOriginalImage());
+    
+    // TODO: fix sampler2 texturemanager
+    TextureManager managerSampler2 = new TextureManager(vDevice);
+    managerSampler2.writeToTexture(encoder, new NativeImage(16, 16, false));
+    
+    // TODO: remove these useless references
+    // GlCommandEncoder e;
+    // ValidationCommandEncoder e2;
     GpuTextureView view = vDevice.createTextureView(manager.getTexture());
+    GpuTextureView view2 = vDevice.createTextureView(managerSampler2.getTexture());
 
-    // TODO : Test
-    this.ubo.rotate();
-    try (GpuBuffer.MappedView bufferView = encoder.mapBuffer(this.ubo.currentBuffer(), false, true)) {
-      Std140Builder.intoBuffer(bufferView.data())
-        .putVec3(cameraPos.toVector3f());
-    }
+    // TODO: fix error, get all transform method inputs
+    GpuBufferSlice dynamicUniforms = RenderSystem.getDynamicUniforms().writeTransform(event.getModelViewMatrix(), new Vector4f(1, 1, 1, 1), new Vector3f(), poseStack.last().pose(), 0); 
+    
+    poseStack.pushPose();
 
-    try (RenderPass pass = encoder.createRenderPass(() -> "testPass", view, OptionalInt.of(0xFFFFFF00))) {
+    VFGpuBuffers.UseWorldPos(worldPosUbo, cameraPos.toVector3f(), encoder);
+
+    try (RenderPass pass = encoder.createRenderPass(() -> "testPass3", view, OptionalInt.of(0xFFFFFF00))) {
       BufferBuilder builder2 = new BufferBuilder(new ByteBufferBuilder(BUFFER_SIZE, BUFFER_SIZE), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
-
+      RenderSystem.bindDefaultUniforms(pass);
+      
       pass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
       pass.setVertexBuffer(0, vertexBuffer);
       pass.setIndexBuffer(indexBuffer, indices.type());
       pass.bindSampler("Sampler0", RenderSystem.getShaderTexture(0));
-      pass.setUniform("DynamicTransforms", this.ubo.currentBuffer());
-      pass.setUniform("testBuffer", this.ubo.currentBuffer());
+      pass.bindSampler("Sampler2", view2); 
+
+      pass.setUniform(GpuBuffersNames.DYNAMIC_TRANSFORM.name, dynamicUniforms);
+      pass.setUniform(VFGpuBuffersNames.WORLD_POS.name, this.worldPosUbo.currentBuffer());
       
       for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
         builder2.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, VFRenderConsts.RUBICON_PACKED_LIGHT, OFFSET);
-        pass.draw(0, 6);
       }
+
+      pass.draw(0, BUFFER_SIZE);
+      pass.close();
     }
     
     view.close();
+
+    poseStack.popPose();
       
     // poseStack.pushPose();
     // // Start Rendering
