@@ -6,6 +6,7 @@ import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.shaders.UniformType;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 
@@ -33,8 +34,8 @@ public class VFRenderPipelines {
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_frag"))
         .withVertexFormat(
-          VertexFormat.builder().add("UV0", VertexFormatElement.UV0).add("Position", VertexFormatElement.POSITION).build(), 
-          VertexFormat.Mode.QUADS)
+          // VertexFormat.builder().add("UV0", VertexFormatElement.UV0).add("Position", VertexFormatElement.POSITION).build(), 
+          DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
         .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)

@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.function.Function;
 
+import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -14,12 +17,15 @@ import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.core.TextureManager;
 import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.goopey.voidsentflame.core.VFRenderPipelines;
+import com.goopey.voidsentflame.core.VFRenderTypes;
 import com.goopey.voidsentflame.core.VFGpuBuffers.GpuBuffersNames;
 import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
 import com.goopey.voidsentflame.util.VFRenderConsts;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.opengl.GlCommandEncoder;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -28,14 +34,19 @@ import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MappableRingBuffer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.SkyRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -74,9 +85,15 @@ public class VoidSeaRenderer {
   // Around 4'194'304
   private static final int BUFFER_SIZE = 64 * OFFSET * OFFSET + 512;
   private final MappableRingBuffer worldPosUbo;
+  private GpuBuffer seaMeshBuffer;
+  private int seaMeshIndex;
   
   // Cache Stuff
   private Map<Float, List<BakedQuad>> cachedQuads;
+  private GpuBuffer seaBuffer;
+  private GpuBuffer vertexBuffer;
+  private GpuBuffer indexBuffer;
+  private BufferBuilder bufferBuilder;
 
   // Dimension Stuff
   private static final ResourceKey<Level> RUBICON = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("voidsentflame:rubicon"));
@@ -89,6 +106,7 @@ public class VoidSeaRenderer {
     // Cache
     this.cachedQuads = new HashMap<>();
     this.worldPosUbo = VFGpuBuffers.VFWorldPosUbo.apply(0);
+    this.seaMeshBuffer = buildSea();
   }
 
   public static VoidSeaRenderer getInstance() {
@@ -99,94 +117,209 @@ public class VoidSeaRenderer {
   //                  RENDER STUFF
   //######################################################
 
+  
   /**
    * This is the function which actually does all the work to get stuff to appear/render in the world.
    * @param event the event needed to tie into the part of the general rendering pipeline which I want to be at
    */
+  /**
   public void render(RenderLevelStageEvent.AfterEntities event) {
     // Check if in Rubicon
     Level level = event.getLevel();
     if (level.dimension() != RUBICON) { return; }
-
-    // Level Renderer
+    
     // LevelRenderer levelRenderer = event.getLevelRenderer();
-    PoseStack poseStack = event.getPoseStack();
     Vec3 cameraPos = event.getCamera().position();
     TextureAtlasSprite sprite = getSprite(SPRITE_NAME);
-    // Matrix4f modelViewMatrix = event.getModelViewMatrix();
+    Matrix4f modelViewMatrix = event.getModelViewMatrix();
+    RenderTarget target = Minecraft.getInstance().getMainRenderTarget();
     // double viewDistance = levelRenderer.getLastViewDistance();
     // MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
     // VertexConsumer builder = bufferSource.getBuffer(VFRenderTypes.VOID_SEA_DISTORT_RENDER);
       
+    PoseStack poseStack = event.getPoseStack();
+    poseStack.pushPose();
+    poseStack.translate(0, HEIGHT-cameraPos.y, 0);
+    
+    Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
+    matrix4fStack.pushMatrix();
+    matrix4fStack.mul(poseStack.last().pose());
+    
     RenderSystem.AutoStorageIndexBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
     GpuBuffer vertexBuffer = RenderSystem.getQuadVertexBuffer();
     GpuBuffer indexBuffer = indices.getBuffer(6);
-
+    
     ValidationGpuDevice vDevice = new ValidationGpuDevice(RenderSystem.getDevice(), false);
     CommandEncoder encoder = vDevice.createCommandEncoder();
-
     TextureManager manager = new TextureManager(vDevice);
     manager.writeToTexture(encoder, sprite.contents().getOriginalImage());
     
-    // TODO: fix sampler2 texturemanager
-    TextureManager managerSampler2 = new TextureManager(vDevice);
-    managerSampler2.writeToTexture(encoder, new NativeImage(16, 16, false));
-    
+
     // TODO: remove these useless references
     // GlCommandEncoder e;
     // ValidationCommandEncoder e2;
+    SkyRenderer e;  
     GpuTextureView view = vDevice.createTextureView(manager.getTexture());
-    GpuTextureView view2 = vDevice.createTextureView(managerSampler2.getTexture());
+  
+    GpuTextureView colorView = Minecraft.getInstance().getMainRenderTarget().getColorTextureView(); 
+    GpuTextureView depthView = Minecraft.getInstance().getMainRenderTarget().getDepthTextureView(); 
 
     // TODO: fix error, get all transform method inputs
-    GpuBufferSlice dynamicUniforms = RenderSystem.getDynamicUniforms().writeTransform(event.getModelViewMatrix(), new Vector4f(1, 1, 1, 1), new Vector3f(), poseStack.last().pose(), 0); 
-    
-    poseStack.pushPose();
+    GpuBufferSlice dynamicUniforms = RenderSystem.getDynamicUniforms().writeTransform(matrix4fStack, new Vector4f(0, 0, 0, 0), new Vector3f(), modelViewMatrix, 0); 
 
     VFGpuBuffers.UseWorldPos(worldPosUbo, cameraPos.toVector3f(), encoder);
 
-    try (RenderPass pass = encoder.createRenderPass(() -> "testPass3", view, OptionalInt.of(0xFFFFFF00))) {
+    // createRenderPass takes the name, the colorTextureView, an OptionalInt for clearColor, a depthTextureView and an OptionalDouble for clearing the Depth Texture
+    try (RenderPass pass = encoder.createRenderPass(() -> "testPass3", colorView, OptionalInt.empty(), depthView, OptionalDouble.of(1.0))) {
       BufferBuilder builder2 = new BufferBuilder(new ByteBufferBuilder(BUFFER_SIZE, BUFFER_SIZE), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
       RenderSystem.bindDefaultUniforms(pass);
       
       pass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
-      pass.setVertexBuffer(0, vertexBuffer);
       pass.setIndexBuffer(indexBuffer, indices.type());
-      pass.bindSampler("Sampler0", RenderSystem.getShaderTexture(0));
-      pass.bindSampler("Sampler2", view2); 
-
-      pass.setUniform(GpuBuffersNames.DYNAMIC_TRANSFORM.name, dynamicUniforms);
-      pass.setUniform(VFGpuBuffersNames.WORLD_POS.name, this.worldPosUbo.currentBuffer());
+      // sprite texture?
+      pass.bindSampler("Sampler0", view);
+      // lightmap texture?
+      pass.bindSampler("Sampler2", view);
       
-      for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
-        builder2.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, VFRenderConsts.RUBICON_PACKED_LIGHT, OFFSET);
-      }
+      pass.setUniform(GpuBuffersNames.DYNAMIC_TRANSFORM.name, dynamicUniforms);
+      // pass.setUniform(VFGpuBuffersNames.WORLD_POS.name, this.worldPosUbo.currentBuffer());
+      
+      // for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
+        //   builder2.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, VFRenderConsts.RUBICON_PACKED_LIGHT, OFFSET);
+        // }
+      
+      putVertex(builder2, 0, 0, 0, sprite.getU(0), sprite.getV(0), VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, poseStack.last());
+      putVertex(builder2, 0, 0f, 0, sprite.getU(0), sprite.getV(1), VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, poseStack.last());
+      putVertex(builder2, 0f, 0, 0, sprite.getU(1), sprite.getV(0), VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, poseStack.last());
+      putVertex(builder2, 0f, 0f, 0, sprite.getU(1), sprite.getV(1), VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, poseStack.last());
+        
+      GpuBuffer uploadBuffer = RenderSystem.getDevice().createBuffer(() -> { return "VoidSeaRender MeshData upload buffer";}, 16, builder2.buildOrThrow().vertexBuffer());
 
-      pass.draw(0, BUFFER_SIZE);
+      pass.setVertexBuffer(0, uploadBuffer);
+      pass.draw(0, 4);
+
+      // pass.draw(0, BUFFER_SIZE);
       pass.close();
     }
     
+    manager.closeTexture();
+    // managerSampler2.closeTexture();
+    // funnyMap.close();
     view.close();
-
+    matrix4fStack.popMatrix();
     poseStack.popPose();
-      
-    // poseStack.pushPose();
-    // // Start Rendering
-    // // Set height to bottom of world
-    // poseStack.translate(0, HEIGHT-cameraPos.y, 0);
-    // poseStack.scale((float) (viewDistance/VIEW_DISTANCE_SCALE), 1f, (float) (viewDistance/VIEW_DISTANCE_SCALE));
+  }
+  */
 
-    // // red, blue, green and alpha go from 0..1
-    // for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
-    //   builder.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, VFRenderConsts.RUBICON_PACKED_LIGHT, OFFSET);
-    // }
+  public void render(RenderLevelStageEvent.AfterEntities event) {
+    PoseStack poseStack = event.getPoseStack();
+    TextureManager textureManager = new TextureManager((ValidationGpuDevice) RenderSystem.getDevice());
 
-    // poseStack.popPose();
+    Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
+    matrix4fStack.pushMatrix();
+    matrix4fStack.mul(poseStack.last().pose());
+    // RenderPipeline renderpipeline = RenderPipelines.STARS;
+    GpuTextureView colorTextureView = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
+    GpuTextureView depthTextureView = Minecraft.getInstance().getMainRenderTarget().getDepthTextureView();
+
+    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(matrix4fStack, new Vector4f(1f, 1f, 1f, 1f), new Vector3f(), new Matrix4f(), 0.0F);
+    RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> {
+      return "VoidSea";
+    }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
+
+    try {
+      GpuTextureView view = RenderSystem.getDevice().createTextureView(textureManager.getTexture());
+      renderPass.bindSampler("Sampler0", view);
+      renderPass.bindSampler("Sampler2", view);
+
+      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
+      RenderSystem.bindDefaultUniforms(renderPass);
+      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+      renderPass.setVertexBuffer(0, this.seaMeshBuffer);
+      renderPass.setIndexBuffer(this.seaMeshBuffer, RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).type());
+      renderPass.drawIndexed(0, 0, this.seaMeshIndex, 1);
+    } catch (Throwable err) {
+      if (renderPass != null) {
+        try {
+          renderPass.close();
+        } catch (Throwable closeErr) {
+          err.addSuppressed(closeErr);
+        }
+      }
+      throw err;
+    }
+
+    if (renderPass != null) {
+      renderPass.close();
+    }
+
+    matrix4fStack.popMatrix();
   }
 
   //############################################
   //            HELPER METHODS
   //############################################
+
+  private GpuBuffer buildSea() {
+    TextureAtlasSprite sprite = getSprite(SPRITE_NAME);
+    ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * 10 * 4);
+
+    GpuBuffer gpuBuffer;
+
+    try {
+      BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
+
+      putBufferVertex(bufferBuilder, 1f, -1f, 1f, sprite.getU(0), sprite.getV(0));
+      putBufferVertex(bufferBuilder, 1f, -1f, -1f, sprite.getU(0), sprite.getV(1));
+      putBufferVertex(bufferBuilder, -1f, -1f, -1f, sprite.getU(1), sprite.getV(1));
+      putBufferVertex(bufferBuilder, -1f, -1f, 1f, sprite.getU(1), sprite.getV(0));
+      // bufferBuilder.addVertex(1f, -1f, 1f).setColor(BUFFER_SIZE).setUv(BUFFER_SIZE, AMPLITUDE).setUv2(OFFSET, BUFFER_SIZE).setNormal(FREQUENCY, BUFFER_SIZE, AMPLITUDE);
+      // bufferBuilder.addVertex(1f, -1f, -1f);
+      // bufferBuilder.addVertex(-1f, -1f, 1f);
+      // bufferBuilder.addVertex(-1f, -1f, -1f);
+      
+      MeshData meshData = bufferBuilder.buildOrThrow();
+
+      // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
+      // Last step of making the positions we're rendering stuff in.
+      try {
+        ValidationGpuDevice e;
+        this.seaMeshIndex = meshData.drawState().indexCount();
+        gpuBuffer = RenderSystem.getDevice().createBuffer(
+          () -> { return "Void Sea Vertex Buffer"; }, 
+          GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX, 
+          meshData.vertexBuffer()
+        );
+      } catch (Throwable err) {
+        if (meshData != null) {
+            try { 
+              meshData.close(); 
+            } catch (Throwable closeErr) { 
+              err.addSuppressed(closeErr); 
+            }
+        }
+        throw err;
+      }
+      if (meshData != null) {
+        meshData.close();
+      }
+    } catch (Throwable err) {
+      if (byteBufferBuilder != null) {
+        try {
+          byteBufferBuilder.close();
+        } catch (Throwable closeErr) {
+          err.addSuppressed(closeErr);
+        }
+      }
+      throw err;
+    }
+
+    if (byteBufferBuilder != null) {
+      byteBufferBuilder.close();
+    }
+
+    return gpuBuffer;
+  }
 
   /**
    * Helper method to generate a single quad at a specific position within a subdivided grid.
@@ -323,5 +456,28 @@ public class VoidSeaRenderer {
     .setOverlay(overlay)
     .setLight(light)
     .setNormal(pose, 0, 1, 0);
+  }
+
+  /**
+   * Used to add a vertex at specific coordinates with an upwards normal
+   * 
+   * @param builder the builder needed to add the vertices to a mesh
+   * @param mat the initial matrix position
+   * @param x the 1st position of the vertex
+   * @param y the 2nd position of the vertex
+   * @param z the 3rd position of the vertex
+   * @param u the 1st UV position
+   * @param v the 2nd UV position
+   * @param light the packedLight value
+   * @param overlay the packedOverlay value
+   * @param pose the last PoseStack.Pose
+   */
+  private void putBufferVertex(BufferBuilder builder, float x, float y, float z, float u, float v) {
+    builder.addVertex(x, y, z)
+    .setColor(1f, 1f, 1f, 1f)
+    .setUv(u, v)
+    .setOverlay(VFRenderConsts.RUBICON_PACKED_OVERLAY)
+    .setLight(VFRenderConsts.RUBICON_PACKED_LIGHT)
+    .setNormal(0, 1, 0);
   }
 }
