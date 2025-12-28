@@ -40,6 +40,5 @@ out vec4 fragColor;
 void main() {
     vec4 color = texture2D(Sampler0, texCoord0) * ColorModulator;
 
-    fragColor = color; 
-    //apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
+    fragColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 }

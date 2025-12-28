@@ -76,7 +76,7 @@ public class VoidSeaRenderer implements AutoCloseable {
   // Shader Stuff
   // TODO : Test
   // Around 35244
-  private static final int AMOUNT_OF_VERTICES = (int) ((2 * OFFSET * PADDING/ QUAD_SIZE) * (2 * OFFSET * PADDING/ QUAD_SIZE)) * 8;
+  private static final int AMOUNT_OF_VERTICES = (int) ((2 * OFFSET * PADDING/ QUAD_SIZE) * (2 * OFFSET * PADDING/ QUAD_SIZE)) * 6;
   private final MappableRingBuffer worldPosUbo;
   private GpuBuffer seaMeshBuffer;
   private int seaMeshIndex;
@@ -520,7 +520,10 @@ public class VoidSeaRenderer implements AutoCloseable {
     putBufferVertex(builder, x0, 0, z0, u0, v0);
     putBufferVertex(builder, x0, 0, z1, u0, v1);
     putBufferVertex(builder, x1, 0, z1, u1, v1);
+    
+    putBufferVertex(builder, x1, 0, z1, u1, v1);
     putBufferVertex(builder, x1, 0, z0, u1, v0);
+    putBufferVertex(builder, x0, 0, z0, u0, v0);
 }
 
   /**
