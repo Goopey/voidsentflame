@@ -43,9 +43,12 @@ vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
 }
 
 void main() {
-    vec3 pos = Position - ModelOffset;
+    vec3 pos = Position;
     float x = pos.x;
     float z = pos.z;
+    vec3 sinPos = Position + ModelOffset;
+    float sx = sinPos.x;
+    float sz = sinPos.z;
 
     float xz2 = x*x + z*z;
     float y = 0.0;
@@ -55,7 +58,7 @@ void main() {
 
     float time = GameTime * secondsPerDay;
     float curvature = (y * sphereCurvature)/sphereRadius - sphereCurvature * sphereRadius;
-    float waves = sin((x - z + timeFrequency * time) * waveFrequency) * waveAmplitude - waveAmplitude;
+    float waves = sin((sx - sz + timeFrequency * time) * waveFrequency) * waveAmplitude - waveAmplitude;
 
     vec3 displacedPosition = vec3(x, pos.y + curvature + waves, z);
     

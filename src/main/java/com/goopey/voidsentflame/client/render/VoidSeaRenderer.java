@@ -302,7 +302,13 @@ public class VoidSeaRenderer implements AutoCloseable {
     GpuTextureView colorTextureView = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
     GpuTextureView depthTextureView = Minecraft.getInstance().getMainRenderTarget().getDepthTextureView();
 
-    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(matrix4fStack, new Vector4f(1f, 1f, 1f, 1f), new Vector3f(), new Matrix4f(), 0.0F);
+    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
+      matrix4fStack, 
+      new Vector4f(1f, 1f, 1f, 1f), 
+      new Vector3f((float) cameraPos.x, 0f, (float) cameraPos.z), 
+      new Matrix4f(), 
+      0.0F
+    );
     RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> {
       return "VoidSea";
     }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
