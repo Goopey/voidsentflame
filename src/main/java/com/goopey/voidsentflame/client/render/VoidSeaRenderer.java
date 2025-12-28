@@ -74,7 +74,6 @@ public class VoidSeaRenderer implements AutoCloseable {
   private static String SPRITE_NAME = "void_fluid";
   
   // Shader Stuff
-  // TODO : Test
   // Around 35244
   private static final int AMOUNT_OF_VERTICES = (int) ((2 * OFFSET * PADDING/ QUAD_SIZE) * (2 * OFFSET * PADDING/ QUAD_SIZE)) * 6;
   private final MappableRingBuffer worldPosUbo;
@@ -292,8 +291,11 @@ public class VoidSeaRenderer implements AutoCloseable {
     // poseStack.mulPose(Axis.XP.rotationDegrees(90));
 
     TextureManager textureManager = Minecraft.getInstance().getTextureManager();
-    ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/" + SPRITE_NAME);
-    AbstractTexture abstractTexture = textureManager.getTexture(res);
+    // ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/" + SPRITE_NAME);
+    // AbstractTexture abstractTexture = textureManager.getTexture(res);
+    
+    AbstractTexture abstractTexture = textureManager.getTexture(SkyRenderer.END_SKY_LOCATION);
+    abstractTexture.setUseMipmaps(false);
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
     matrix4fStack.pushMatrix();
@@ -358,11 +360,6 @@ public class VoidSeaRenderer implements AutoCloseable {
 
     try {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
-
-      // putBufferVertex(bufferBuilder, -OFFSET, 0, -OFFSET, this.SPRITE.getU(0), this.SPRITE.getV(0));
-      // putBufferVertex(bufferBuilder, -OFFSET, 0, OFFSET, this.SPRITE.getU(0), this.SPRITE.getV(1));
-      // putBufferVertex(bufferBuilder, OFFSET, 0, OFFSET, this.SPRITE.getU(1), this.SPRITE.getV(1));
-      // putBufferVertex(bufferBuilder, OFFSET, 0, -OFFSET, this.SPRITE.getU(1), this.SPRITE.getV(0));
       
       putMesh(bufferBuilder, OFFSET, QUAD_SIZE, PADDING);
 
@@ -564,18 +561,6 @@ public class VoidSeaRenderer implements AutoCloseable {
     }
 
     return this.SPRITE;
-  }
-
-  /**
-   * TODO comment
-   * @param wx the x position in the wave
-   * @param wz the z position in the wave
-   * @param t the time
-   * @return the height of the wave
-   */
-  private float waveHeight(double wx, double wz, double t) {
-    double val = Math.sin((wx + wz) * FREQUENCY + t * SPEED);
-    return (float)(val * AMPLITUDE);
   }
   
   /**
