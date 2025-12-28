@@ -14,7 +14,6 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
-// import com.goopey.voidsentflame.core.TextureManager;
 import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.goopey.voidsentflame.core.VFRenderPipelines;
 import com.goopey.voidsentflame.core.VFRenderTypes;
@@ -23,11 +22,6 @@ import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
 import com.goopey.voidsentflame.util.VFRenderConsts;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.opengl.GlCommandEncoder;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTextureView;
@@ -38,12 +32,9 @@ import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.math.Axis;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -57,8 +48,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.blaze3d.validation.ValidationCommandEncoder;
-import net.neoforged.neoforge.client.blaze3d.validation.ValidationGpuDevice;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
 
@@ -86,8 +75,8 @@ public class VoidSeaRenderer implements AutoCloseable {
   
   // Shader Stuff
   // TODO : Test
-  // Around 4'194'304
-  private static final int BUFFER_SIZE = 64 * OFFSET * OFFSET + 512;
+  // Around 35244
+  private static final int AMOUNT_OF_VERTICES = (int) ((2 * OFFSET * PADDING/ QUAD_SIZE) * (2 * OFFSET * PADDING/ QUAD_SIZE)) * 8;
   private final MappableRingBuffer worldPosUbo;
   private GpuBuffer seaMeshBuffer;
   private int seaMeshIndex;
@@ -290,9 +279,14 @@ public class VoidSeaRenderer implements AutoCloseable {
   }*/
 
   public void render(RenderLevelStageEvent.AfterEntities event) {
-    PoseStack poseStack = event.getPoseStack();
+    // Check if in Rubicon
+    Level level = event.getLevel();
+    if (level.dimension() != RUBICON) { return; }
 
+    // get poseStack to start rendering
+    PoseStack poseStack = event.getPoseStack();
     poseStack.pushPose();
+
     Vec3 cameraPos = event.getCamera().position();
     poseStack.translate(0, HEIGHT - cameraPos.y, 0);
     // poseStack.mulPose(Axis.XP.rotationDegrees(90));
@@ -353,18 +347,18 @@ public class VoidSeaRenderer implements AutoCloseable {
   //############################################
 
   private GpuBuffer buildSea() {
-    ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * 10 * 4);
+    ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * AMOUNT_OF_VERTICES);
     GpuBuffer gpuBuffer;
 
     try {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
 
-      putBufferVertex(bufferBuilder, OFFSET, 0, OFFSET, this.SPRITE.getU(0), this.SPRITE.getV(0));
-      putBufferVertex(bufferBuilder, OFFSET, 0, -OFFSET, this.SPRITE.getU(0), this.SPRITE.getV(1));
-      putBufferVertex(bufferBuilder, -OFFSET, 0, -OFFSET, this.SPRITE.getU(1), this.SPRITE.getV(1));
-      putBufferVertex(bufferBuilder, -OFFSET, 0, OFFSET, this.SPRITE.getU(1), this.SPRITE.getV(0));
+      // putBufferVertex(bufferBuilder, -OFFSET, 0, -OFFSET, this.SPRITE.getU(0), this.SPRITE.getV(0));
+      // putBufferVertex(bufferBuilder, -OFFSET, 0, OFFSET, this.SPRITE.getU(0), this.SPRITE.getV(1));
+      // putBufferVertex(bufferBuilder, OFFSET, 0, OFFSET, this.SPRITE.getU(1), this.SPRITE.getV(1));
+      // putBufferVertex(bufferBuilder, OFFSET, 0, -OFFSET, this.SPRITE.getU(1), this.SPRITE.getV(0));
       
-      // putMesh(bufferBuilder, QUAD_SIZE, BUFFER_SIZE, PADDING);
+      putMesh(bufferBuilder, OFFSET, QUAD_SIZE, PADDING);
 
       MeshData meshData = bufferBuilder.buildOrThrow();
 
@@ -483,14 +477,10 @@ public class VoidSeaRenderer implements AutoCloseable {
   /**
    * Helper method to generate a large, subdivided grid of quads.
    * 
-   * @param poseStack the PoseStack needed to add vertices to the quad.
-   * @param spriteName the name needed to get the sprite to texture the quad.
-   * @param size int which defines how large a quad can potentially be. The resulting quad will be 2x in length and height.
-   * @param subdivisions int needed to define how many times the quad is divided.
-   * @param lodMaxLevelStep the max amount of times the quads can be combined.
-   * @param quadSize the amount of quads that get combined.
-   * 
-   * @return List<BakedQuad> A list of BakedQuads to render.
+   * @param builder the BufferBuilder to which vertices will be added.
+   * @param size int which defines how large the grid can potentially be. The resulting grid will be 2x in length and height.
+   * @param quadSize int needed to define how large the subdisivions of the quad will be.
+   * @param padding a margin of space which makes the grid slightly larger.
    */
   private void putMesh(BufferBuilder builder, int size, int quadSize, float padding) {
     for (int x = -size; x < size; x+=quadSize) {
