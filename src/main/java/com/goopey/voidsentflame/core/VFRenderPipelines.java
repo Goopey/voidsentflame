@@ -33,9 +33,7 @@ public class VFRenderPipelines {
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/distort"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_frag"))
-        .withVertexFormat(
-          // VertexFormat.builder().add("UV0", VertexFormatElement.UV0).add("Position", VertexFormatElement.POSITION).build(), 
-          DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
+        .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
         .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
