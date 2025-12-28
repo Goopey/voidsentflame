@@ -2,17 +2,16 @@ package com.goopey.voidsentflame.core;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.textures.AddressMode;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
 
-import net.neoforged.neoforge.client.blaze3d.validation.ValidationGpuDevice;
-
-public class TextureManager {
+public class VFGpuTextureManager {
   private final GpuTexture texture;
 
-  public TextureManager(ValidationGpuDevice device) {
+  public VFGpuTextureManager(GpuDevice device) {
     this.texture = device.createTexture(
       "", 
       // usage
