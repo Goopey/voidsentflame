@@ -1,9 +1,12 @@
 package com.goopey.voidsentflame.client.render;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.function.Function;
@@ -14,17 +17,19 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
+import com.goopey.voidsentflame.VoidsentFlameModClient;
 import com.goopey.voidsentflame.core.VFGpuBuffers;
+import com.goopey.voidsentflame.core.VFGpuTextureManager;
 import com.goopey.voidsentflame.core.VFRenderPipelines;
-import com.goopey.voidsentflame.core.VFRenderTypes;
-import com.goopey.voidsentflame.core.VFGpuBuffers.GpuBuffersNames;
-import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
 import com.goopey.voidsentflame.util.VFRenderConsts;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -37,17 +42,17 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.Sheets;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SkyRenderer;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.blaze3d.validation.ValidationGpuDevice;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
 
@@ -71,10 +76,11 @@ public class VoidSeaRenderer implements AutoCloseable {
   
   // Sprite/Model Stuff
   private TextureAtlasSprite SPRITE;
+  private GpuTextureView GPU_SPRITE_VIEW;
   private static String SPRITE_NAME = "void_fluid";
   
   // Shader Stuff
-  // Around 35244
+  // Around 35 244 * 6 = 211 464
   private static final int AMOUNT_OF_VERTICES = (int) ((2 * OFFSET * PADDING/ QUAD_SIZE) * (2 * OFFSET * PADDING/ QUAD_SIZE)) * 6;
   private final MappableRingBuffer worldPosUbo;
   private GpuBuffer seaMeshBuffer;
@@ -85,7 +91,6 @@ public class VoidSeaRenderer implements AutoCloseable {
   private GpuBuffer seaBuffer;
   private GpuBuffer vertexBuffer;
   private GpuBuffer indexBuffer;
-  // private BufferBuilder bufferBuilder;
 
   // Dimension Stuff
   private static final ResourceKey<Level> RUBICON = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("voidsentflame:rubicon"));
@@ -97,8 +102,8 @@ public class VoidSeaRenderer implements AutoCloseable {
   private VoidSeaRenderer() {
     // Cache
     this.cachedQuads = new HashMap<>();
+    this.getSprites();
     this.worldPosUbo = VFGpuBuffers.VFWorldPosUbo.apply(0);
-    this.SPRITE = getSprite(SPRITE_NAME);
     this.seaMeshBuffer = buildSea();
   }
 
@@ -204,79 +209,6 @@ public class VoidSeaRenderer implements AutoCloseable {
   }
   */
 
-  /**
-   * This is the function which actually does all the work to get stuff to appear/render in the world.
-   * @param event the event needed to tie into the part of the general rendering pipeline which I want to be at
-   */
-  /**
-  public void render2(RenderLevelStageEvent.AfterEntities event) {
-    // Check if in Rubicon
-    Level level = event.getLevel();
-    if (level.dimension() != RUBICON) { return; }
-
-    // Level Renderer
-    LevelRenderer levelRenderer = event.getLevelRenderer();
-    PoseStack poseStack = event.getPoseStack();
-    Vec3 cameraPos = event.getCamera().position();
-    double viewDistance = levelRenderer.getLastViewDistance();
-    Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
-    
-    // Start Rendering
-    poseStack.pushPose();
-    matrix4fStack.pushMatrix();
-
-    // Set height to bottom of world
-    poseStack.translate(0, HEIGHT-cameraPos.y, 0);
-    poseStack.scale((float) (viewDistance/VIEW_DISTANCE_SCALE), 1f, (float) (viewDistance/VIEW_DISTANCE_SCALE));
-
-    // pass in modelOffset value
-    // #########################
-    GpuTextureView colorTextureView = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
-    GpuTextureView depthTextureView = Minecraft.getInstance().getMainRenderTarget().getDepthTextureView();
-    
-    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
-      matrix4fStack, 
-      new Vector4f(1f, 1f, 1f, 1f), 
-      new Vector3f((float) cameraPos.x, (float) cameraPos.y, (float) cameraPos.z), 
-      new Matrix4f(), 
-      0.0F
-    );
-    RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> {
-      return "VoidSea";
-    }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
-
-    try {
-      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
-    } catch (Throwable err) {
-      if (renderPass != null) {
-        try {
-          renderPass.close();
-        } catch (Throwable closeErr) {
-          err.addSuppressed(closeErr);
-        }
-      }
-      throw err;
-    }
-    
-    if (renderPass != null) {
-      renderPass.close();
-    }
-    // #########################
-    //close renderpass (needed for modelOffset)
-
-    MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-    VertexConsumer builder = bufferSource.getBuffer(VFRenderTypes.VOID_SEA_DISTORT_RENDER);
-
-    for (BakedQuad quad : getCachedQuads(0, this.cachedQuads, poseStack, SPRITE_NAME, OFFSET, QUAD_SIZE, PADDING)) {
-      builder.putBulkData(poseStack.last(), quad, 1, 1, 1, 1, VFRenderConsts.RUBICON_PACKED_LIGHT, OFFSET);
-    }
-
-    // close rendering
-    bufferSource.endBatch();
-    matrix4fStack.popMatrix();
-    poseStack.popPose();
-  }*/
-
   public void render(RenderLevelStageEvent.AfterEntities event) {
     // Check if in Rubicon
     Level level = event.getLevel();
@@ -290,12 +222,14 @@ public class VoidSeaRenderer implements AutoCloseable {
     poseStack.translate(0, HEIGHT - cameraPos.y, 0);
     // poseStack.mulPose(Axis.XP.rotationDegrees(90));
 
-    TextureManager textureManager = Minecraft.getInstance().getTextureManager();
-    // ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/" + SPRITE_NAME);
+    // TextureManager textureManager = Minecraft.getInstance().getTextureManager();
+    // ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/" + "void_stone_block");
     // AbstractTexture abstractTexture = textureManager.getTexture(res);
+    // GpuTextureView view = abstractTexture != null ? abstractTexture.getTextureView() : null;
     
-    AbstractTexture abstractTexture = textureManager.getTexture(SkyRenderer.END_SKY_LOCATION);
-    abstractTexture.setUseMipmaps(false);
+    // ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/" + SPRITE_NAME);
+    // ResourceLocation atlasLocation = Sheets.BLOCKS_MAPPER.apply(res).atlasLocation();
+    // GpuTextureView view = Minecraft.getInstance().getModelManager().getAtlas(atlasLocation).getTextureView();
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
     matrix4fStack.pushMatrix();
@@ -311,6 +245,7 @@ public class VoidSeaRenderer implements AutoCloseable {
       new Matrix4f(), 
       0.0F
     );
+
     RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> {
       return "VoidSea";
     }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
@@ -320,12 +255,8 @@ public class VoidSeaRenderer implements AutoCloseable {
       RenderSystem.bindDefaultUniforms(renderPass);
       renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
       
-      renderPass.bindSampler("Sampler0", abstractTexture.getTextureView());
-      renderPass.bindSampler("Sampler2", abstractTexture.getTextureView());
-
-      // VFGpuBuffers.UseWorldPos(this.worldPosUbo, cameraPos.toVector3f(), RenderSystem.getDevice().createCommandEncoder());
-      // GpuTextureView view = RenderSystem.getDevice().createTextureView(textureManager.getTexture());
-      // renderPass.setUniform(VFGpuBuffers.VFGpuBuffersNames.WORLD_POS.name, this.worldPosUbo.currentBuffer());
+      renderPass.bindSampler("Sampler0", this.GPU_SPRITE_VIEW);
+      renderPass.bindSampler("Sampler2", this.GPU_SPRITE_VIEW);
 
       renderPass.setVertexBuffer(0, this.seaMeshBuffer);
       renderPass.setIndexBuffer(this.seaMeshBuffer, RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).type());
@@ -345,7 +276,6 @@ public class VoidSeaRenderer implements AutoCloseable {
       renderPass.close();
     }
 
-    
     matrix4fStack.popMatrix();
     poseStack.popPose();
   }
@@ -364,7 +294,6 @@ public class VoidSeaRenderer implements AutoCloseable {
       putMesh(bufferBuilder, OFFSET, QUAD_SIZE, PADDING);
 
       MeshData meshData = bufferBuilder.buildOrThrow();
-
       // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
       // Last step of making the positions we're rendering stuff in.
       try {
@@ -424,7 +353,7 @@ public class VoidSeaRenderer implements AutoCloseable {
    */
   private BakedQuad preBakeQuad(PoseStack poseStack, String name, int size, float xSubPos, float ySubPos) {
     PoseStack.Pose pose = poseStack.last();
-    TextureAtlasSprite sprite = getSprite(name);
+    TextureAtlasSprite sprite = this.SPRITE;
 
     QuadBakingVertexConsumer builder = new QuadBakingVertexConsumer();
     builder.setHasAmbientOcclusion(false);
@@ -552,15 +481,19 @@ public class VoidSeaRenderer implements AutoCloseable {
    * 
    * @return TextureAtlasSprite A Sprite in the TextureAtlas
    */
-  private TextureAtlasSprite getSprite(String spriteName) {
-    if (this.SPRITE == null) {
-      ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/" + spriteName);
-      ResourceLocation atlasLocation = Sheets.BLOCKS_MAPPER.apply(res).atlasLocation();
-      Function<ResourceLocation, TextureAtlasSprite> atlas = Minecraft.getInstance().getTextureAtlas(atlasLocation);
-      this.SPRITE = atlas.apply(res);
-    }
+  private void getSprites() {
+    // if (this.SPRITE == null) {
+    // ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/" + "void_stone_block");
+    // ResourceLocation res2 = ResourceLocation.withDefaultNamespace("dirt");
+    ResourceLocation res3 = ResourceLocation.withDefaultNamespace("textures/environment/sun.png");
+    // Minecraft.getInstance().getTextureAtlas(res);
+    ResourceLocation atlasLocation = Sheets.BLOCKS_MAPPER.apply(res3).atlasLocation();
+    Function<ResourceLocation, TextureAtlasSprite> atlas = Minecraft.getInstance().getTextureAtlas(atlasLocation);
+    this.SPRITE = atlas.apply(res3);
+    this.GPU_SPRITE_VIEW = Minecraft.getInstance().getTextureManager().getTexture(res3).getTextureView();
+    // }
 
-    return this.SPRITE;
+    // return this.SPRITE;
   }
   
   /**
