@@ -77,7 +77,7 @@ public class VoidSeaRenderer implements AutoCloseable {
   // Sprite/Model Stuff
   private TextureAtlasSprite SPRITE;
   private GpuTextureView GPU_SPRITE_VIEW;
-  private static String SPRITE_NAME = "void_fluid";
+  private final static String SPRITE_NAME = "void_fluid";
   
   // Shader Stuff
   // Around 35 244 * 6 = 211 464
@@ -482,18 +482,15 @@ public class VoidSeaRenderer implements AutoCloseable {
    * @return TextureAtlasSprite A Sprite in the TextureAtlas
    */
   private void getSprites() {
-    // if (this.SPRITE == null) {
-    // ResourceLocation res = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/" + "void_stone_block");
-    // ResourceLocation res2 = ResourceLocation.withDefaultNamespace("dirt");
-    ResourceLocation res3 = ResourceLocation.withDefaultNamespace("textures/environment/sun.png");
-    // Minecraft.getInstance().getTextureAtlas(res);
-    ResourceLocation atlasLocation = Sheets.BLOCKS_MAPPER.apply(res3).atlasLocation();
-    Function<ResourceLocation, TextureAtlasSprite> atlas = Minecraft.getInstance().getTextureAtlas(atlasLocation);
-    this.SPRITE = atlas.apply(res3);
-    this.GPU_SPRITE_VIEW = Minecraft.getInstance().getTextureManager().getTexture(res3).getTextureView();
-    // }
+    // this one is different, I have 0 idea why. It seems to need me to defined more about the path than the regular sprite loading method.
+    ResourceLocation gpuResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/block/" + SPRITE_NAME + ".png");
+    ResourceLocation textureAtlasResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/" + SPRITE_NAME);
 
-    // return this.SPRITE;
+    ResourceLocation atlasLocation = Sheets.BLOCKS_MAPPER.apply(textureAtlasResLoc).atlasLocation();
+    Function<ResourceLocation, TextureAtlasSprite> atlas = Minecraft.getInstance().getTextureAtlas(atlasLocation);
+    this.SPRITE = atlas.apply(textureAtlasResLoc);
+
+    this.GPU_SPRITE_VIEW = Minecraft.getInstance().getTextureManager().getTexture(gpuResLoc).getTextureView();
   }
   
   /**
