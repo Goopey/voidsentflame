@@ -17,7 +17,6 @@ import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
@@ -30,7 +29,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite.Ticker;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -58,7 +56,6 @@ public class VoidSeaRenderer {
   
   // Sprite/Model Stuff
   private TextureAtlasSprite SPRITE;
-  private GpuTextureView GPU_SPRITE_VIEW;
   private GpuTextureView[] GPU_SPRITE_ANIM_VIEW;
   private final static String SPRITE_NAME = "void_fluid";
   
@@ -94,7 +91,6 @@ public class VoidSeaRenderer {
     Level level = event.getLevel();
     if (level.dimension() != RUBICON) { return; }
     int frame = (int) (level.getGameTime() % 15) / 3;
-    VoidsentFlameMod.LOGGER.info(frame + "");
 
     // get poseStack to start rendering
     PoseStack poseStack = event.getPoseStack();
@@ -107,7 +103,6 @@ public class VoidSeaRenderer {
     matrix4fStack.pushMatrix();
     matrix4fStack.mul(poseStack.last().pose());
 
-    Ticker spriteTicker = this.SPRITE.createTicker();
     GpuTextureView colorTextureView = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
     GpuTextureView depthTextureView = Minecraft.getInstance().getMainRenderTarget().getDepthTextureView();
 
@@ -124,10 +119,6 @@ public class VoidSeaRenderer {
     }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
     
     try {
-      // GpuTexture tickerTextureUpload = this.GPU_SPRITE_VIEW.texture();
-      // spriteTicker.tickAndUpload(tickerTextureUpload);
-      // GpuTextureView tickerTextureView = RenderSystem.getDevice().createTextureView(tickerTextureUpload);
-
       renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
       RenderSystem.bindDefaultUniforms(renderPass);
       renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
@@ -153,7 +144,6 @@ public class VoidSeaRenderer {
       renderPass.close();
     }
  
-    spriteTicker.close();
     matrix4fStack.popMatrix();
     poseStack.popPose();
   }
@@ -269,53 +259,32 @@ public class VoidSeaRenderer {
   }
 
   /**
-   * Helper method which gets a sprite from the block TextureAtlas using it's name.
+   * Helper method which gets a sprite from the block TextureAtlas using it's name and the animated sprites for the gpu texture.
+   * Initializes textures for VoidSeaRenderer.
    * 
    * @return TextureAtlasSprite A Sprite in the TextureAtlas
    */
   private void getSprites() {
-    ResourceLocation textureAtlasResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/" + SPRITE_NAME);
-    // Gpu ResourceLocation is different from textureAtlasResLoc, I have 0 idea why. 
-    // Seems it needs its path more defined than the regular sprite loading method.
-    // Doesn't work if I use the regular path description.
-    ResourceLocation gpuResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/block/" + SPRITE_NAME + ".png");
+    ResourceLocation textureAtlasResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/void_fluid/" + SPRITE_NAME + "_0");
 
     ResourceLocation atlasLocation = Sheets.BLOCKS_MAPPER.apply(textureAtlasResLoc).atlasLocation();
     Function<ResourceLocation, TextureAtlasSprite> atlas = Minecraft.getInstance().getTextureAtlas(atlasLocation);
     this.SPRITE = atlas.apply(textureAtlasResLoc);
     
-    // get ticker texture instead. We initialize GPU_SPRITE using AbstractTexture, but we only use the ticker texture.
-    AbstractTexture abstractTexture = Minecraft.getInstance().getTextureManager().getTexture(gpuResLoc);
-    this.GPU_SPRITE_VIEW = abstractTexture.getTextureView();
-    Ticker spriteTicker = this.SPRITE.createTicker();
-    GpuTexture gpuSpriteTexture = this.GPU_SPRITE_VIEW.texture();
-    spriteTicker.tickAndUpload(gpuSpriteTexture);
-    this.GPU_SPRITE_VIEW = RenderSystem.getDevice().createTextureView(gpuSpriteTexture);
-    
-    // Ticker animTicker = this.SPRITE.createTicker();
     GpuTextureView[] spriteAnim = new GpuTextureView[5];
 
-    //TODO: Clean Up Test
     for (int i = 0; i < 5; i++) {
-      // get ticker texture instead. We initialize GPU_SPRITE using AbstractTexture, but we only use the ticker texture.
-      ResourceLocation resLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/block/void_fluid/" + SPRITE_NAME + "_" + i + ".png");
-      
-      VoidsentFlameMod.LOGGER.info(resLoc.getPath());
-
-      AbstractTexture abstText = Minecraft.getInstance().getTextureManager().getTexture(resLoc);
+      // Gpu ResourceLocation is different from textureAtlasResLoc, I have 0 idea why. 
+      // Seems it needs its path more defined than the regular sprite loading method.
+      // Doesn't work if I use the regular path description.
+      ResourceLocation gpuResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/block/void_fluid/" + SPRITE_NAME + "_" + i + ".png");
+      AbstractTexture abstText = Minecraft.getInstance().getTextureManager().getTexture(gpuResLoc);
       GpuTextureView textView = abstText.getTextureView();
-      
-      VoidsentFlameMod.LOGGER.info("Iter:" + i + " Texture:" + textView.texture().getLabel());
 
-      // animTicker.tickAndUpload(text);
       spriteAnim[i] = textView;
-      
-      VoidsentFlameMod.LOGGER.info(i + " done.");
     }
 
     this.GPU_SPRITE_ANIM_VIEW = spriteAnim;
-
-    spriteTicker.close();
   }
   
   /**
@@ -338,6 +307,6 @@ public class VoidSeaRenderer {
     .setUv(u, v)
     .setOverlay(VFRenderConsts.RUBICON_PACKED_OVERLAY)
     .setLight(VFRenderConsts.RUBICON_PACKED_LIGHT)
-    .setNormal(0, 1, 0);
+    .setNormal(0, 1f, 0);
   }
 }
