@@ -113,35 +113,43 @@ public class VoidSeaRenderer {
       new Matrix4f(), 
       0.0F
     );
-
-    RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> {
-      return "VoidSea";
-    }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
     
-    try {
-      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
-      RenderSystem.bindDefaultUniforms(renderPass);
-      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
-      
-      renderPass.bindSampler("Sampler0", this.GPU_SPRITE_ANIM_VIEW[frame]);
-      renderPass.bindSampler("Sampler2", this.GPU_SPRITE_ANIM_VIEW[frame]);
+    // avoid crashes if the sprites were cleared
+    if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
+      RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> {
+        return "VoidSea";
+      }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
 
-      renderPass.setVertexBuffer(0, this.seaMeshBuffer);
-      renderPass.setIndexBuffer(this.seaMeshBuffer, RenderSystem.getSequentialBuffer(VertexFormat.Mode.TRIANGLES).type());
-      renderPass.draw(0, this.seaMeshIndex);
-    } catch (Throwable err) {
-      if (renderPass != null) {
-        try {
-          renderPass.close();
-        } catch (Throwable closeErr) {
-          err.addSuppressed(closeErr);
+      try {
+        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
+        RenderSystem.bindDefaultUniforms(renderPass);
+        renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+        
+        renderPass.bindSampler("Sampler0", this.GPU_SPRITE_ANIM_VIEW[frame]);
+        renderPass.bindSampler("Sampler1", this.GPU_SPRITE_ANIM_VIEW[frame]);
+        
+        renderPass.setVertexBuffer(0, this.seaMeshBuffer);
+        renderPass.setIndexBuffer(this.seaMeshBuffer, RenderSystem.getSequentialBuffer(VertexFormat.Mode.TRIANGLES).type());
+        renderPass.draw(0, this.seaMeshIndex);
+
+      // manages closing the renderpass (annoying boilerplate)
+      } catch (Throwable err) {
+        if (renderPass != null) {
+          try {
+            renderPass.close();
+          } catch (Throwable closeErr) {
+            err.addSuppressed(closeErr);
+          }
         }
+        throw err;
       }
-      throw err;
-    }
+      if (renderPass != null) {
+        renderPass.close();
+      }
 
-    if (renderPass != null) {
-      renderPass.close();
+    // reload the sprites if they were closed (ex: by reloading texturepacks)
+    } else {
+      this.getSprites();
     }
  
     matrix4fStack.popMatrix();

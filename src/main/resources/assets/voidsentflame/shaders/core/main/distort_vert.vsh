@@ -12,9 +12,9 @@ in vec2 UV0;
 in ivec2 UV2;
 in vec3 Normal;
 
-// texture sampler and lightmap sampler
-uniform sampler2D Sampler2;
-uniform sampler2D Sampler0;
+uniform sampler2D Sampler0; // texture sampler
+uniform sampler2D Sampler1; // lightmap sampler
+uniform sampler2D Sampler2; // screen map
 
 // world position
 uniform vec3 ChunkOffset;
@@ -63,7 +63,7 @@ void main() {
     vec3 displacedPosition = vec3(x, pos.y + curvature + waves, z);
     
     texCoord0 = UV0;
-    vertexColor = Color * minecraft_sample_lightmap(Sampler2, UV2);
+    vertexColor = Color * minecraft_sample_lightmap(Sampler1, UV2);
     sphericalVertexDistance = fog_spherical_distance(displacedPosition);
     cylindricalVertexDistance = fog_cylindrical_distance(displacedPosition);
     gl_Position = ProjMat * ModelViewMat * vec4(displacedPosition, 1.0);

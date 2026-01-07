@@ -5,7 +5,8 @@
 #moj_import <minecraft:globals.glsl>
 
 uniform sampler2D Sampler0; // texture
-uniform sampler2D Sampler2; // normal map or ripple map
+uniform sampler2D Sampler1; // normal map or ripple map
+uniform sampler2D Sampler2; // screen map
 
 const float secondsPerDay = 1200.00;
 
