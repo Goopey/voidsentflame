@@ -24,7 +24,6 @@ import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.client.Minecraft;
@@ -38,7 +37,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
 
 public class VoidSeaRenderer {
   // Singleton Instance
@@ -61,6 +59,7 @@ public class VoidSeaRenderer {
   // Sprite/Model Stuff
   private TextureAtlasSprite SPRITE;
   private GpuTextureView GPU_SPRITE_VIEW;
+  private GpuTextureView[] GPU_SPRITE_ANIM_VIEW;
   private final static String SPRITE_NAME = "void_fluid";
   
   // Shader Stuff
@@ -94,6 +93,8 @@ public class VoidSeaRenderer {
     // Check if in Rubicon
     Level level = event.getLevel();
     if (level.dimension() != RUBICON) { return; }
+    int frame = (int) (level.getGameTime() % 15) / 3;
+    VoidsentFlameMod.LOGGER.info(frame + "");
 
     // get poseStack to start rendering
     PoseStack poseStack = event.getPoseStack();
@@ -123,16 +124,16 @@ public class VoidSeaRenderer {
     }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
     
     try {
-      GpuTexture tickerTextureUpload = this.GPU_SPRITE_VIEW.texture();
-      spriteTicker.tickAndUpload(tickerTextureUpload);
-      GpuTextureView tickerTextureView = RenderSystem.getDevice().createTextureView(tickerTextureUpload);
+      // GpuTexture tickerTextureUpload = this.GPU_SPRITE_VIEW.texture();
+      // spriteTicker.tickAndUpload(tickerTextureUpload);
+      // GpuTextureView tickerTextureView = RenderSystem.getDevice().createTextureView(tickerTextureUpload);
 
       renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
       RenderSystem.bindDefaultUniforms(renderPass);
       renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
       
-      renderPass.bindSampler("Sampler0", tickerTextureView);
-      renderPass.bindSampler("Sampler2", this.GPU_SPRITE_VIEW);
+      renderPass.bindSampler("Sampler0", this.GPU_SPRITE_ANIM_VIEW[frame]);
+      renderPass.bindSampler("Sampler2", this.GPU_SPRITE_ANIM_VIEW[frame]);
 
       renderPass.setVertexBuffer(0, this.seaMeshBuffer);
       renderPass.setIndexBuffer(this.seaMeshBuffer, RenderSystem.getSequentialBuffer(VertexFormat.Mode.TRIANGLES).type());
@@ -151,7 +152,7 @@ public class VoidSeaRenderer {
     if (renderPass != null) {
       renderPass.close();
     }
-
+ 
     spriteTicker.close();
     matrix4fStack.popMatrix();
     poseStack.popPose();
@@ -178,7 +179,7 @@ public class VoidSeaRenderer {
         ByteBuffer uploadBuffer = meshData.vertexBuffer();
 
         gpuBuffer = RenderSystem.getDevice().createBuffer(
-          () -> { return "Void Sea Vertex Buffer"; }, 
+          () -> { return "Void Sea Vertex Buffer"; },  
           GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX, 
           uploadBuffer
         );
@@ -256,7 +257,7 @@ public class VoidSeaRenderer {
     float z1 = zSubPos + size;
 
     float u0 = 0, v0 = 0;
-    float u1 = 1f, v1 = 0.25f;
+    float u1 = 1f, v1 = 1f;
 
     putBufferVertex(builder, x0, 0, z0, u0, v0);
     putBufferVertex(builder, x0, 0, z1, u0, v1);
@@ -283,13 +284,37 @@ public class VoidSeaRenderer {
     Function<ResourceLocation, TextureAtlasSprite> atlas = Minecraft.getInstance().getTextureAtlas(atlasLocation);
     this.SPRITE = atlas.apply(textureAtlasResLoc);
     
+    // get ticker texture instead. We initialize GPU_SPRITE using AbstractTexture, but we only use the ticker texture.
     AbstractTexture abstractTexture = Minecraft.getInstance().getTextureManager().getTexture(gpuResLoc);
     this.GPU_SPRITE_VIEW = abstractTexture.getTextureView();
-    // get ticker texture instead. We initialize GPU_SPRITE using AbstractTexture, but we only use the ticker texture.
     Ticker spriteTicker = this.SPRITE.createTicker();
     GpuTexture gpuSpriteTexture = this.GPU_SPRITE_VIEW.texture();
     spriteTicker.tickAndUpload(gpuSpriteTexture);
     this.GPU_SPRITE_VIEW = RenderSystem.getDevice().createTextureView(gpuSpriteTexture);
+    
+    // Ticker animTicker = this.SPRITE.createTicker();
+    GpuTextureView[] spriteAnim = new GpuTextureView[5];
+
+    //TODO: Clean Up Test
+    for (int i = 0; i < 5; i++) {
+      // get ticker texture instead. We initialize GPU_SPRITE using AbstractTexture, but we only use the ticker texture.
+      ResourceLocation resLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/block/void_fluid/" + SPRITE_NAME + "_" + i + ".png");
+      
+      VoidsentFlameMod.LOGGER.info(resLoc.getPath());
+
+      AbstractTexture abstText = Minecraft.getInstance().getTextureManager().getTexture(resLoc);
+      GpuTextureView textView = abstText.getTextureView();
+      
+      VoidsentFlameMod.LOGGER.info("Iter:" + i + " Texture:" + textView.texture().getLabel());
+
+      // animTicker.tickAndUpload(text);
+      spriteAnim[i] = textView;
+      
+      VoidsentFlameMod.LOGGER.info(i + " done.");
+    }
+
+    this.GPU_SPRITE_ANIM_VIEW = spriteAnim;
+
     spriteTicker.close();
   }
   
