@@ -26,6 +26,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -33,6 +34,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
@@ -89,6 +91,7 @@ public class VoidSeaRenderer {
   public void render(RenderLevelStageEvent.AfterEntities event) {
     // Check if in Rubicon
     Level level = event.getLevel();
+    LevelRenderer levelRenderer = event.getLevelRenderer();
     if (level.dimension() != RUBICON) { return; }
     int frame = (int) (level.getGameTime() % 15) / 3;
 
@@ -96,6 +99,12 @@ public class VoidSeaRenderer {
     PoseStack poseStack = event.getPoseStack();
     poseStack.pushPose();
 
+    // scale size depending on render distance
+    // TODO : needs readjusting
+    float renderDistance = (float) (levelRenderer.getLastViewDistance()/VIEW_DISTANCE_SCALE);
+    poseStack.scale(renderDistance, 1f, renderDistance);
+
+    // get cameraPos and lock the wave model at the proper height in the world
     Vec3 cameraPos = event.getCamera().position();
     poseStack.translate(0, HEIGHT - cameraPos.y, 0);
 
@@ -103,49 +112,9 @@ public class VoidSeaRenderer {
     matrix4fStack.pushMatrix();
     matrix4fStack.mul(poseStack.last().pose());
 
-    GpuTextureView colorTextureView = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
-    GpuTextureView depthTextureView = Minecraft.getInstance().getMainRenderTarget().getDepthTextureView();
-
-    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
-      matrix4fStack, 
-      new Vector4f(1f, 1f, 1f, 1f), 
-      new Vector3f((float) cameraPos.x, 0f, (float) cameraPos.z), 
-      new Matrix4f(), 
-      0.0F
-    );
-    
-    // avoid crashes if the sprites were cleared
+    // avoid crashes if the sprites were cleared 
     if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
-      RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> {
-        return "VoidSea";
-      }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
-
-      try {
-        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
-        RenderSystem.bindDefaultUniforms(renderPass);
-        renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
-        
-        renderPass.bindSampler("Sampler0", this.GPU_SPRITE_ANIM_VIEW[frame]);
-        renderPass.bindSampler("Sampler1", this.GPU_SPRITE_ANIM_VIEW[frame]);
-        
-        renderPass.setVertexBuffer(0, this.seaMeshBuffer);
-        renderPass.setIndexBuffer(this.seaMeshBuffer, RenderSystem.getSequentialBuffer(VertexFormat.Mode.TRIANGLES).type());
-        renderPass.draw(0, this.seaMeshIndex);
-
-      // manages closing the renderpass (annoying boilerplate)
-      } catch (Throwable err) {
-        if (renderPass != null) {
-          try {
-            renderPass.close();
-          } catch (Throwable closeErr) {
-            err.addSuppressed(closeErr);
-          }
-        }
-        throw err;
-      }
-      if (renderPass != null) {
-        renderPass.close();
-      }
+      this.renderSea(cameraPos, matrix4fStack, frame);
 
     // reload the sprites if they were closed (ex: by reloading texturepacks)
     } else {
@@ -154,6 +123,54 @@ public class VoidSeaRenderer {
  
     matrix4fStack.popMatrix();
     poseStack.popPose();
+  }
+
+  //##############################################
+  //            RENDER HELPER METHODS
+  //##############################################
+
+  private void renderSea(Vec3 cameraPos, Matrix4fStack matrix4fStack, int frame) {
+    GpuTextureView colorTextureView = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
+    GpuTextureView depthTextureView = Minecraft.getInstance().getMainRenderTarget().getDepthTextureView();
+    
+    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
+      matrix4fStack, 
+      new Vector4f(1f, 1f, 1f, 1f), 
+      new Vector3f((float) cameraPos.x, 0f, (float) cameraPos.z), 
+      new Matrix4f(), 
+      0.0F
+    );  
+    
+    RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> {
+      return "VoidSea";
+    }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
+
+    try {
+      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
+      RenderSystem.bindDefaultUniforms(renderPass);
+      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+      
+      renderPass.bindSampler("Sampler0", this.GPU_SPRITE_ANIM_VIEW[frame]);
+      renderPass.bindSampler("Sampler1", this.GPU_SPRITE_ANIM_VIEW[frame]);
+
+      renderPass.setVertexBuffer(0, this.seaMeshBuffer);
+      renderPass.setIndexBuffer(this.seaMeshBuffer, RenderSystem.getSequentialBuffer(VertexFormat.Mode.TRIANGLES).type());
+      renderPass.draw(0, this.seaMeshIndex);
+
+    // manages closing the renderpass (annoying boilerplate)
+    } catch (Throwable err) {
+      if (renderPass != null) {
+        try {
+          renderPass.close();
+        } catch (Throwable closeErr) {
+          err.addSuppressed(closeErr);
+        }
+      }
+      throw err;
+    }
+    if (renderPass != null) {
+      renderPass.close();
+    }
   }
 
   //############################################
