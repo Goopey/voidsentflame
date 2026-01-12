@@ -1,13 +1,15 @@
 package com.goopey.voidsentflame;
 
+import com.goopey.voidsentflame.client.render.BleedVisualEffect;
 import com.goopey.voidsentflame.client.render.VoidSeaLayerBlockEntityRenderer;
 import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
-import com.goopey.voidsentflame.core.VFTextureManager;
-import com.goopey.voidsentflame.core.init.AbstractTextureInit;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.client.PeriodicNotificationManager;
+import net.minecraft.client.renderer.CloudRenderer;
+import net.minecraft.client.resources.FoliageColorReloadListener;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -15,12 +17,10 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
-import net.neoforged.neoforge.client.event.ClientResourceLoadFinishedEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderBuffersEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
@@ -51,6 +51,17 @@ public class VoidsentFlameModClient {
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent.AfterEntities event) {
         VoidSeaRenderer.getInstance().render(event);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterReloadListeners(AddClientReloadListenersEvent event) {
+        event.addListener(BleedVisualEffect.LOCATION, new BleedVisualEffect());
+        VoidsentFlameMod.LOGGER.info("###################################" + event.getLastVanillaListener().getClass().toGenericString());
+        VoidsentFlameMod.LOGGER.info("###################################" + event.getRegistry());
+        // TODO : remove test code (examples for addListeners)
+        CloudRenderer e;
+        PeriodicNotificationManager e2;
+        FoliageColorReloadListener e3;
     }
 
     @SubscribeEvent
