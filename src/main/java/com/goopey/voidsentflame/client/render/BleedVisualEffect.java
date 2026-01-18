@@ -4,7 +4,6 @@ import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.util.PostChainSerialization;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PostChain;
-import net.minecraft.client.renderer.PostChainConfig;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -40,11 +39,11 @@ public class BleedVisualEffect extends SimplePreparableReloadListener {
 
             for (String s : stringList) {
                 builder.append(s.replace(" ", ""));
-                VoidsentFlameMod.LOGGER.info(s.replace(" ", ""));
             }
 
             PostChain chain = PostChainSerialization.serialize(builder.toString(), FILE_NAME, Minecraft.getInstance().getTextureManager(), externalTargets);
 
+            // TODO : remove test LOGGING methods
             VoidsentFlameMod.LOGGER.info(builder.toString());
             VoidsentFlameMod.LOGGER.info(chain.toString());
         } catch (Exception e) {
