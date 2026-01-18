@@ -1,4 +1,4 @@
-package com.goopey.voidsentflame.client.render;
+package com.goopey.voidsentflame.block.blockentity.render;
 
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 

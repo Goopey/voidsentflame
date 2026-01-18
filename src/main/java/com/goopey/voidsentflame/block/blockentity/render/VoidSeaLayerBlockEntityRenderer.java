@@ -1,15 +1,12 @@
-package com.goopey.voidsentflame.client.render;
+package com.goopey.voidsentflame.block.blockentity.render;
 
 import java.util.Map;
-import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
 import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.CameraRenderState;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
@@ -32,7 +29,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 
 public class VoidSeaLayerBlockEntityRenderer implements BlockEntityRenderer<VoidSeaLayerBlockEntity, VoidSeaLayerBlockEntityRenderState> {
