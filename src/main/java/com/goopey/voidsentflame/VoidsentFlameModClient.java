@@ -1,7 +1,7 @@
 package com.goopey.voidsentflame;
 
 import com.goopey.voidsentflame.client.render.BleedVisualEffect;
-import com.goopey.voidsentflame.client.render.VoidSeaLayerBlockEntityRenderer;
+//import com.goopey.voidsentflame.client.render.VoidSeaLayerBlockEntityRenderer;
 import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 
@@ -45,7 +45,7 @@ public class VoidsentFlameModClient {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), VoidSeaLayerBlockEntityRenderer::new);
+//        event.registerBlockEntityRenderer(BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), VoidSeaLayerBlockEntityRenderer::new);
     }
  
     @SubscribeEvent
@@ -55,13 +55,14 @@ public class VoidsentFlameModClient {
 
     @SubscribeEvent
     public static void onRegisterReloadListeners(AddClientReloadListenersEvent event) {
+        // TODO : fix no registering when not on renderThread
         event.addListener(BleedVisualEffect.LOCATION, new BleedVisualEffect());
-        VoidsentFlameMod.LOGGER.info("###################################" + event.getLastVanillaListener().getClass().toGenericString());
-        VoidsentFlameMod.LOGGER.info("###################################" + event.getRegistry());
-        // TODO : remove test code (examples for addListeners)
-        CloudRenderer e;
-        PeriodicNotificationManager e2;
-        FoliageColorReloadListener e3;
+//        VoidsentFlameMod.LOGGER.info("###################################" + event.getLastVanillaListener().getClass().toGenericString());
+//        VoidsentFlameMod.LOGGER.info("###################################" + event.getRegistry());
+//         TODO : remove test code (examples for addListeners)
+//        CloudRenderer e;
+//        PeriodicNotificationManager e2;
+//        FoliageColorReloadListener e3;
     }
 
     @SubscribeEvent

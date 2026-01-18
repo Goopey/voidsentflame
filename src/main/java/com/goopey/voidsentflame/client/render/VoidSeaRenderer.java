@@ -3,7 +3,6 @@ package com.goopey.voidsentflame.client.render;
 import java.nio.ByteBuffer;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
-import java.util.function.Function;
 
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -27,14 +26,12 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
@@ -90,7 +87,7 @@ public class VoidSeaRenderer {
 
   public void render(RenderLevelStageEvent.AfterEntities event) {
     // Check if in Rubicon
-    Level level = event.getLevel();
+    Level level = Minecraft.getInstance().level;
     LevelRenderer levelRenderer = event.getLevelRenderer();
     if (level.dimension() != RUBICON) { return; }
     int frame = (int) (level.getGameTime() % 15) / 3;
@@ -105,7 +102,7 @@ public class VoidSeaRenderer {
     poseStack.scale(renderDistance, 1f, renderDistance);
 
     // get cameraPos and lock the wave model at the proper height in the world
-    Vec3 cameraPos = event.getCamera().position();
+    Vec3 cameraPos = Minecraft.getInstance().getCameraEntity().position();
     poseStack.translate(0, HEIGHT - cameraPos.y, 0);
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
@@ -253,14 +250,9 @@ public class VoidSeaRenderer {
 
   /**
    * Helper method to generate a single quad at a specific position within a subdivided grid.
-   * 
-   * @param poseStack the PoseStack needed to add vertices to the quad.
+   *
    * @param xSubPos the x position within the subdivision. Goes from 0 to 1.
    * @param zSubPos the z position within the subdivision. Goes from 0 to 1.
-   * @param increment the amount needed to get the next subdivided coordinate.
-   * @param subdivisions int needed to define how many times the quad is divided.
-   * @param lodMaxLevelStep the max amount of times the triangles can be combined.
-   * @param lodStepSize the amount of triangles that get combined.
    * 
    * @return BakedQuad a single BakedQuad which will be rendered in the world.
    */
@@ -290,11 +282,11 @@ public class VoidSeaRenderer {
    * @return TextureAtlasSprite A Sprite in the TextureAtlas
    */
   private void getSprites() {
-    ResourceLocation textureAtlasResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/void_fluid/" + SPRITE_NAME + "_0");
+//    ResourceLocation textureAtlasResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "block/void_fluid/" + SPRITE_NAME + "_0");
 
-    ResourceLocation atlasLocation = Sheets.BLOCKS_MAPPER.apply(textureAtlasResLoc).atlasLocation();
-    Function<ResourceLocation, TextureAtlasSprite> atlas = Minecraft.getInstance().getTextureAtlas(atlasLocation);
-    this.SPRITE = atlas.apply(textureAtlasResLoc);
+//    ResourceLocation atlasLocation = Sheets.BLOCKS_MAPPER.apply(textureAtlasResLoc).atlasLocation();
+//    Function<ResourceLocation, TextureAtlasSprite> atlas = Minecraft.getInstance().getTextureAtlas(atlasLocation);
+//    this.SPRITE = atlas.apply(textureAtlasResLoc);
     
     GpuTextureView[] spriteAnim = new GpuTextureView[5];
 
@@ -316,15 +308,11 @@ public class VoidSeaRenderer {
    * Used to add a vertex at specific coordinates with an upwards normal
    * 
    * @param builder the builder needed to add the vertices to a mesh
-   * @param mat the initial matrix position
    * @param x the 1st position of the vertex
    * @param y the 2nd position of the vertex
    * @param z the 3rd position of the vertex
    * @param u the 1st UV position
    * @param v the 2nd UV position
-   * @param light the packedLight value
-   * @param overlay the packedOverlay value
-   * @param pose the last PoseStack.Pose
    */
   private void putBufferVertex(BufferBuilder builder, float x, float y, float z, float u, float v) {
     builder.addVertex(x, y, z)

@@ -24,7 +24,7 @@ public class VoidSeaLayerBlock extends BaseEntityBlock {
 
 	public VoidSeaLayerBlock(BlockBehaviour.Properties properties) {
 		super(properties.mapColor(MapColor.COLOR_YELLOW).strength(1000000000f).hasPostProcess((bs, br, bp) -> true).emissiveRendering((bs, br, bp) -> true).lightLevel(s -> 15)
-			.noCollission().noLootTable().pushReaction(PushReaction.DESTROY).sound(SoundType.EMPTY).destroyTime(Block.INDESTRUCTIBLE).explosionResistance(1000000));
+			.noCollision().noLootTable().pushReaction(PushReaction.DESTROY).sound(SoundType.EMPTY).destroyTime(Block.INDESTRUCTIBLE).explosionResistance(1000000));
 	}
 
 	@Override

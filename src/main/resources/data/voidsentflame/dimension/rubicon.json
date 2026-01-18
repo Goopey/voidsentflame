@@ -66,7 +66,7 @@
         "erosion": "minecraft:overworld/erosion",
         "depth": "minecraft:overworld/depth",
         "ridges": "minecraft:overworld/ridges",
-        "initial_density_without_jaggedness": "voidsentflame:rubicon/initial_density_without_jaggedness",
+        "preliminary_surface_level": "voidsentflame:rubicon/preliminary_surface_level",
         "final_density": {
           "type": "minecraft:range_choice", "input": "voidsentflame:chebyshev_distance",
           "min_inclusive": 0, "max_exclusive": 180,

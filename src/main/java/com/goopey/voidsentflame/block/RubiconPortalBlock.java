@@ -56,7 +56,7 @@ public class RubiconPortalBlock extends NetherPortalBlock {
 	}
 
 	public RubiconPortalBlock(BlockBehaviour.Properties properties) {
-		super(properties.noCollission().randomTicks().pushReaction(PushReaction.BLOCK).strength(-1.0F).sound(SoundType.GLASS).lightLevel(s -> 15).noLootTable());
+		super(properties.noCollision().randomTicks().pushReaction(PushReaction.BLOCK).strength(-1.0F).sound(SoundType.GLASS).lightLevel(s -> 15).noLootTable());
 	}
 
 	private RubiconTeleporter getTeleporter(ServerLevel level) {
