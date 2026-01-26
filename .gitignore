@@ -28,3 +28,6 @@ repo
 # datagen
 .cache
 generated
+
+# vscode
+launch.json
