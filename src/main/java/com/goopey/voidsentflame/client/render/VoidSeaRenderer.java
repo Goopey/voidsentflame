@@ -164,7 +164,7 @@ public class VoidSeaRenderer {
     GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
       matrix4fStack,
       new Vector4f(1f, 1f, 1f, 1f),
-      new Vector3f((float) cameraPos.x(), (float) (HEIGHT - cameraPos.y()), (float) cameraPos.y()),
+      new Vector3f(0f, (float) (HEIGHT - cameraPos.y()), 0f),
       new Matrix4f(),
       0.0F
     );
@@ -174,7 +174,7 @@ public class VoidSeaRenderer {
     // setup other special uniforms
     VFGpuBuffers.UseWorldPos(
       this.positionBuffer,
-      new Vector3f((float) cameraPos.x, (float) (HEIGHT - cameraPos.y), (float) cameraPos.z),
+      new Vector3f((float) cameraPos.x, 0f, (float) cameraPos.z),
       encoder
     );
 
@@ -212,6 +212,8 @@ public class VoidSeaRenderer {
     if (renderPass != null) {
       renderPass.close();
     }
+
+//    PostPass pass = new PostPass(VFRenderPipelines.VOID_SEA_DISTORT);
   }
 
   private void renderPost(FrameGraphBuilder frameGraphBuilder) {

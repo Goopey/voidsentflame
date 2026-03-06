@@ -4,6 +4,7 @@
 #moj_import <minecraft:dynamictransforms.glsl>
 #moj_import <minecraft:projection.glsl>
 #moj_import <minecraft:globals.glsl>
+#moj_import <voidsentflame:chunkoffset.glsl>
 
 // basic inputs, position, color, uv0, uv2, normal
 in vec3 Position;
@@ -15,11 +16,6 @@ in vec3 Normal;
 uniform sampler2D Sampler0; // texture sampler
 uniform sampler2D Sampler1; // lightmap sampler
 uniform sampler2D Sampler2; // screen map
-
-// world position
-layout(std140) uniform ChunkOffset {
-    vec3 COffset;
-};
 
 // basic outputs, fog, texture coordinates and color
 out float sphericalVertexDistance;
@@ -45,10 +41,10 @@ vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
 }
 
 void main() {
-    vec3 pos = vec3(Position.x, Position.y + COffset.y, Position.z);
+    vec3 pos = Position + ModelOffset;
     float x = pos.x;
     float z = pos.z;
-    vec3 sinPos = vec3(Position.x + COffset.x, Position.y, Position.z + COffset.z);
+    vec3 sinPos = Position + COffset;
     float sx = sinPos.x;
     float sz = sinPos.z;
 
