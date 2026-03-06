@@ -1,7 +1,9 @@
 package com.goopey.voidsentflame.core;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
+import com.fasterxml.jackson.databind.BeanProperty;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -23,7 +25,8 @@ public class VFGpuBuffers {
   public static Function<Integer, MappableRingBuffer> projectionUbo;
 
   // Custom UBOs
-  public static Function<Integer, MappableRingBuffer> VFWorldPosUbo;
+  public static Supplier<MappableRingBuffer> VFWorldPosUbo;
+  public static Supplier<MappableRingBuffer> VFHeightPosUbo;
 
   //#####################################################################
   //#####################################################################
@@ -80,7 +83,7 @@ public class VFGpuBuffers {
   }
   
   /**
-   * Manages using a a DynamicTransforms UBO. Does the rotation and assigning of values
+   * Manages using a DynamicTransforms UBO. Does the rotation and assigning of values
    * 
    * @param ubo the DynamicTransforms MappabeRingBuffer UBO
    * @param modelViewMat the ModelViewMatrix
@@ -149,12 +152,12 @@ public class VFGpuBuffers {
   //#####################################################################
 
   static {
-    VFWorldPosUbo = e -> new MappableRingBuffer(
-      () -> VFGpuBuffersNames.WORLD_POS.name, 
-      GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE, 
-      new Std140SizeCalculator()
-        .putVec3()
-        .get());
+    VFWorldPosUbo = () -> new MappableRingBuffer(
+      () -> VFGpuBuffersNames.WORLD_POS.name,
+        GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE,
+          new Std140SizeCalculator()
+            .putVec3()
+            .get());
   }
 
   /**
@@ -167,8 +170,8 @@ public class VFGpuBuffers {
   public static void UseWorldPos(MappableRingBuffer ubo, Vector3f pos, CommandEncoder encoder) {
     ubo.rotate();
     try (GpuBuffer.MappedView bufferView = encoder.mapBuffer(ubo.currentBuffer(), false, true)) {
-      Std140Builder.intoBuffer(bufferView.data())
-        .putVec3(pos);
+      Std140Builder std140Builder = Std140Builder.intoBuffer(bufferView.data());
+      std140Builder.putVec3(pos);
     }
   }
 

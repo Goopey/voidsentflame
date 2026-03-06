@@ -17,7 +17,9 @@ uniform sampler2D Sampler1; // lightmap sampler
 uniform sampler2D Sampler2; // screen map
 
 // world position
-uniform vec3 ChunkOffset;
+layout(std140) uniform ChunkOffset {
+    vec3 COffset;
+};
 
 // basic outputs, fog, texture coordinates and color
 out float sphericalVertexDistance;
@@ -43,10 +45,10 @@ vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
 }
 
 void main() {
-    vec3 pos = Position;
+    vec3 pos = vec3(Position.x, Position.y + COffset.y, Position.z);
     float x = pos.x;
     float z = pos.z;
-    vec3 sinPos = Position + ModelOffset;
+    vec3 sinPos = vec3(Position.x + COffset.x, Position.y, Position.z + COffset.z);
     float sx = sinPos.x;
     float sz = sinPos.z;
 

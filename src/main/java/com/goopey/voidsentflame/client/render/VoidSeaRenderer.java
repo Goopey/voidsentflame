@@ -1,11 +1,11 @@
 package com.goopey.voidsentflame.client.render;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
+import java.util.*;
 
+import com.goopey.voidsentflame.core.VFGpuBuffers;
+import com.goopey.voidsentflame.util.PostChainSerialization;
+import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -13,9 +13,12 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.resource.ResourceHandle;
+import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.renderer.*;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.Entity;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
@@ -73,6 +76,7 @@ public class VoidSeaRenderer {
   // Around 35 244 * 6 = 211 464
   private static final int AMOUNT_OF_VERTICES = (int) ((2 * OFFSET * PADDING/ QUAD_SIZE) * (2 * OFFSET * PADDING/ QUAD_SIZE)) * 6;
   private GpuBuffer seaMeshBuffer;
+  private MappableRingBuffer positionBuffer;
   private int seaMeshIndex;
 
   // PostChain
@@ -90,6 +94,7 @@ public class VoidSeaRenderer {
     // Cache
     this.getSprites();
     this.seaMeshBuffer = buildSea();
+    this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
 //    this.bleedVisualEffect = new BleedVisualEffect();
   }
 
@@ -112,7 +117,6 @@ public class VoidSeaRenderer {
     Level level = Minecraft.getInstance().level;
     LevelRenderer levelRenderer = event.getLevelRenderer();
     if (level.dimension() != RUBICON) { return; }
-
     // account for which frame of the animation the texture is
     int frame = (int) (level.getGameTime() % 15) / 3;
 
@@ -121,6 +125,7 @@ public class VoidSeaRenderer {
     poseStack.pushPose();
 
     // FrameGraphBuilder needed to run multiple passes
+//    event.get
     FrameGraphBuilder frameGraphBuilder = new FrameGraphBuilder();
 
     // scale size depending on render distance
@@ -130,7 +135,6 @@ public class VoidSeaRenderer {
 
     // get cameraPos and lock the wave model at the proper height in the world
     Vec3 cameraPos = Minecraft.getInstance().getCameraEntity().position();
-    poseStack.translate(0, HEIGHT - cameraPos.y, 0);
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
     matrix4fStack.pushMatrix();
@@ -138,16 +142,10 @@ public class VoidSeaRenderer {
 
     // avoid crashes if the sprites were cleared 
     if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
-      FramePass seaPass = this.renderSea(frameGraphBuilder, cameraPos, matrix4fStack, frame);
-//      this.renderPost(frameGraphBuilder);
-    // reload the sprites if they were closed (ex: by reloading texturepacks)
-      frameGraphBuilder.execute(new CrossFrameResourcePool(1));
+      this.renderSea(frameGraphBuilder, cameraPos, matrix4fStack, frame);
     } else {
       this.getSprites();
     }
-
-    LevelRenderer e;
-    GameRenderer e2;
 
     matrix4fStack.popMatrix();
     poseStack.popPose();
@@ -157,82 +155,81 @@ public class VoidSeaRenderer {
   //            RENDER HELPER METHODS
   //##############################################
 
-  private FramePass renderSea(FrameGraphBuilder frameGraphBuilder, Vec3 cameraPos, Matrix4fStack matrix4fStack, int frame) {
-    FramePass pass = frameGraphBuilder.addPass("voidSeaFramePass");
+  private void renderSea(FrameGraphBuilder frameGraphBuilder, Vec3 cameraPos, Matrix4fStack matrix4fStack, int frame) {
+    RenderTarget target = Minecraft.getInstance().getMainRenderTarget();
+    GpuTextureView colorTextureView = target.getColorTextureView();
+    GpuTextureView depthTextureView = target.getDepthTextureView();
 
-    // pass resourceHandle data to the FramePass
-    ResourceHandle<RenderTarget> resourceHandle = frameGraphBuilder.importExternal("main", Minecraft.getInstance().getMainRenderTarget());
-    pass.readsAndWrites(resourceHandle);
+    // setup dynamic uniforms
+    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
+      matrix4fStack,
+      new Vector4f(1f, 1f, 1f, 1f),
+      new Vector3f((float) cameraPos.x(), (float) (HEIGHT - cameraPos.y()), (float) cameraPos.y()),
+      new Matrix4f(),
+      0.0F
+    );
 
-    pass.executes(() -> {
-      RenderTarget target = (RenderTarget) resourceHandle.get();
-      GpuTextureView colorTextureView = target.getColorTextureView();
-      GpuTextureView depthTextureView = target.getDepthTextureView();
+    CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
-      GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
-        matrix4fStack,
-        new Vector4f(1f, 1f, 1f, 1f),
-        new Vector3f((float) cameraPos.x, 0f, (float) cameraPos.z),
-        new Matrix4f(),
-        0.0F
-      );
+    // setup other special uniforms
+    VFGpuBuffers.UseWorldPos(
+      this.positionBuffer,
+      new Vector3f((float) cameraPos.x, (float) (HEIGHT - cameraPos.y), (float) cameraPos.z),
+      encoder
+    );
 
-      RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> {
-        return "VoidSea";
-      }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
+    // setup render pass and actually use it
+    RenderPass renderPass = encoder.createRenderPass(() -> {
+      return "VoidSea";
+    }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
 
-      try {
-        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
-        RenderSystem.bindDefaultUniforms(renderPass);
-        renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+    try {
+      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
+      RenderSystem.bindDefaultUniforms(renderPass);
+      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+      // See distort_vert.vsh
+      renderPass.setUniform("ChunkOffset", this.positionBuffer.currentBuffer());
 
-        renderPass.bindSampler("Sampler0", this.GPU_SPRITE_ANIM_VIEW[frame]);
-        renderPass.bindSampler("Sampler1", this.GPU_SPRITE_ANIM_VIEW[frame]);
+      renderPass.bindSampler("Sampler0", this.GPU_SPRITE_ANIM_VIEW[frame]);
+      renderPass.bindSampler("Sampler1", this.GPU_SPRITE_ANIM_VIEW[frame]);
 
-        renderPass.setVertexBuffer(0, this.seaMeshBuffer);
-        renderPass.setIndexBuffer(this.seaMeshBuffer, RenderSystem.getSequentialBuffer(VertexFormat.Mode.TRIANGLES).type());
-        renderPass.draw(0, this.seaMeshIndex);
+      renderPass.setVertexBuffer(0, this.seaMeshBuffer);
+      renderPass.setIndexBuffer(this.seaMeshBuffer, RenderSystem.getSequentialBuffer(VertexFormat.Mode.TRIANGLES).type());
+      renderPass.draw(0, this.seaMeshIndex);
 
-        // manages closing the renderpass (annoying boilerplate)
-      } catch (Throwable err) {
-        if (renderPass != null) {
-          try {
-            renderPass.close();
-          } catch (Throwable closeErr) {
-            err.addSuppressed(closeErr);
-          }
-        }
-        throw err;
-      }
-
+      // manages closing the renderpass (annoying boilerplate)
+    } catch (Throwable err) {
       if (renderPass != null) {
-        renderPass.close();
+        try {
+          renderPass.close();
+        } catch (Throwable closeErr) {
+          err.addSuppressed(closeErr);
+        }
       }
-    });
+      throw err;
+    }
 
-    return pass;
+    if (renderPass != null) {
+      renderPass.close();
+    }
   }
-
-//  private void initSeaPostPass() {
-//    List<PostPass.Input> inputs = new ArrayList<PostPass.Input>();
-//    RenderPipeline pipeline = VFRenderPipelines.VOID_SEA_DISTORT;
-//
-//    PostPass postPass = new PostPass(pipeline, PostChain.MAIN_TARGET_ID, null, inputs);
-//  }
 
   private void renderPost(FrameGraphBuilder frameGraphBuilder) {
     final ProfilerFiller profilerFiller = Profiler.get();
     RenderTarget target = Minecraft.getInstance().getMainRenderTarget();
-    if (BleedVisualEffect.INSTANCE.shouldPrepare()) {
-      BleedVisualEffect.INSTANCE.prepare(Minecraft.getInstance().getResourceManager(), profilerFiller);
+
+    Optional<PostChain> postChainOpt = BleedVisualEffect.INSTANCE.prepare(Minecraft.getInstance().getResourceManager(), profilerFiller);
+    if (postChainOpt.isEmpty()) {
+      return;
     }
+    PostChain postChain = postChainOpt.get();
 
     PostChain.TargetBundle bundle = PostChain.TargetBundle.of(
       PostChain.MAIN_TARGET_ID,
       frameGraphBuilder.importExternal("main", target)
     );
 
-    BleedVisualEffect.INSTANCE.bleedEffectPostChain.addToFrame(
+    postChain.addToFrame(
       frameGraphBuilder,
       target.width,
       target.height,
