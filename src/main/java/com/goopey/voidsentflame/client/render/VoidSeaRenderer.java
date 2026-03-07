@@ -4,17 +4,9 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.goopey.voidsentflame.core.VFGpuBuffers;
-import com.goopey.voidsentflame.util.PostChainSerialization;
-import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
-import com.mojang.blaze3d.framegraph.FramePass;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.resource.CrossFrameResourcePool;
-import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
-import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.CommandEncoder;
-import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.renderer.*;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -63,7 +55,7 @@ public class VoidSeaRenderer {
   private static final float PADDING = 1.1f;
 
   // World Position
-  private static final float HEIGHT = -42.5f;
+  private static final double HEIGHT = -42.5;
   private static final int OFFSET = 256;
   private static final int VIEW_DISTANCE_SCALE = 16;
   
@@ -134,7 +126,9 @@ public class VoidSeaRenderer {
     poseStack.scale(renderDistance, 1f, renderDistance);
 
     // get cameraPos and lock the wave model at the proper height in the world
-    Vec3 cameraPos = Minecraft.getInstance().getCameraEntity().position();
+    Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
+    float deltaTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+    Vec3 cameraPos = cameraEntity.getPosition(deltaTick);
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
     matrix4fStack.pushMatrix();
@@ -164,7 +158,7 @@ public class VoidSeaRenderer {
     GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
       matrix4fStack,
       new Vector4f(1f, 1f, 1f, 1f),
-      new Vector3f(0f, (float) (HEIGHT - cameraPos.y()), 0f),
+      new Vector3f(0f, (float) (HEIGHT - cameraPos.y), 0f),
       new Matrix4f(),
       0.0F
     );
