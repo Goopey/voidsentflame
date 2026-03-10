@@ -15,7 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 public class VFRenderPipelines {
   public static RenderPipeline.Snippet GLOBALS_TERRAIN_SNIPPET;
   public static RenderPipeline.Snippet WORLD_POS_SNIPPET;
-  public static RenderPipeline VOID_SEA_DISTORT;
+  public static RenderPipeline VOID_SEA_MESH_PIPELINE;
 
   static {
     GLOBALS_TERRAIN_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.TERRAIN_SNIPPET})
@@ -25,7 +25,7 @@ public class VFRenderPipelines {
       .withUniform(VFGpuBuffersNames.WORLD_POS.name, UniformType.UNIFORM_BUFFER)
       .buildSnippet();
 
-    VOID_SEA_DISTORT = RenderPipelines.register(
+    VOID_SEA_MESH_PIPELINE = RenderPipelines.register(
       RenderPipeline.builder(
         new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
         // sets a pipeline name, not an actual file

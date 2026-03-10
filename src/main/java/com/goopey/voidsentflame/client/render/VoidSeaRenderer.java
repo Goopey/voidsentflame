@@ -5,7 +5,11 @@ import java.util.*;
 
 import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
+import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.resource.CrossFrameResourcePool;
+import com.mojang.blaze3d.resource.RenderTargetDescriptor;
+import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import net.minecraft.client.renderer.*;
 import net.minecraft.util.profiling.Profiler;
@@ -70,6 +74,7 @@ public class VoidSeaRenderer {
   private GpuBuffer seaMeshBuffer;
   private MappableRingBuffer positionBuffer;
   private int seaMeshIndex;
+  private CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
 
   // PostChain
   private BleedVisualEffect bleedVisualEffect;
@@ -106,7 +111,8 @@ public class VoidSeaRenderer {
    */
   public void render(RenderLevelStageEvent.AfterEntities event) {
     // Check if in Rubicon
-    Level level = Minecraft.getInstance().level;
+    Minecraft mc = Minecraft.getInstance();
+    Level level = mc.level;
     LevelRenderer levelRenderer = event.getLevelRenderer();
     if (level.dimension() != RUBICON) { return; }
     // account for which frame of the animation the texture is
@@ -117,8 +123,17 @@ public class VoidSeaRenderer {
     poseStack.pushPose();
 
     // FrameGraphBuilder needed to run multiple passes
-//    event.get
     FrameGraphBuilder frameGraphBuilder = new FrameGraphBuilder();
+    RenderTarget mainTarget = mc.getMainRenderTarget();
+    ResourceLocation mainLocation = ResourceLocation.withDefaultNamespace("main");
+    ResourceHandle<RenderTarget> mainTargetHandle = frameGraphBuilder.importExternal(mainLocation.toString(), mainTarget);
+    RenderTargetDescriptor swapTargetDescriptor = new RenderTargetDescriptor(
+      mainTarget.width, mainTarget.height, mainTarget.useDepth, 0
+    );
+    RenderTarget swapTarget = swapTargetDescriptor.allocate();
+    swapTarget.createBuffers(mainTarget.width, mainTarget.height);
+    ResourceLocation swapLocation = ResourceLocation.withDefaultNamespace("swap");
+    ResourceHandle<RenderTarget> swapTargetHandle = frameGraphBuilder.importExternal(swapLocation.toString(), swapTarget);
 
     // scale size depending on render distance
     // TODO : needs readjusting
@@ -136,11 +151,19 @@ public class VoidSeaRenderer {
 
     // avoid crashes if the sprites were cleared 
     if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
-      this.renderSea(frameGraphBuilder, cameraPos, matrix4fStack, frame);
+      FramePass pass1 = frameGraphBuilder.addPass("VoidSeaPass1");
+      pass1.readsAndWrites(mainTargetHandle);
+      pass1.executes(
+        () -> this.renderSea(frameGraphBuilder, cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], mainTargetHandle)
+      );
+//      PostPass pass2 = new PostPass(
+//        null, null, null, null
+//      );
     } else {
       this.getSprites();
     }
 
+    frameGraphBuilder.execute(this.resourcePool);
     matrix4fStack.popMatrix();
     poseStack.popPose();
   }
@@ -149,8 +172,8 @@ public class VoidSeaRenderer {
   //            RENDER HELPER METHODS
   //##############################################
 
-  private void renderSea(FrameGraphBuilder frameGraphBuilder, Vec3 cameraPos, Matrix4fStack matrix4fStack, int frame) {
-    RenderTarget target = Minecraft.getInstance().getMainRenderTarget();
+  private void renderSea(FrameGraphBuilder frameGraphBuilder, Vec3 cameraPos, Matrix4fStack matrix4fStack, GpuTextureView frame, ResourceHandle<RenderTarget> targetHandle) {
+    RenderTarget target = targetHandle.get();
     GpuTextureView colorTextureView = target.getColorTextureView();
     GpuTextureView depthTextureView = target.getDepthTextureView();
 
@@ -178,14 +201,14 @@ public class VoidSeaRenderer {
     }, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty());
 
     try {
-      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORT);
+      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
       renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
       // See distort_vert.vsh
       renderPass.setUniform("ChunkOffset", this.positionBuffer.currentBuffer());
 
-      renderPass.bindSampler("Sampler0", this.GPU_SPRITE_ANIM_VIEW[frame]);
-      renderPass.bindSampler("Sampler1", this.GPU_SPRITE_ANIM_VIEW[frame]);
+      renderPass.bindSampler("Sampler0", frame);
+      renderPass.bindSampler("Sampler1", frame);
 
       renderPass.setVertexBuffer(0, this.seaMeshBuffer);
       renderPass.setIndexBuffer(this.seaMeshBuffer, RenderSystem.getSequentialBuffer(VertexFormat.Mode.TRIANGLES).type());
