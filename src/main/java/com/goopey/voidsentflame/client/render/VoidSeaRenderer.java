@@ -154,23 +154,20 @@ public class VoidSeaRenderer {
 
     // avoid crashes if the sprites were cleared 
     if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
-      /**
-      ResourceLocation mainLocation = ResourceLocation.withDefaultNamespace("main");
-      ResourceLocation swapLocation = ResourceLocation.withDefaultNamespace("swap");
-      List<PostPass.Input> pass1Inputs = new ArrayList<PostPass.Input>();
-      AbstractTexture abstractTexture = ABSTRACT_TEXTURE_ANIM[frame];
-      pass1Inputs.add(new PostPass.TextureInput("Sampler0", abstractTexture, 16, 16));
-      pass1Inputs.add(new PostPass.TextureInput("Sampler1", abstractTexture, 16, 16));
-      Map<String, List<UniformValue>> pass1Uniforms = new HashMap<String, List<UniformValue>>();
-      pass1Uniforms.put("");
-
-      PostPass pass1 = new PostPass(
-        VFRenderPipelines.VOID_SEA_DISTORT,
-        ResourceLocation.parse("main"),
-        pass1Uniforms,
-        pass1Inputs
-      );
-       */
+//      ResourceLocation mainLocation = ResourceLocation.withDefaultNamespace("main");
+//      ResourceLocation swapLocation = ResourceLocation.withDefaultNamespace("swap");
+//      List<PostPass.Input> pass1Inputs = new ArrayList<PostPass.Input>();
+//      AbstractTexture abstractTexture = ABSTRACT_TEXTURE_ANIM[frame];
+//      pass1Inputs.add(new PostPass.TextureInput("Sampler0", abstractTexture, 16, 16));
+//      pass1Inputs.add(new PostPass.TextureInput("Sampler1", abstractTexture, 16, 16));
+//      Map<String, List<UniformValue>> pass1Uniforms = new HashMap<String, List<UniformValue>>();
+//
+//      PostPass pass1 = new PostPass(
+//        VFRenderPipelines.VOID_SEA_DISTORT,
+//        ResourceLocation.parse("main"),
+//        pass1Uniforms,
+//        pass1Inputs
+//      );
 
 //      pass1.addToFrame(frameGraphBuilder, null, );
 //      FramePass pass1 = frameGraphBuilder.addPass("voidSea");
