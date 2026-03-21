@@ -16,6 +16,7 @@ public class VFRenderPipelines {
   public static RenderPipeline.Snippet GLOBALS_TERRAIN_SNIPPET;
   public static RenderPipeline.Snippet WORLD_POS_SNIPPET;
   public static RenderPipeline VOID_SEA_MESH_PIPELINE;
+  public static RenderPipeline VOID_SEA_DISTORTION_PIPELINE;
 
   static {
     GLOBALS_TERRAIN_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.TERRAIN_SNIPPET})
@@ -29,14 +30,28 @@ public class VFRenderPipelines {
       RenderPipeline.builder(
         new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
         // sets a pipeline name, not an actual file
-        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/distort"))
-        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_vert"))
-        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/main/distort_frag"))
+        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_mesh"))
+        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_vert"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_frag"))
         .withUniform("ChunkOffset", UniformType.UNIFORM_BUFFER)
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
         .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .build());
+    VOID_SEA_DISTORTION_PIPELINE = RenderPipelines.register(
+      RenderPipeline.builder()
+        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distort"))
+        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "post/void_sea_distort_vert"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "post/void_sea_distort_frag"))
+        .withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.TRIANGLES)
+        .withSampler("Sampler0")
+        .withColorWrite(true, false)
+        .withDepthWrite(false)
+        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+        .withCull(false)
+        .withoutBlend()
+        .build()
+    );
   }
 }

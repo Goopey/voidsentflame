@@ -6,11 +6,7 @@ import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.PeriodicNotificationManager;
-import net.minecraft.client.renderer.CloudRenderer;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.resources.FoliageColorReloadListener;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
