@@ -155,6 +155,9 @@ public class VoidSeaRenderer {
     Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
     float deltaTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
     Vec3 cameraPos = cameraEntity.getPosition(deltaTick);
+    // get view vector and convert it to radians
+    Vec3 cameraRotPos = cameraEntity.getViewVector(deltaTick).add(new Vec3(1, 1, 1)).scale(Math.PI * 2);
+//    cameraEntity.getViewVector(deltaTick)
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
     matrix4fStack.pushMatrix();
@@ -173,17 +176,15 @@ public class VoidSeaRenderer {
       pass2.requires(pass1);
       this.mainTargetHandle = pass2.readsAndWrites(this.mainTargetHandle);
       pass2.executes(
-        () -> {
-          this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.mainTargetHandle);
-        }
+        () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.mainTargetHandle)
       );
 
       FramePass pass3 = frameGraphBuilder.addPass("VoidSeaDistortPass2");
-//      pass3.requires(pass2);
+      pass3.requires(pass2);
       this.copyTargetHandle = pass3.readsAndWrites(this.copyTargetHandle);
       this.mainTargetHandle = pass3.readsAndWrites(this.mainTargetHandle);
       pass3.executes(
-        () -> this.renderDistortion(poseStack, matrix4fStack, this.mainTargetHandle, this.copyTargetHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
+        () -> this.renderDistortion(cameraRotPos, matrix4fStack, this.mainTargetHandle, this.copyTargetHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
 //          this.renderSea(cameraPos, matrix4fStack, this.copyTarget.getColorTextureView(), this.mainTargetHandle)
 //          this.renderDistortion(matrix4fStack, this.mainTargetHandle, this.copyTargetHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
       );
@@ -239,19 +240,33 @@ public class VoidSeaRenderer {
       renderPass.draw(0, this.seaMeshIndex);
     }
 
-    VoidsentFlameMod.LOGGER.info(colorTextureView.texture().getDepthOrLayers() + "");
+//    VoidsentFlameMod.LOGGER.info(colorTextureView.texture().getDepthOrLayers() + "");
 
 //    RenderSystem.getDevice().createCommandEncoder().presentTexture(colorTextureView);
 //    target.resize(50, 50);
 //    target.blitToScreen();
-    this.renderPost(new FrameGraphBuilder());
+//    this.renderPost(new FrameGraphBuilder());
   }
 
-  private void renderDistortion(PoseStack poseStack, Matrix4fStack matrix4fStack, ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> copyHandle, GpuTextureView voidSeaTexture) {
+  private void renderDistortion(Vec3 cameraRotPos, Matrix4fStack matrix4fStack, ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> copyHandle, GpuTextureView voidSeaTexture) {
     RenderTarget target = targetHandle.get();
     RenderTarget copy = copyHandle.get();
     GpuTextureView colorTextureViewT = target.getColorTextureView();
     GpuTextureView colorTextureViewC = copy.getColorTextureView();
+
+    // TODO : fix rotation
+    matrix4fStack.rotateXYZ(
+      new Vector3f((float) cameraRotPos.x, (float) cameraRotPos.y, (float) cameraRotPos.z)
+    );
+
+    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
+      matrix4fStack,
+      new Vector4f(1f, 1f, 1f, 1f),
+      new Vector3f(0f,  0f, 0f),
+//      new Vector3f(0f,  (float) (40 - cameraPos.y), 0f),
+      new Matrix4f(),
+      0.0F
+    );
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
@@ -261,6 +276,7 @@ public class VoidSeaRenderer {
     try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistort", colorTextureViewT, OptionalInt.empty())) {
       renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORTION_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
+      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
 
 //      renderPass.bindSampler("Sampler0", colorTextureViewC);
       renderPass.bindSampler("Sampler0", voidSeaTexture);
@@ -333,14 +349,24 @@ public class VoidSeaRenderer {
     VertexFormat.Mode mode = VertexFormat.Mode.QUADS;
     GpuBuffer gpuBuffer;
 
-    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(4 * format.getVertexSize())) {
-      BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
-      bufferBuilder.addVertex(-1.0F, 0.0F, -1.0F).setUv(0.0F, 0.0F);
-      bufferBuilder.addVertex(1.0F, 0.0F, -1.0F).setUv(1.0F, 0.0F);
-      bufferBuilder.addVertex(1.0F, 0.0F, 1.0F).setUv(1.0F, 1.0F);
-      bufferBuilder.addVertex(-1.0F, 0.0F, 1.0F).setUv(0.0F, 1.0F);
+    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(6 * format.getVertexSize())) {
+      BufferBuilder builder = new BufferBuilder(byteBufferBuilder, mode, format);
+      // TODO : hardcode values to improve performance
+      float x0 = -1f, x1 = 1f;
+      float y0 = -1f, y1 = 1f;
+      float z0 = 0f, z1 = 0f;
+      float v0 = 0f, v1 = 1f;
+      float u0 = 0f, u1 = 1f;
 
-      try (MeshData meshdata = bufferBuilder.buildOrThrow()) {
+      putBufferVertex(builder, x0, y0, z0, u0, v0);
+      putBufferVertex(builder, x0, y1, z1, u0, v1);
+      putBufferVertex(builder, x1, y1, z1, u1, v1);
+
+      putBufferVertex(builder, x1, y1, z1, u1, v1);
+      putBufferVertex(builder, x1, y0, z0, u1, v0);
+      putBufferVertex(builder, x0, y0, z0, u0, v0);
+
+      try (MeshData meshdata = builder.buildOrThrow()) {
         this.seaDistortionIndex = meshdata.drawState().indexCount();
         gpuBuffer = RenderSystem.getDevice().createBuffer(
           () -> "Distort quad",

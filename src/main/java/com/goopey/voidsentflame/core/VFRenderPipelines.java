@@ -27,8 +27,7 @@ public class VFRenderPipelines {
       .buildSnippet();
 
     VOID_SEA_MESH_PIPELINE = RenderPipelines.register(
-      RenderPipeline.builder(
-        new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
+      RenderPipeline.builder(new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
         // sets a pipeline name, not an actual file
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_mesh"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_vert"))
@@ -40,7 +39,7 @@ public class VFRenderPipelines {
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .build());
     VOID_SEA_DISTORTION_PIPELINE = RenderPipelines.register(
-      RenderPipeline.builder()
+      RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.MATRICES_PROJECTION_SNIPPET})
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distort"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_frag"))

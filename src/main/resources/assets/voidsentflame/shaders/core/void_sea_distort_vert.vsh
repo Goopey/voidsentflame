@@ -1,9 +1,14 @@
 #version 150
 
-in vec2 Position;
+#moj_import <minecraft:dynamictransforms.glsl>
+#moj_import <minecraft:projection.glsl>
+
+in vec3 Position;
+in vec2 UV0;
 out vec2 texCoord;
 
 void main() {
-    texCoord = (Position + 1.0) * 0.5;
-    gl_Position = vec4(Position, 0.0, 1.0);
+    vec3 pos = Position + ModelOffset;
+    texCoord = UV0;
+    gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
 }
