@@ -42,8 +42,8 @@ public class VFRenderPipelines {
     VOID_SEA_DISTORTION_PIPELINE = RenderPipelines.register(
       RenderPipeline.builder()
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distort"))
-        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "post/void_sea_distort_vert"))
-        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "post/void_sea_distort_frag"))
+        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_vert"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_frag"))
         .withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.TRIANGLES)
         .withSampler("Sampler0")
         .withColorWrite(true, false)

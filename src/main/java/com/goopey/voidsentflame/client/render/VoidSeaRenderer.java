@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.goopey.voidsentflame.core.VFGpuBuffers;
+import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -77,6 +78,10 @@ public class VoidSeaRenderer {
   private final GpuBuffer seaDistortionBuffer;
   private int seaDistortionIndex;
   private final MappableRingBuffer positionBuffer;
+  private final TextureTarget copyTarget;
+  private ResourceHandle<TextureTarget> copyTargetHandle;
+  private final RenderTarget mainTarget;
+  private ResourceHandle<RenderTarget> mainTargetHandle;
   private GpuTextureView seaSprite;
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
 
@@ -96,6 +101,9 @@ public class VoidSeaRenderer {
     this.getSprites();
     this.seaMeshBuffer = buildSea();
     this.seaDistortionBuffer = buildDistortion();
+    // these values will be resized later
+    this.copyTarget = new TextureTarget("VoidSeaCopyTexture", 100, 100, true);
+    this.mainTarget = Minecraft.getInstance().getMainRenderTarget();
     this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
   }
 
@@ -128,9 +136,9 @@ public class VoidSeaRenderer {
 
     // FrameGraphBuilder needed to run multiple passes
     FrameGraphBuilder frameGraphBuilder = new FrameGraphBuilder();
-    RenderTarget mainTarget = mc.getMainRenderTarget();
-    ResourceLocation mainLocation = ResourceLocation.withDefaultNamespace("main");
-    ResourceHandle<RenderTarget> mainTargetHandle = frameGraphBuilder.importExternal(mainLocation.toString(), mainTarget);
+//    RenderTarget mainTarget = mc.getMainRenderTarget();
+//    ResourceLocation mainLocation = ResourceLocation.withDefaultNamespace("main");
+    this.mainTargetHandle = frameGraphBuilder.importExternal("minecraft:main", this.mainTarget);
 //    RenderTargetDescriptor swapTargetDescriptor = new RenderTargetDescriptor(
 //      mainTarget.width, mainTarget.height, mainTarget.useDepth, 0
 //    );
@@ -141,7 +149,7 @@ public class VoidSeaRenderer {
 
     // scale size depending on render distance
     // TODO : needs readjusting
-    float renderDistance = (float) (levelRenderer.getLastViewDistance()/VIEW_DISTANCE_SCALE);
+    float renderDistance = (float) (levelRenderer.getLastViewDistance()/Math.max(VIEW_DISTANCE_SCALE, 12));
 
     // get cameraPos and lock the wave model at the proper height in the world
     Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
@@ -150,26 +158,35 @@ public class VoidSeaRenderer {
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
     matrix4fStack.pushMatrix();
-    matrix4fStack.mul(poseStack.last().pose());
 
     // avoid crashes if the sprites were cleared 
     if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
-      TextureTarget copyTex = new TextureTarget("VoidSeaCopyTexture", mainTarget.width, mainTarget.height, true);
-      copyTex.createBuffers(mainTarget.width, mainTarget.height);
-      ResourceHandle<TextureTarget> copyTexHandle = frameGraphBuilder.importExternal("VoidSeaCopyTexHandle", copyTex);
+      this.copyTargetHandle = frameGraphBuilder.importExternal("VoidSeaCopyTexHandle", this.copyTarget);
 
-      FramePass pass1 = frameGraphBuilder.addPass("VoidSeaPass1");
-      pass1.readsAndWrites(mainTargetHandle);
+      FramePass pass1 = frameGraphBuilder.addPass("resizeCopy");
+      this.copyTargetHandle = pass1.readsAndWrites(this.copyTargetHandle);
       pass1.executes(
-        () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], mainTargetHandle)
+        () -> this.copyTarget.resize(mainTarget.width, mainTarget.height)
       );
 
-//      FramePass pass2 = frameGraphBuilder.addPass("VoidSeaBlurPass2");
-//      pass2.requires(pass1);
-//      pass2.readsAndWrites(mainTargetHandle);
-//      pass2.executes(
-//        () -> this.renderDistortion(matrix4fStack, mainTargetHandle, copyTexHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
-//      );
+      FramePass pass2 = frameGraphBuilder.addPass("VoidSeaMeshPass1");
+      pass2.requires(pass1);
+      this.mainTargetHandle = pass2.readsAndWrites(this.mainTargetHandle);
+      pass2.executes(
+        () -> {
+          this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.mainTargetHandle);
+        }
+      );
+
+      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaDistortPass2");
+//      pass3.requires(pass2);
+      this.copyTargetHandle = pass3.readsAndWrites(this.copyTargetHandle);
+      this.mainTargetHandle = pass3.readsAndWrites(this.mainTargetHandle);
+      pass3.executes(
+        () -> this.renderDistortion(poseStack, matrix4fStack, this.mainTargetHandle, this.copyTargetHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
+//          this.renderSea(cameraPos, matrix4fStack, this.copyTarget.getColorTextureView(), this.mainTargetHandle)
+//          this.renderDistortion(matrix4fStack, this.mainTargetHandle, this.copyTargetHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
+      );
     } else {
       this.getSprites();
     }
@@ -222,43 +239,39 @@ public class VoidSeaRenderer {
       renderPass.draw(0, this.seaMeshIndex);
     }
 
+    VoidsentFlameMod.LOGGER.info(colorTextureView.texture().getDepthOrLayers() + "");
+
+//    RenderSystem.getDevice().createCommandEncoder().presentTexture(colorTextureView);
+//    target.resize(50, 50);
 //    target.blitToScreen();
+    this.renderPost(new FrameGraphBuilder());
   }
 
-  private void renderDistortion(Matrix4fStack matrix4fStack, ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> copyHandle, GpuTextureView voidSeaTexture) {
+  private void renderDistortion(PoseStack poseStack, Matrix4fStack matrix4fStack, ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> copyHandle, GpuTextureView voidSeaTexture) {
     RenderTarget target = targetHandle.get();
     RenderTarget copy = copyHandle.get();
     GpuTextureView colorTextureViewT = target.getColorTextureView();
-//    GpuTextureView depthTextureViewT = target.getDepthTextureView();
     GpuTextureView colorTextureViewC = copy.getColorTextureView();
-//    GpuTextureView depthTextureViewC = copy.getDepthTextureView();
-
-    // setup dynamic uniforms
-//    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
-//      matrix4fStack,
-//      new Vector4f(1f, 1f, 1f, 1f),
-//      new Vector3f(0f, 0f, 0f),
-//      new Matrix4f(),
-//      0.0F
-//    );
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
-//    RenderPass renderPass = encoder.createRenderPass(() -> {
-//      return "VoidSeaDistort";
-//    }, colorTextureViewT, OptionalInt.empty());
+    RenderSystem.backupProjectionMatrix();
+//    RenderSystem.setProjectionMatrix(null, ProjectionType.ORTHOGRAPHIC);
 
     try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistort", colorTextureViewT, OptionalInt.empty())) {
       renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORTION_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
-//      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
 
-      renderPass.bindSampler("Sampler0", colorTextureViewC);
+//      renderPass.bindSampler("Sampler0", colorTextureViewC);
+      renderPass.bindSampler("Sampler0", voidSeaTexture);
 
       renderPass.setVertexBuffer(0, this.seaDistortionBuffer);
       renderPass.setIndexBuffer(this.seaDistortionBuffer, VertexFormat.IndexType.SHORT);
       renderPass.draw(0, this.seaDistortionIndex);
+//      renderPass.draw(0, 3);
     }
+
+    RenderSystem.restoreProjectionMatrix();
   }
 
   private void renderPost(FrameGraphBuilder frameGraphBuilder) {
