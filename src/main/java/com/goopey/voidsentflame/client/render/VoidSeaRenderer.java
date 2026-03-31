@@ -156,7 +156,7 @@ public class VoidSeaRenderer {
     float deltaTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
     Vec3 cameraPos = cameraEntity.getPosition(deltaTick);
     // get view vector and convert it to radians
-    Vec3 cameraRotPos = cameraEntity.getViewVector(deltaTick).add(new Vec3(1, 1, 1)).scale(Math.PI * 2);
+    Vec3 cameraRotPos = cameraEntity.getViewVector(deltaTick);
 //    cameraEntity.getViewVector(deltaTick)
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
@@ -166,20 +166,24 @@ public class VoidSeaRenderer {
     if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
       this.copyTargetHandle = frameGraphBuilder.importExternal("VoidSeaCopyTexHandle", this.copyTarget);
 
-      FramePass pass1 = frameGraphBuilder.addPass("resizeCopy");
+      FramePass pass1 = frameGraphBuilder.addPass("resizeCopyPass1");
       this.copyTargetHandle = pass1.readsAndWrites(this.copyTargetHandle);
+      this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
       pass1.executes(
-        () -> this.copyTarget.resize(mainTarget.width, mainTarget.height)
+        () -> {
+          this.copyTarget.resize(mainTarget.width, mainTarget.height);
+          this.copyTarget.copyDepthFrom(this.mainTarget);
+        }
       );
 
-      FramePass pass2 = frameGraphBuilder.addPass("VoidSeaMeshPass1");
+      FramePass pass2 = frameGraphBuilder.addPass("VoidSeaMeshPass2");
       pass2.requires(pass1);
       this.mainTargetHandle = pass2.readsAndWrites(this.mainTargetHandle);
       pass2.executes(
         () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.mainTargetHandle)
       );
 
-      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaDistortPass2");
+      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaDistortPass3");
       pass3.requires(pass2);
       this.copyTargetHandle = pass3.readsAndWrites(this.copyTargetHandle);
       this.mainTargetHandle = pass3.readsAndWrites(this.mainTargetHandle);
@@ -240,6 +244,7 @@ public class VoidSeaRenderer {
       renderPass.draw(0, this.seaMeshIndex);
     }
 
+    gpuBufferSlice.buffer().close();
 //    VoidsentFlameMod.LOGGER.info(colorTextureView.texture().getDepthOrLayers() + "");
 
 //    RenderSystem.getDevice().createCommandEncoder().presentTexture(colorTextureView);
@@ -286,6 +291,8 @@ public class VoidSeaRenderer {
       renderPass.draw(0, this.seaDistortionIndex);
 //      renderPass.draw(0, 3);
     }
+
+    gpuBufferSlice.buffer().close();
 
     RenderSystem.restoreProjectionMatrix();
   }
