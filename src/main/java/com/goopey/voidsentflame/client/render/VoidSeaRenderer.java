@@ -143,16 +143,7 @@ public class VoidSeaRenderer {
 
     // FrameGraphBuilder needed to run multiple passes
     FrameGraphBuilder frameGraphBuilder = new FrameGraphBuilder();
-//    RenderTarget mainTarget = mc.getMainRenderTarget();
-//    ResourceLocation mainLocation = ResourceLocation.withDefaultNamespace("main");
     this.mainTargetHandle = frameGraphBuilder.importExternal("minecraft:main", this.mainTarget);
-//    RenderTargetDescriptor swapTargetDescriptor = new RenderTargetDescriptor(
-//      mainTarget.width, mainTarget.height, mainTarget.useDepth, 0
-//    );
-//    RenderTarget swapTarget = swapTargetDescriptor.allocate();
-//    swapTarget.createBuffers(mainTarget.width, mainTarget.height);
-//    ResourceLocation swapLocation = ResourceLocation.withDefaultNamespace("swap");
-//    ResourceHandle<RenderTarget> swapTargetHandle = frameGraphBuilder.importExternal(swapLocation.toString(), swapTarget);
 
     // scale size depending on render distance
     // TODO : needs readjusting
@@ -162,13 +153,6 @@ public class VoidSeaRenderer {
     Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
     float deltaTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
     Vec3 cameraPos = cameraEntity.getPosition(deltaTick);
-    // get view vector and convert it to radians
-    Vec3 cameraRotPos = cameraEntity.getViewVector(deltaTick);
-      /**calculateViewVector(
-      cameraEntity.getXRot(deltaTick),
-      cameraEntity.getYRot(deltaTick)
-    );*/
-//    cameraEntity.getViewVector(deltaTick)
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
     matrix4fStack.pushMatrix();
@@ -189,18 +173,18 @@ public class VoidSeaRenderer {
 
       FramePass pass2 = frameGraphBuilder.addPass("VoidSeaMeshPass2");
       pass2.requires(pass1);
-      this.mainTargetHandle = pass2.readsAndWrites(this.mainTargetHandle);
+      this.copyTargetHandle = pass2.readsAndWrites(this.copyTargetHandle);
       pass2.executes(
-        () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.mainTargetHandle)
+        () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.copyTargetHandle)
       );
 
-//      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaDistortPass3");
-//      pass3.requires(pass2);
-//      this.copyTargetHandle = pass3.readsAndWrites(this.copyTargetHandle);
-//      this.mainTargetHandle = pass3.readsAndWrites(this.mainTargetHandle);
-//      pass3.executes(
-//        () -> this.renderDistortion(cameraRotPos, matrix4fStack, this.mainTargetHandle, this.copyTargetHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
-//      );
+      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaDistortPass3");
+      pass3.requires(pass2);
+      this.copyTargetHandle = pass3.readsAndWrites(this.copyTargetHandle);
+      this.mainTargetHandle = pass3.readsAndWrites(this.mainTargetHandle);
+      pass3.executes(
+        () -> this.renderDistortion(this.mainTargetHandle, this.copyTargetHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
+      );
     } else {
       this.getSprites();
     }
@@ -214,6 +198,13 @@ public class VoidSeaRenderer {
   //            RENDER HELPER METHODS
   //##############################################
 
+  /**
+   *
+   * @param cameraPos
+   * @param matrix4fStack
+   * @param frame
+   * @param targetHandle
+   */
   private void renderSea(Vec3 cameraPos, Matrix4fStack matrix4fStack, GpuTextureView frame, ResourceHandle<? extends RenderTarget> targetHandle) {
     RenderTarget target = targetHandle.get();
     GpuTextureView colorTextureView = target.getColorTextureView();
@@ -254,13 +245,17 @@ public class VoidSeaRenderer {
     }
   }
 
-  private void renderDistortion(Vec3 cameraRotPos, Matrix4fStack matrix4fStack, ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> copyHandle, GpuTextureView voidSeaTexture) {
+  /**
+   *
+   * @param targetHandle
+   * @param copyHandle
+   * @param voidSeaTexture
+   */
+  private void renderDistortion(ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> copyHandle, GpuTextureView voidSeaTexture) {
     RenderTarget target = targetHandle.get();
     RenderTarget copy = copyHandle.get();
     GpuTextureView colorTextureViewT = target.getColorTextureView();
     GpuTextureView colorTextureViewC = copy.getColorTextureView();
-
-    target.blitToScreen();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
@@ -275,12 +270,12 @@ public class VoidSeaRenderer {
       renderPass.setVertexBuffer(0, this.seaDistortionBuffer);
       renderPass.setIndexBuffer(this.seaDistortionBuffer, VertexFormat.IndexType.SHORT);
       renderPass.draw(0, this.seaDistortionIndex);
-//      renderPass.draw(0, 3);
     }
 
     RenderSystem.restoreProjectionMatrix();
   }
 
+  // TODO : remove if unneeded
   private void renderPost(FrameGraphBuilder frameGraphBuilder) {
     final ProfilerFiller profilerFiller = Profiler.get();
     RenderTarget target = Minecraft.getInstance().getMainRenderTarget();
@@ -464,21 +459,5 @@ public class VoidSeaRenderer {
     .setOverlay(VFRenderConsts.RUBICON_PACKED_OVERLAY)
     .setLight(VFRenderConsts.RUBICON_PACKED_LIGHT)
     .setNormal(0, 1f, 0);
-  }
-
-  /**
-   * Calculate a view vector for screen cast
-   * @param xRot
-   * @param yRot
-   * @return
-   */
-  public final Vec3 calculateViewVector(float xRot, float yRot) {
-    float f = xRot * ((float)Math.PI / 180F);
-    float f1 = yRot * ((float)Math.PI / 180F);
-    float f2 = Mth.cos(f1);
-    float f3 = Mth.sin(f1);
-    float f4 = Mth.cos(f);
-    float f5 = Mth.sin(f);
-    return new Vec3((double)(f3 * f4), (double)(f5), (double)(f2 * f4));
   }
 }
