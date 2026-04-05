@@ -39,11 +39,11 @@ public class VFRenderPipelines {
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .build());
     VOID_SEA_DISTORTION_PIPELINE = RenderPipelines.register(
-      RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.MATRICES_PROJECTION_SNIPPET})
+      RenderPipeline.builder(new RenderPipeline.Snippet[0])
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distort"))
-        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_vert"))
+        .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_frag"))
-        .withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.TRIANGLES)
+        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
         .withSampler("Sampler0")
         .withColorWrite(true, false)
         .withDepthWrite(false)

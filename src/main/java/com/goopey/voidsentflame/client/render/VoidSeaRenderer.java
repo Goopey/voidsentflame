@@ -8,6 +8,10 @@ import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
+import com.mojang.blaze3d.opengl.GlCommandEncoder;
+import com.mojang.blaze3d.opengl.GlDebug;
+import com.mojang.blaze3d.opengl.GlDevice;
+import com.mojang.blaze3d.opengl.GlRenderPass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
@@ -16,9 +20,12 @@ import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.textures.TextureFormat;
 import net.minecraft.client.renderer.*;
+import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
+import net.neoforged.neoforge.client.blaze3d.validation.ValidationCommandEncoder;
+import net.neoforged.neoforge.client.blaze3d.validation.ValidationRenderPass;
 import org.joml.*;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
@@ -157,6 +164,10 @@ public class VoidSeaRenderer {
     Vec3 cameraPos = cameraEntity.getPosition(deltaTick);
     // get view vector and convert it to radians
     Vec3 cameraRotPos = cameraEntity.getViewVector(deltaTick);
+      /**calculateViewVector(
+      cameraEntity.getXRot(deltaTick),
+      cameraEntity.getYRot(deltaTick)
+    );*/
 //    cameraEntity.getViewVector(deltaTick)
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
@@ -183,15 +194,13 @@ public class VoidSeaRenderer {
         () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.mainTargetHandle)
       );
 
-      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaDistortPass3");
-      pass3.requires(pass2);
-      this.copyTargetHandle = pass3.readsAndWrites(this.copyTargetHandle);
-      this.mainTargetHandle = pass3.readsAndWrites(this.mainTargetHandle);
-      pass3.executes(
-        () -> this.renderDistortion(cameraRotPos, matrix4fStack, this.mainTargetHandle, this.copyTargetHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
-//          this.renderSea(cameraPos, matrix4fStack, this.copyTarget.getColorTextureView(), this.mainTargetHandle)
-//          this.renderDistortion(matrix4fStack, this.mainTargetHandle, this.copyTargetHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
-      );
+//      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaDistortPass3");
+//      pass3.requires(pass2);
+//      this.copyTargetHandle = pass3.readsAndWrites(this.copyTargetHandle);
+//      this.mainTargetHandle = pass3.readsAndWrites(this.mainTargetHandle);
+//      pass3.executes(
+//        () -> this.renderDistortion(cameraRotPos, matrix4fStack, this.mainTargetHandle, this.copyTargetHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
+//      );
     } else {
       this.getSprites();
     }
@@ -214,7 +223,7 @@ public class VoidSeaRenderer {
     GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
       matrix4fStack,
       new Vector4f(1f, 1f, 1f, 1f),
-      new Vector3f(0f, (float) (HEIGHT - cameraPos.y), 0f),
+      new Vector3f(0f, 0f, 0f),
       new Matrix4f(),
       0.0F
     );
@@ -224,7 +233,7 @@ public class VoidSeaRenderer {
     // setup other special uniforms
     VFGpuBuffers.UseWorldPos(
       this.positionBuffer,
-      new Vector3f((float) cameraPos.x, 0f, (float) cameraPos.z),
+      new Vector3f((float) cameraPos.x, (float) (HEIGHT - cameraPos.y), (float) cameraPos.z),
       encoder
     );
 
@@ -243,14 +252,6 @@ public class VoidSeaRenderer {
       renderPass.setIndexBuffer(this.seaMeshBuffer, VertexFormat.IndexType.SHORT);
       renderPass.draw(0, this.seaMeshIndex);
     }
-
-    gpuBufferSlice.buffer().close();
-//    VoidsentFlameMod.LOGGER.info(colorTextureView.texture().getDepthOrLayers() + "");
-
-//    RenderSystem.getDevice().createCommandEncoder().presentTexture(colorTextureView);
-//    target.resize(50, 50);
-//    target.blitToScreen();
-//    this.renderPost(new FrameGraphBuilder());
   }
 
   private void renderDistortion(Vec3 cameraRotPos, Matrix4fStack matrix4fStack, ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> copyHandle, GpuTextureView voidSeaTexture) {
@@ -259,40 +260,23 @@ public class VoidSeaRenderer {
     GpuTextureView colorTextureViewT = target.getColorTextureView();
     GpuTextureView colorTextureViewC = copy.getColorTextureView();
 
-    // TODO : fix rotation
-    matrix4fStack.rotateXYZ(
-      new Vector3f((float) cameraRotPos.x, (float) cameraRotPos.y, (float) cameraRotPos.z)
-    );
-
-    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
-      matrix4fStack,
-      new Vector4f(1f, 1f, 1f, 1f),
-      new Vector3f(0f,  0f, 0f),
-//      new Vector3f(0f,  (float) (40 - cameraPos.y), 0f),
-      new Matrix4f(),
-      0.0F
-    );
+    target.blitToScreen();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
     RenderSystem.backupProjectionMatrix();
-//    RenderSystem.setProjectionMatrix(null, ProjectionType.ORTHOGRAPHIC);
 
     try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistort", colorTextureViewT, OptionalInt.empty())) {
       renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORTION_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
-      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
 
-//      renderPass.bindSampler("Sampler0", colorTextureViewC);
-      renderPass.bindSampler("Sampler0", voidSeaTexture);
+      renderPass.bindSampler("Sampler0", colorTextureViewC);
 
       renderPass.setVertexBuffer(0, this.seaDistortionBuffer);
       renderPass.setIndexBuffer(this.seaDistortionBuffer, VertexFormat.IndexType.SHORT);
       renderPass.draw(0, this.seaDistortionIndex);
 //      renderPass.draw(0, 3);
     }
-
-    gpuBufferSlice.buffer().close();
 
     RenderSystem.restoreProjectionMatrix();
   }
@@ -480,5 +464,21 @@ public class VoidSeaRenderer {
     .setOverlay(VFRenderConsts.RUBICON_PACKED_OVERLAY)
     .setLight(VFRenderConsts.RUBICON_PACKED_LIGHT)
     .setNormal(0, 1f, 0);
+  }
+
+  /**
+   * Calculate a view vector for screen cast
+   * @param xRot
+   * @param yRot
+   * @return
+   */
+  public final Vec3 calculateViewVector(float xRot, float yRot) {
+    float f = xRot * ((float)Math.PI / 180F);
+    float f1 = yRot * ((float)Math.PI / 180F);
+    float f2 = Mth.cos(f1);
+    float f3 = Mth.sin(f1);
+    float f4 = Mth.cos(f);
+    float f5 = Mth.sin(f);
+    return new Vec3((double)(f3 * f4), (double)(f5), (double)(f2 * f4));
   }
 }

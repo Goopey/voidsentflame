@@ -41,10 +41,12 @@ vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
 }
 
 void main() {
-    vec3 pos = Position + ModelOffset;
+    vec3 COffsetHoriz = vec3(COffset.x, 0, COffset.z);
+    vec3 COffsetVert = vec3(0, COffset.y, 0);
+    vec3 pos = Position + ModelOffset + COffsetVert;
     float x = pos.x;
     float z = pos.z;
-    vec3 sinPos = Position + COffset;
+    vec3 sinPos = Position + COffsetHoriz;
     float sx = sinPos.x;
     float sz = sinPos.z;
 

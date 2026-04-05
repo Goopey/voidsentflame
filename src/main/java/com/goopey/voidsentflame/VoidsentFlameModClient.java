@@ -48,7 +48,7 @@ public class VoidsentFlameModClient {
  
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent.AfterEntities event) {
-        VoidSeaRenderer.getInstance().render(event);
+//        VoidSeaRenderer.getInstance().render(event);
     }
 
     @SubscribeEvent
