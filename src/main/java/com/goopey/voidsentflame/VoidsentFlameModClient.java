@@ -6,7 +6,11 @@ import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.PeriodicNotificationManager;
+import net.minecraft.client.renderer.CloudRenderer;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.resources.FoliageColorReloadListener;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -55,15 +59,15 @@ public class VoidsentFlameModClient {
     @SubscribeEvent
     public static void onRegisterReloadListeners(AddClientReloadListenersEvent event) {
         // TODO : fix no registering when not on renderThread
-        event.addListener(BleedVisualEffect.LOCATION, BleedVisualEffect.INSTANCE);
-//        VoidsentFlameMod.LOGGER.info("###################################" + event.getLastVanillaListener().getClass().toGenericString());
-//        VoidsentFlameMod.LOGGER.info("###################################" + event.getRegistry());
-//         TODO : remove test code (examples for addListeners)
-//        CloudRenderer e;
-//        GameRenderer e5;
-//        PeriodicNotificationManager e2;
-//        FoliageColorReloadListener e3;
-//        ClientHooks e4;
+//      event.addListener(BleedVisualEffect.LOCATION, BleedVisualEffect.INSTANCE);
+      // VoidsentFlameMod.LOGGER.info("###################################" + event.getLastVanillaListener().getClass().toGenericString());
+      // VoidsentFlameMod.LOGGER.info("###################################" + event.getRegistry());
+//       TODO : remove test code (examples for addListeners)
+//      CloudRenderer e;
+//      GameRenderer e5;
+//      PeriodicNotificationManager e2;
+//      FoliageColorReloadListener e3;
+//      ClientHooks e4;
     }
 
     @SubscribeEvent

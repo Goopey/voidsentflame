@@ -174,19 +174,23 @@ public class VoidSeaRenderer {
       this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
       pass1.executes(
         () -> {
-          RenderTarget handle = this.copyTargetHandle.get();
-          if (handle.getColorTexture() != null) {
+          RenderTarget copyTarget = this.copyTargetHandle.get();
+          RenderTarget mainTarget = this.mainTargetHandle.get();
+          if (copyTarget.getColorTexture() != null) {
             RenderSystem.getDevice().createCommandEncoder().clearColorTexture(
-              handle.getColorTexture(),
+              copyTarget.getColorTexture(),
               // do not change this color. Distort Effect depends on replacing whitespace.
               ARGB.color(255, 255, 255, 255)
             );
           }
-          if (handle.getDepthTexture() != null) {
-            RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(handle.getDepthTexture(), 1.0);
+          if (copyTarget.getDepthTexture() != null) {
+            RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(copyTarget.getDepthTexture(), 1.0);
           }
-//          handle.resize(mainTarget.width, mainTarget.height);
-          handle.copyDepthFrom(this.mainTarget);
+          // TODO : improve with non-tick based resizing
+          if (copyTarget.width != mainTarget.width || copyTarget.height != mainTarget.height) {
+            copyTarget.resize(mainTarget.width, mainTarget.height);
+          }
+            copyTarget.copyDepthFrom(mainTarget);
         }
       );
 
