@@ -3,6 +3,7 @@ package com.goopey.voidsentflame.core;
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.core.VFGpuBuffers.GpuBuffersNames;
 import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
+import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.shaders.UniformType;
@@ -44,9 +45,10 @@ public class VFRenderPipelines {
         .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_frag"))
         .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
-        .withSampler("Sampler0")
+        .withSampler("SamplerSea")
+        .withSampler("SamplerWorld")
         .withColorWrite(true, false)
-        .withDepthWrite(false)
+        .withDepthWrite(true)
         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
         .withCull(false)
         .withoutBlend()

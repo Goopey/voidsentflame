@@ -15,11 +15,13 @@ import com.mojang.blaze3d.opengl.GlRenderPass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
+import com.mojang.blaze3d.resource.RenderTargetDescriptor;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.textures.TextureFormat;
 import net.minecraft.client.renderer.*;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -109,8 +111,14 @@ public class VoidSeaRenderer {
     this.seaMeshBuffer = buildSea();
     this.seaDistortionBuffer = buildDistortion();
     // these values will be resized later
-    this.copyTarget = new TextureTarget("VoidSeaCopyTexture", 100, 100, true);
     this.mainTarget = Minecraft.getInstance().getMainRenderTarget();
+    this.copyTarget = new TextureTarget(
+      "VoidSeaCopyTexture",
+      this.mainTarget.width,
+      this.mainTarget.height,
+      true
+    );
+    this.copyTarget.copyDepthFrom(this.mainTarget);
     this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
   }
 
@@ -166,8 +174,19 @@ public class VoidSeaRenderer {
       this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
       pass1.executes(
         () -> {
-          this.copyTarget.resize(mainTarget.width, mainTarget.height);
-          this.copyTarget.copyDepthFrom(this.mainTarget);
+          RenderTarget handle = this.copyTargetHandle.get();
+          if (handle.getColorTexture() != null) {
+            RenderSystem.getDevice().createCommandEncoder().clearColorTexture(
+              handle.getColorTexture(),
+              // do not change this color. Distort Effect depends on replacing whitespace.
+              ARGB.color(255, 255, 255, 255)
+            );
+          }
+          if (handle.getDepthTexture() != null) {
+            RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(handle.getDepthTexture(), 1.0);
+          }
+//          handle.resize(mainTarget.width, mainTarget.height);
+          handle.copyDepthFrom(this.mainTarget);
         }
       );
 
@@ -255,17 +274,21 @@ public class VoidSeaRenderer {
     RenderTarget target = targetHandle.get();
     RenderTarget copy = copyHandle.get();
     GpuTextureView colorTextureViewT = target.getColorTextureView();
+    GpuTextureView depthTextureViewT = target.getDepthTextureView();
     GpuTextureView colorTextureViewC = copy.getColorTextureView();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
     RenderSystem.backupProjectionMatrix();
 
-    try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistort", colorTextureViewT, OptionalInt.empty())) {
+    try (RenderPass renderPass = encoder.createRenderPass(
+      () -> "VoidSeaDistort", colorTextureViewT, OptionalInt.empty(), depthTextureViewT, OptionalDouble.empty())
+    ) {
       renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORTION_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
 
-      renderPass.bindSampler("Sampler0", colorTextureViewC);
+      renderPass.bindSampler("SamplerSea", colorTextureViewC);
+      renderPass.bindSampler("SamplerWorld", colorTextureViewT);
 
       renderPass.setVertexBuffer(0, this.seaDistortionBuffer);
       renderPass.setIndexBuffer(this.seaDistortionBuffer, VertexFormat.IndexType.SHORT);
