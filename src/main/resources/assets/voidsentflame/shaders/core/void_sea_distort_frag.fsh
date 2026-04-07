@@ -36,9 +36,9 @@ void main() {
     vec4 abVal1 = texture(SamplerSea, texCoord + AB_OFFSET);
 
     vec4 aberrantColor = vec4(
-        (1.0 - AB_WEIGHTS.x) * (ghostColor.r) + (AB_WEIGHTS.x) * (abVal1.r),
-        (1.0 - AB_WEIGHTS.y) * (ghostColor.g) + (AB_WEIGHTS.y) * (abVal1.g),
-        ghostColor.b,
+        (1.0 - AB_WEIGHTS.x) * (seaColor.r) + (AB_WEIGHTS.x) * (abVal1.r),
+        (1.0 - AB_WEIGHTS.y) * (seaColor.g) + (AB_WEIGHTS.y) * (abVal1.g),
+        seaColor.b,
         1.0
     );
 
