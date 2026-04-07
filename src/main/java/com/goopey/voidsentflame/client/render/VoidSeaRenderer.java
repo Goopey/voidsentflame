@@ -190,7 +190,7 @@ public class VoidSeaRenderer {
           if (copyTarget.width != mainTarget.width || copyTarget.height != mainTarget.height) {
             copyTarget.resize(mainTarget.width, mainTarget.height);
           }
-            copyTarget.copyDepthFrom(mainTarget);
+          copyTarget.copyDepthFrom(mainTarget);
         }
       );
 
