@@ -1,5 +1,7 @@
 #version 150
 
+#moj_import <minecraft:globals.glsl>
+
 uniform sampler2D SamplerSea;
 uniform sampler2D SamplerWorld;
 
