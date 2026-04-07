@@ -143,7 +143,7 @@ public class VoidSeaRenderer {
     LevelRenderer levelRenderer = event.getLevelRenderer();
     if (level.dimension() != RUBICON) { return; }
     // account for which frame of the animation the texture is
-    int frame = (int) (level.getGameTime() % 15) / 3;
+    int frame = (int) (level.getGameTime() % 20) / 4;
 
     // get poseStack to start rendering
     PoseStack poseStack = event.getPoseStack();
