@@ -12,10 +12,9 @@ const vec3 WEIGHTS = vec3(0.333, 0.333, 0.333);
 //----chromatic aberration
 const vec2 AB_OFFSET = vec2(0, 0.0033);
 const vec3 AB_WEIGHTS = vec3(0.550, 0.587, 0.114);
-//----texture bleeding
-const int SAMPLES = 8;
-const vec2 BLEED_DIR = vec2(0.0, -1.0);
-const float BLEED_STRENGTH = 0.02;
+//----heatwave
+const float HEAT_STRENGTH = 0.02;
+const vec2 HEAT_SCALE = vec2(0, 0.5);
 //----gametime
 const float SECONDS_PER_DAY = 1200.00;
 
@@ -27,19 +26,11 @@ void main() {
     vec4 seaColor = texture(SamplerSea, texCoord);
     vec4 worldColor = texture(SamplerWorld, texCoord);
 
-    //----ghost trail
-    float mask = 1.0 - (seaColor.r * WEIGHTS.x + seaColor.g * WEIGHTS.y + seaColor.b * WEIGHTS.z);
+    //----heat wave
+    float jacked_time = 5.5 * time;
 
-    // heat distortion
-    vec2 distortion = vec2(
-        sin(texCoord.y * 25.0 + time * 5.0),
-        cos(texCoord.x * 25.0 + time * 5.0)
-    ) * 0.005;
-
-    // apply distortion
-    vec2 distortedUV = texCoord + distortion * mask;
-    vec4 distortedColor = texture(SamplerWorld, distortedUV);
-    vec4 distortedWorldColor = mix(distortedColor, seaColor, mask);
+    vec2 heatDistortCoord = texCoord + (1.0 - texCoord.y) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
+    vec4 heatDistortColor = texture(SamplerWorld, heatDistortCoord);
 
     //----chromatic aberration
     vec4 abVal1 = texture(SamplerSea, texCoord + AB_OFFSET);
@@ -54,8 +45,8 @@ void main() {
     //----overlays world texture over white part of screen
     bool isWhite = all(greaterThanEqual(seaColor.rgb, vec3(1.0 - TOLERANCE)));
     //call colors from other effects
-    vec4 mixedColor = isWhite ? distortedWorldColor : aberrantSeaColor;
+    vec4 mixedColor = isWhite ? heatDistortColor : aberrantSeaColor;
 
     // output
-    fragColor = distortedWorldColor;
+    fragColor = mixedColor;
 }
