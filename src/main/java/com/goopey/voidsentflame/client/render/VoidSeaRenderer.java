@@ -5,29 +5,16 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.goopey.voidsentflame.core.VFGpuBuffers;
-import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
-import com.mojang.blaze3d.opengl.GlCommandEncoder;
-import com.mojang.blaze3d.opengl.GlDebug;
-import com.mojang.blaze3d.opengl.GlDevice;
-import com.mojang.blaze3d.opengl.GlRenderPass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
-import com.mojang.blaze3d.resource.RenderTargetDescriptor;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.CommandEncoder;
-import com.mojang.blaze3d.systems.GpuDevice;
-import com.mojang.blaze3d.textures.TextureFormat;
 import net.minecraft.client.renderer.*;
 import net.minecraft.util.ARGB;
-import net.minecraft.util.Mth;
-import net.minecraft.util.profiling.Profiler;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
-import net.neoforged.neoforge.client.blaze3d.validation.ValidationCommandEncoder;
-import net.neoforged.neoforge.client.blaze3d.validation.ValidationRenderPass;
 import org.joml.*;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
@@ -84,19 +71,18 @@ public class VoidSeaRenderer {
   private static final int AMOUNT_OF_VERTICES = 155574;
   private final GpuBuffer seaMeshBuffer;
   private int seaMeshIndex;
-  private final GpuBuffer seaDistortionBuffer;
-  private int seaDistortionIndex;
+  private final GpuBuffer screenBuffer;
+  private int screenIndex;
   private final MappableRingBuffer positionBuffer;
-  private final TextureTarget copyTarget;
-  private ResourceHandle<TextureTarget> copyTargetHandle;
+  private final TextureTarget distortionTarget;
+  private ResourceHandle<TextureTarget> distortionTargetHandle;
+  private final TextureTarget blendTarget;
+  private ResourceHandle<TextureTarget> blendTargetHandle;
+  private final TextureTarget seaTarget;
+  private ResourceHandle<TextureTarget> seaTargetHandle;
   private final RenderTarget mainTarget;
   private ResourceHandle<RenderTarget> mainTargetHandle;
-  private GpuTextureView seaSprite;
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
-
-  // PostChain
-  private BleedVisualEffect bleedVisualEffect;
-  private PostPass distortionPass;
 
   // Dimension Stuff
   private static final ResourceKey<Level> RUBICON = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("voidsentflame:rubicon"));
@@ -109,17 +95,32 @@ public class VoidSeaRenderer {
     // Cache
     this.getSprites();
     this.seaMeshBuffer = buildSea();
-    this.seaDistortionBuffer = buildDistortion();
+    this.screenBuffer = buildDistortion();
+    this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
+
     // these values will be resized later
     this.mainTarget = Minecraft.getInstance().getMainRenderTarget();
-    this.copyTarget = new TextureTarget(
-      "VoidSeaCopyTexture",
+    this.distortionTarget = new TextureTarget(
+      "VoidSeaDistortionTexture",
       this.mainTarget.width,
       this.mainTarget.height,
       true
     );
-    this.copyTarget.copyDepthFrom(this.mainTarget);
-    this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
+    this.distortionTarget.copyDepthFrom(this.mainTarget);
+    this.blendTarget = new TextureTarget(
+      "VoidSeaBlendTexture",
+      this.mainTarget.width,
+      this.mainTarget.height,
+      true
+    );
+    this.blendTarget.copyDepthFrom(this.mainTarget);
+    this.seaTarget = new TextureTarget(
+      "VoidSeaSeaTexture",
+      this.mainTarget.width,
+      this.mainTarget.height,
+      true
+    );
+    this.seaTarget.copyDepthFrom(this.mainTarget);
   }
 
   public static VoidSeaRenderer getInstance() {
@@ -167,28 +168,33 @@ public class VoidSeaRenderer {
 
     // avoid crashes if the sprites were cleared 
     if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
-      this.copyTargetHandle = frameGraphBuilder.importExternal("VoidSeaCopyTexHandle", this.copyTarget);
+      this.distortionTargetHandle = frameGraphBuilder.importExternal("VoidSeaDistortionTexHandle", this.distortionTarget);
+      this.blendTargetHandle = frameGraphBuilder.importExternal("VoidSeaBlendTexHandle", this.blendTarget);
+      this.seaTargetHandle = frameGraphBuilder.importExternal("VoidSeaSeaTexHandle", this.seaTarget);
 
-      FramePass pass1 = frameGraphBuilder.addPass("resizeCopyPass1");
-      this.copyTargetHandle = pass1.readsAndWrites(this.copyTargetHandle);
+      FramePass pass1 = frameGraphBuilder.addPass("resizeClearCopyPass1");
+      this.distortionTargetHandle = pass1.readsAndWrites(this.distortionTargetHandle);
+      this.seaTargetHandle = pass1.readsAndWrites(this.seaTargetHandle);
+      this.blendTargetHandle = pass1.readsAndWrites(this.blendTargetHandle);
       this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
       pass1.executes(
-        () -> clearAndResizeTargets(this.mainTargetHandle, List.of(this.copyTargetHandle))
+        () -> clearAndResizeTargets(this.mainTargetHandle, List.of(this.distortionTargetHandle, this.blendTargetHandle, this.seaTargetHandle))
       );
 
       FramePass pass2 = frameGraphBuilder.addPass("VoidSeaMeshPass2");
       pass2.requires(pass1);
-      this.copyTargetHandle = pass2.readsAndWrites(this.copyTargetHandle);
+      this.seaTargetHandle = pass2.readsAndWrites(this.seaTargetHandle);
       pass2.executes(
-        () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.copyTargetHandle)
+        () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.seaTargetHandle)
       );
 
       FramePass pass3 = frameGraphBuilder.addPass("VoidSeaDistortPass3");
       pass3.requires(pass2);
-      this.copyTargetHandle = pass3.readsAndWrites(this.copyTargetHandle);
+      this.distortionTargetHandle = pass3.readsAndWrites(this.distortionTargetHandle);
+      this.seaTargetHandle = pass3.readsAndWrites(this.seaTargetHandle);
       this.mainTargetHandle = pass3.readsAndWrites(this.mainTargetHandle);
       pass3.executes(
-        () -> this.renderDistortion(this.mainTargetHandle, this.copyTargetHandle, this.GPU_SPRITE_ANIM_VIEW[frame])
+        () -> this.renderDistortion(this.mainTargetHandle, this.seaTargetHandle, this.distortionTargetHandle)
       );
     } else {
       this.getSprites();
@@ -252,11 +258,46 @@ public class VoidSeaRenderer {
 
   /**
    * TODO : comment
+   * @param writeTargetHandle
+   * @param distortionHandle
+   * @param seaHandle
+   */
+  private void renderDistortion(ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> distortionHandle) {
+    RenderTarget writeTarget = writeTargetHandle.get();
+    RenderTarget distortion = distortionHandle.get();
+    RenderTarget sea = seaHandle.get();
+    GpuTextureView colorTextureViewT = writeTarget.getColorTextureView();
+    GpuTextureView depthTextureViewT = writeTarget.getDepthTextureView();
+    GpuTextureView colorTextureViewC = sea.getColorTextureView();
+
+    CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+
+    RenderSystem.backupProjectionMatrix();
+
+    try (RenderPass renderPass = encoder.createRenderPass(
+      () -> "VoidSeaDistort", colorTextureViewT, OptionalInt.empty(), depthTextureViewT, OptionalDouble.empty())
+    ) {
+      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORTION_PIPELINE);
+      RenderSystem.bindDefaultUniforms(renderPass);
+
+      renderPass.bindSampler("SamplerSea", colorTextureViewC);
+      renderPass.bindSampler("SamplerWorld", colorTextureViewT);
+
+      renderPass.setVertexBuffer(0, this.screenBuffer);
+      renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);
+      renderPass.draw(0, this.screenIndex);
+    }
+
+    RenderSystem.restoreProjectionMatrix();
+  }
+
+  /**
+   * TODO : comment
    * @param targetHandle
    * @param copyHandle
    * @param voidSeaTexture
    */
-  private void renderDistortion(ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> copyHandle, GpuTextureView voidSeaTexture) {
+  private void renderBlend(ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> copyHandle, GpuTextureView voidSeaTexture) {
     RenderTarget target = targetHandle.get();
     RenderTarget copy = copyHandle.get();
     GpuTextureView colorTextureViewT = target.getColorTextureView();
@@ -276,13 +317,14 @@ public class VoidSeaRenderer {
       renderPass.bindSampler("SamplerSea", colorTextureViewC);
       renderPass.bindSampler("SamplerWorld", colorTextureViewT);
 
-      renderPass.setVertexBuffer(0, this.seaDistortionBuffer);
-      renderPass.setIndexBuffer(this.seaDistortionBuffer, VertexFormat.IndexType.SHORT);
-      renderPass.draw(0, this.seaDistortionIndex);
+      renderPass.setVertexBuffer(0, this.screenBuffer);
+      renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);
+      renderPass.draw(0, this.screenIndex);
     }
 
     RenderSystem.restoreProjectionMatrix();
   }
+
 
   /**
    * TODO : comment
@@ -315,6 +357,7 @@ public class VoidSeaRenderer {
       }
     }
   }
+
 
   //############################################
   //                BUILD SEA
@@ -370,7 +413,7 @@ public class VoidSeaRenderer {
       putBufferVertex(builder, x0, y0, z0, u0, v0);
 
       try (MeshData meshdata = builder.buildOrThrow()) {
-        this.seaDistortionIndex = meshdata.drawState().indexCount();
+        this.screenIndex = meshdata.drawState().indexCount();
         gpuBuffer = RenderSystem.getDevice().createBuffer(
           () -> "Distort quad",
           GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX,
@@ -452,13 +495,8 @@ public class VoidSeaRenderer {
     }
 
     this.GPU_SPRITE_ANIM_VIEW = spriteAnim;
-    RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
-    GpuDevice device = RenderSystem.getDevice();
-    this.seaSprite = device.createTextureView(
-      device.createTexture(() -> "seaSpriteSwapTexture", 15, TextureFormat.RGBA8, mainTarget.width, mainTarget.height, 1, 1)
-    );
   }
-  
+
   /**
    * Used to add a vertex at specific coordinates with an upwards normal
    * 
