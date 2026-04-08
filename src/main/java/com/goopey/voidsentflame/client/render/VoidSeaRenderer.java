@@ -173,25 +173,7 @@ public class VoidSeaRenderer {
       this.copyTargetHandle = pass1.readsAndWrites(this.copyTargetHandle);
       this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
       pass1.executes(
-        () -> {
-          RenderTarget copyTarget = this.copyTargetHandle.get();
-          RenderTarget mainTarget = this.mainTargetHandle.get();
-          if (copyTarget.getColorTexture() != null) {
-            RenderSystem.getDevice().createCommandEncoder().clearColorTexture(
-              copyTarget.getColorTexture(),
-              // do not change this color. Distort Effect depends on replacing whitespace.
-              ARGB.color(255, 255, 255, 255)
-            );
-          }
-          if (copyTarget.getDepthTexture() != null) {
-            RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(copyTarget.getDepthTexture(), 1.0);
-          }
-          // TODO : improve with non-tick based resizing
-          if (copyTarget.width != mainTarget.width || copyTarget.height != mainTarget.height) {
-            copyTarget.resize(mainTarget.width, mainTarget.height);
-          }
-          copyTarget.copyDepthFrom(mainTarget);
-        }
+        () -> clearAndResizeTargets(this.mainTargetHandle, List.of(this.copyTargetHandle))
       );
 
       FramePass pass2 = frameGraphBuilder.addPass("VoidSeaMeshPass2");
@@ -222,7 +204,7 @@ public class VoidSeaRenderer {
   //##############################################
 
   /**
-   *
+   * TODO : comment
    * @param cameraPos
    * @param matrix4fStack
    * @param frame
@@ -269,7 +251,7 @@ public class VoidSeaRenderer {
   }
 
   /**
-   *
+   * TODO : comment
    * @param targetHandle
    * @param copyHandle
    * @param voidSeaTexture
@@ -302,28 +284,36 @@ public class VoidSeaRenderer {
     RenderSystem.restoreProjectionMatrix();
   }
 
-  // TODO : remove if unneeded
-  private void renderPost(FrameGraphBuilder frameGraphBuilder) {
-    final ProfilerFiller profilerFiller = Profiler.get();
-    RenderTarget target = Minecraft.getInstance().getMainRenderTarget();
+  /**
+   * TODO : comment
+   * @param mainTargetHandle
+   * @param targetHandles
+   */
+  private void clearAndResizeTargets(ResourceHandle<RenderTarget> mainTargetHandle, List<ResourceHandle<? extends RenderTarget>> targetHandles) {
+    RenderTarget mainTarget = mainTargetHandle.get();
+    int width = mainTarget.width;
+    int height = mainTarget.height;
 
-    Optional<PostChain> postChainOpt = BleedVisualEffect.INSTANCE.prepare(Minecraft.getInstance().getResourceManager(), profilerFiller);
-    if (postChainOpt.isEmpty()) {
-      return;
+    for (ResourceHandle<? extends RenderTarget> targetHandle : targetHandles) {
+      RenderTarget target = targetHandle.get();
+
+      // clear textures
+      if (target.getColorTexture() != null) {
+        RenderSystem.getDevice().createCommandEncoder().clearColorTexture(target.getColorTexture(),
+          // do not change this color. Distort Effect depends on replacing whitespace.
+          ARGB.color(255, 255, 255, 255)
+        );
+      }
+      if (target.getDepthTexture() != null) {
+        RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(target.getDepthTexture(), 1.0);
+      }
+      target.copyDepthFrom(mainTarget);
+
+      // resize
+      if (target.width != width || target.height != height) {
+        target.resize(width, height);
+      }
     }
-    PostChain postChain = postChainOpt.get();
-
-    PostChain.TargetBundle bundle = PostChain.TargetBundle.of(
-      PostChain.MAIN_TARGET_ID,
-      frameGraphBuilder.importExternal("main", target)
-    );
-
-    postChain.addToFrame(
-      frameGraphBuilder,
-      target.width,
-      target.height,
-      bundle
-    );
   }
 
   //############################################
