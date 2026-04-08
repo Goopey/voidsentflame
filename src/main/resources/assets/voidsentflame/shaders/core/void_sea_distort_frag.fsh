@@ -4,6 +4,7 @@
 
 uniform sampler2D SamplerSea;
 uniform sampler2D SamplerWorld;
+uniform sampler2D SamplerBlend;
 
 //----white mask
 const float TOLERANCE = 0.05f;

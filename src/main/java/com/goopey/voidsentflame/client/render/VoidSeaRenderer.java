@@ -15,6 +15,7 @@ import com.mojang.blaze3d.systems.CommandEncoder;
 import net.minecraft.client.renderer.*;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
+import net.neoforged.neoforge.client.event.ScreenEvent;
 import org.joml.*;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
@@ -74,8 +75,6 @@ public class VoidSeaRenderer {
   private final GpuBuffer screenBuffer;
   private int screenIndex;
   private final MappableRingBuffer positionBuffer;
-  private final TextureTarget distortionTarget;
-  private ResourceHandle<TextureTarget> distortionTargetHandle;
   private final TextureTarget blendTarget;
   private ResourceHandle<TextureTarget> blendTargetHandle;
   private final TextureTarget seaTarget;
@@ -100,13 +99,6 @@ public class VoidSeaRenderer {
 
     // these values will be resized later
     this.mainTarget = Minecraft.getInstance().getMainRenderTarget();
-    this.distortionTarget = new TextureTarget(
-      "VoidSeaDistortionTexture",
-      this.mainTarget.width,
-      this.mainTarget.height,
-      true
-    );
-    this.distortionTarget.copyDepthFrom(this.mainTarget);
     this.blendTarget = new TextureTarget(
       "VoidSeaBlendTexture",
       this.mainTarget.width,
@@ -168,17 +160,15 @@ public class VoidSeaRenderer {
 
     // avoid crashes if the sprites were cleared 
     if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
-      this.distortionTargetHandle = frameGraphBuilder.importExternal("VoidSeaDistortionTexHandle", this.distortionTarget);
       this.blendTargetHandle = frameGraphBuilder.importExternal("VoidSeaBlendTexHandle", this.blendTarget);
       this.seaTargetHandle = frameGraphBuilder.importExternal("VoidSeaSeaTexHandle", this.seaTarget);
 
       FramePass pass1 = frameGraphBuilder.addPass("resizeClearCopyPass1");
-      this.distortionTargetHandle = pass1.readsAndWrites(this.distortionTargetHandle);
       this.seaTargetHandle = pass1.readsAndWrites(this.seaTargetHandle);
       this.blendTargetHandle = pass1.readsAndWrites(this.blendTargetHandle);
       this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
       pass1.executes(
-        () -> clearAndResizeTargets(this.mainTargetHandle, List.of(this.distortionTargetHandle, this.blendTargetHandle, this.seaTargetHandle))
+        () -> clearAndResizeTargets(this.mainTargetHandle, List.of(this.blendTargetHandle, this.seaTargetHandle))
       );
 
       FramePass pass2 = frameGraphBuilder.addPass("VoidSeaMeshPass2");
@@ -188,13 +178,22 @@ public class VoidSeaRenderer {
         () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.seaTargetHandle)
       );
 
-      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaDistortPass3");
+      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaBlendPass3");
       pass3.requires(pass2);
-      this.distortionTargetHandle = pass3.readsAndWrites(this.distortionTargetHandle);
       this.seaTargetHandle = pass3.readsAndWrites(this.seaTargetHandle);
       this.mainTargetHandle = pass3.readsAndWrites(this.mainTargetHandle);
+      this.blendTargetHandle = pass3.readsAndWrites(this.blendTargetHandle);
       pass3.executes(
-        () -> this.renderDistortion(this.mainTargetHandle, this.seaTargetHandle, this.distortionTargetHandle)
+        () -> this.renderBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
+      );
+
+      FramePass pass4 = frameGraphBuilder.addPass("VoidSeaDistortPass4");
+      pass4.requires(pass3);
+      this.blendTargetHandle = pass4.readsAndWrites(this.blendTargetHandle);
+      this.seaTargetHandle = pass4.readsAndWrites(this.seaTargetHandle);
+      this.mainTargetHandle = pass4.readsAndWrites(this.mainTargetHandle);
+      pass4.executes(
+        () -> this.renderDistortion(this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle)
       );
     } else {
       this.getSprites();
@@ -259,20 +258,19 @@ public class VoidSeaRenderer {
   /**
    * TODO : comment
    * @param writeTargetHandle
-   * @param distortionHandle
+   * @param blendHandle
    * @param seaHandle
    */
-  private void renderDistortion(ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> distortionHandle) {
+  private void renderDistortion(ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
-    RenderTarget distortion = distortionHandle.get();
+    RenderTarget blend = blendHandle.get();
     RenderTarget sea = seaHandle.get();
     GpuTextureView colorTextureViewT = writeTarget.getColorTextureView();
     GpuTextureView depthTextureViewT = writeTarget.getDepthTextureView();
-    GpuTextureView colorTextureViewC = sea.getColorTextureView();
+    GpuTextureView colorTextureViewS = sea.getColorTextureView();
+    GpuTextureView colorTextureViewB = blend.getColorTextureView();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-
-    RenderSystem.backupProjectionMatrix();
 
     try (RenderPass renderPass = encoder.createRenderPass(
       () -> "VoidSeaDistort", colorTextureViewT, OptionalInt.empty(), depthTextureViewT, OptionalDouble.empty())
@@ -280,49 +278,46 @@ public class VoidSeaRenderer {
       renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORTION_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
 
-      renderPass.bindSampler("SamplerSea", colorTextureViewC);
+      renderPass.bindSampler("SamplerSea", colorTextureViewS);
+      renderPass.bindSampler("SamplerBlend", colorTextureViewB);
       renderPass.bindSampler("SamplerWorld", colorTextureViewT);
 
       renderPass.setVertexBuffer(0, this.screenBuffer);
       renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);
       renderPass.draw(0, this.screenIndex);
     }
-
-    RenderSystem.restoreProjectionMatrix();
   }
 
   /**
    * TODO : comment
-   * @param targetHandle
-   * @param copyHandle
-   * @param voidSeaTexture
+   * @param writeTargetHandle
+   * @param seaHandle
+   * @param worldHandle
    */
-  private void renderBlend(ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> copyHandle, GpuTextureView voidSeaTexture) {
-    RenderTarget target = targetHandle.get();
-    RenderTarget copy = copyHandle.get();
-    GpuTextureView colorTextureViewT = target.getColorTextureView();
-    GpuTextureView depthTextureViewT = target.getDepthTextureView();
-    GpuTextureView colorTextureViewC = copy.getColorTextureView();
+  private void renderBlend(ResourceHandle<TextureTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<RenderTarget> worldHandle) {
+    RenderTarget writeTarget = writeTargetHandle.get();
+    RenderTarget sea = seaHandle.get();
+    RenderTarget world = worldHandle.get();
+    GpuTextureView colorTextureViewT = writeTarget.getColorTextureView();
+    GpuTextureView depthTextureViewT = writeTarget.getDepthTextureView();
+    GpuTextureView colorTextureViewS = sea.getColorTextureView();
+    GpuTextureView colorTextureViewW = world.getColorTextureView();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-
-    RenderSystem.backupProjectionMatrix();
 
     try (RenderPass renderPass = encoder.createRenderPass(
       () -> "VoidSeaDistort", colorTextureViewT, OptionalInt.empty(), depthTextureViewT, OptionalDouble.empty())
     ) {
-      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORTION_PIPELINE);
+      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_BLEND_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
 
-      renderPass.bindSampler("SamplerSea", colorTextureViewC);
-      renderPass.bindSampler("SamplerWorld", colorTextureViewT);
+      renderPass.bindSampler("SamplerSea", colorTextureViewS);
+      renderPass.bindSampler("SamplerWorld", colorTextureViewW);
 
       renderPass.setVertexBuffer(0, this.screenBuffer);
       renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);
       renderPass.draw(0, this.screenIndex);
     }
-
-    RenderSystem.restoreProjectionMatrix();
   }
 
 

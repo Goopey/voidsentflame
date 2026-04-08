@@ -17,6 +17,7 @@ public class VFRenderPipelines {
   public static RenderPipeline.Snippet GLOBALS_TERRAIN_SNIPPET;
   public static RenderPipeline.Snippet WORLD_POS_SNIPPET;
   public static RenderPipeline VOID_SEA_MESH_PIPELINE;
+  public static RenderPipeline VOID_SEA_BLEND_PIPELINE;
   public static RenderPipeline VOID_SEA_DISTORTION_PIPELINE;
 
   static {
@@ -39,6 +40,21 @@ public class VFRenderPipelines {
         .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .build());
+    VOID_SEA_BLEND_PIPELINE = RenderPipelines.register(
+      RenderPipeline.builder(new RenderPipeline.Snippet[0])
+        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_blend"))
+        .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_blend_frag"))
+        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+        .withSampler("SamplerSea")
+        .withSampler("SamplerWorld")
+        .withColorWrite(true, false)
+        .withDepthWrite(true)
+        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+        .withCull(false)
+        .withoutBlend()
+        .build()
+    );
     VOID_SEA_DISTORTION_PIPELINE = RenderPipelines.register(
       RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.GLOBALS_SNIPPET})
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distort"))
@@ -47,6 +63,7 @@ public class VFRenderPipelines {
         .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
         .withSampler("SamplerSea")
         .withSampler("SamplerWorld")
+        .withSampler("SamplerBlend")
         .withColorWrite(true, false)
         .withDepthWrite(true)
         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
