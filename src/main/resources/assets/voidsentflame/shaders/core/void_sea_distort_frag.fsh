@@ -15,6 +15,7 @@ const vec2 AB_OFFSET = vec2(0, 0.0033);
 const vec3 AB_WEIGHTS = vec3(0.550, 0.587, 0.114);
 //----heatwave
 const float HEAT_STRENGTH = 0.02;
+const vec2 HEAT_OFFSET = vec2(0, 0.2);
 const vec2 HEAT_SCALE = vec2(0, 0.5);
 //----gametime
 const float SECONDS_PER_DAY = 1200.00;
@@ -26,12 +27,16 @@ void main() {
     float time = GameTime * SECONDS_PER_DAY;
     vec4 seaColor = texture(SamplerSea, texCoord);
     vec4 worldColor = texture(SamplerWorld, texCoord);
+    vec4 blendColor = texture(SamplerBlend, texCoord);
 
     //----heat wave
     float jacked_time = 5.5 * time;
 
-    vec2 heatDistortCoord = texCoord + (1.0 - texCoord.y) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
-    vec4 heatDistortColor = texture(SamplerWorld, heatDistortCoord);
+    vec2 heatCoord = texCoord + (1.0 - texCoord.y) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
+    //vec4 offsetSea = texture(SamplerSea, texCoord + HEAT_OFFSET);
+    //bool isCloseToSea = all(greaterThanEqual(offsetSea.rgb, vec3(1.0 - TOLERANCE)));
+    vec4 heatColor = texture(SamplerBlend, heatCoord);
+    //vec4 finalHeatColor = isCloseToSea ? heatColor : blendColor;
 
     //----chromatic aberration
     vec4 abVal1 = texture(SamplerSea, texCoord + AB_OFFSET);
@@ -46,7 +51,7 @@ void main() {
     //----overlays world texture over white part of screen
     bool isWhite = all(greaterThanEqual(seaColor.rgb, vec3(1.0 - TOLERANCE)));
     //call colors from other effects
-    vec4 mixedColor = isWhite ? heatDistortColor : aberrantSeaColor;
+    vec4 mixedColor = isWhite ? heatColor : aberrantSeaColor;
 
     // output
     fragColor = mixedColor;
