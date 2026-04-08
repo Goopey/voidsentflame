@@ -64,6 +64,7 @@ public class VFRenderPipelines {
         .withSampler("SamplerSea")
         .withSampler("SamplerWorld")
         .withSampler("SamplerBlend")
+        .withSampler("SamplerHeatWave")
         .withColorWrite(true, false)
         .withDepthWrite(true)
         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)

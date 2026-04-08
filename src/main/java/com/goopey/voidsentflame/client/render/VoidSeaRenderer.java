@@ -81,6 +81,7 @@ public class VoidSeaRenderer {
   private ResourceHandle<TextureTarget> seaTargetHandle;
   private final RenderTarget mainTarget;
   private ResourceHandle<RenderTarget> mainTargetHandle;
+  private GpuTextureView heatWaveTextureView;
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
 
   // Dimension Stuff
@@ -281,6 +282,7 @@ public class VoidSeaRenderer {
       renderPass.bindSampler("SamplerSea", colorTextureViewS);
       renderPass.bindSampler("SamplerBlend", colorTextureViewB);
       renderPass.bindSampler("SamplerWorld", colorTextureViewT);
+      renderPass.bindSampler("SamplerHeatWave", this.heatWaveTextureView);
 
       renderPass.setVertexBuffer(0, this.screenBuffer);
       renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);
@@ -490,6 +492,9 @@ public class VoidSeaRenderer {
     }
 
     this.GPU_SPRITE_ANIM_VIEW = spriteAnim;
+    ResourceLocation gpuResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/heat_wave.png");
+    AbstractTexture abstText = Minecraft.getInstance().getTextureManager().getTexture(gpuResLoc);
+    this.heatWaveTextureView = abstText.getTextureView();
   }
 
   /**

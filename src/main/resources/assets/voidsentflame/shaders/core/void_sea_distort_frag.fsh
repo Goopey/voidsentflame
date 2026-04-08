@@ -11,12 +11,13 @@ const float TOLERANCE = 0.05f;
 //----luminance
 const vec3 WEIGHTS = vec3(0.333, 0.333, 0.333);
 //----chromatic aberration
-const vec2 AB_OFFSET = vec2(0, 0.0033);
-const vec3 AB_WEIGHTS = vec3(0.550, 0.587, 0.114);
+const vec2 AB_OFFSET = vec2(0, 0.012);
+const vec3 AB_WEIGHTS = vec3(0.360, 0.360, 0);
 //----heatwave
 const float HEAT_STRENGTH = 0.02;
-const vec2 HEAT_OFFSET = vec2(0, 0.2);
+const vec2 HEAT_OFFSET = vec2(0, -0.25);
 const vec2 HEAT_SCALE = vec2(0, 0.5);
+const float HEAT_MASK_HEIGHT = 0.1;
 //----gametime
 const float SECONDS_PER_DAY = 1200.00;
 
@@ -33,26 +34,28 @@ void main() {
     float jacked_time = 5.5 * time;
 
     vec2 heatCoord = texCoord + (1.0 - texCoord.y) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
-    //vec4 offsetSea = texture(SamplerSea, texCoord + HEAT_OFFSET);
-    //bool isCloseToSea = all(greaterThanEqual(offsetSea.rgb, vec3(1.0 - TOLERANCE)));
     vec4 heatColor = texture(SamplerBlend, heatCoord);
-    //vec4 finalHeatColor = isCloseToSea ? heatColor : blendColor;
-
-    //----chromatic aberration
-    vec4 abVal1 = texture(SamplerSea, texCoord + AB_OFFSET);
-
-    vec4 aberrantSeaColor = vec4(
-        (1.0 - AB_WEIGHTS.x) * (seaColor.r) + (AB_WEIGHTS.x) * (abVal1.r),
-        (1.0 - AB_WEIGHTS.y) * (seaColor.g) + (AB_WEIGHTS.y) * (abVal1.g),
-        seaColor.b,
+    //----heat chromatic aberration
+    heatColor = vec4(
+        heatColor.r,
+        heatColor.g,
+        heatColor.b,
         1.0
     );
 
-    //----overlays world texture over white part of screen
+    // expand the sea texture in 3 directions to "pad" the texture
+    vec2 blowUpCoord[3] = {{0, -0.5 * HEAT_MASK_HEIGHT}, {HEAT_MASK_HEIGHT, 0}, {-HEAT_MASK_HEIGHT, 0}};
+    vec4 offsetSea = vec4(0.0);
+    for (int i = 0; i < 3; i++) {
+        offsetSea += vec4(1.0) - texture(SamplerSea, texCoord + blowUpCoord[i]);
+    }
+    offsetSea = vec4(1.0) - offsetSea;
+
     bool isWhite = all(greaterThanEqual(seaColor.rgb, vec3(1.0 - TOLERANCE)));
-    //call colors from other effects
-    vec4 mixedColor = isWhite ? heatColor : aberrantSeaColor;
+    bool isCloseToSea = isWhite && all(greaterThanEqual(offsetSea.rgb, vec3(1.0 - TOLERANCE)));
+
+    vec4 finalHeatColor = isCloseToSea ? blendColor : heatColor;
 
     // output
-    fragColor = mixedColor;
+    fragColor = finalHeatColor;
 }
