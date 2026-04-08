@@ -15,7 +15,6 @@ import com.mojang.blaze3d.systems.CommandEncoder;
 import net.minecraft.client.renderer.*;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
-import net.neoforged.neoforge.client.event.ScreenEvent;
 import org.joml.*;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
@@ -95,7 +94,7 @@ public class VoidSeaRenderer {
     // Cache
     this.getSprites();
     this.seaMeshBuffer = buildSea();
-    this.screenBuffer = buildDistortion();
+    this.screenBuffer = buildScreen();
     this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
 
     // these values will be resized later
@@ -387,7 +386,7 @@ public class VoidSeaRenderer {
     return gpuBuffer;
   }
 
-  private GpuBuffer buildDistortion() {
+  private GpuBuffer buildScreen() {
     VertexFormat format = DefaultVertexFormat.POSITION_TEX;
     VertexFormat.Mode mode = VertexFormat.Mode.QUADS;
     GpuBuffer gpuBuffer;

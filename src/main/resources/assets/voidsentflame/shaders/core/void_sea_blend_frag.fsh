@@ -26,6 +26,8 @@ void main() {
         1.0
     );
 
+    //aberrantSeaColor = aberrantSeaColor + aberrantSeaColor * aberrantSeaColor * aberrantSeaColor * aberrantSeaColor;
+
     //----overlays world texture over white part of screen
     bool isWhite = all(greaterThanEqual(seaColor.rgb, vec3(1.0 - TOLERANCE)));
     //call colors from other effects
