@@ -35,30 +35,29 @@ void main() {
     vec4 blendColor = texture(SamplerBlend, texCoord);
 
     //----gold foam
-    vec2 flow = vec2(0.1, 0.05) * time;
-    vec2 uv1 = texCoord * 2.5 + flow;
-    float n1 = texture(SamplerHeatWave, uv1).r;
+    //vec2 flow = vec2(0.015, -0.05) * time * 0.15;
+    //vec2 uv1 = texCoord * 2.5 + flow;
+    //float n1 = texture(SamplerHeatWave, uv1).r;
 
     // Secondary distortion
-    vec2 uv2 = texCoord * 4.0 - flow * 1.5;
-    float n2 = texture(SamplerHeatWave, uv2).r;
+    //vec2 uv2 = texCoord * 4.0 - flow * 1.5;
+    //float n2 = texture(SamplerHeatWave, uv2).r;
 
     // Distort coordinates (important for organic foam look)
-    vec2 distortedUV = uv1 + vec2(n2 - 0.5) * 0.2;
-    float nTex = texture(SamplerHeatWave, distortedUV).r;
+    //vec2 distortedUV = uv1 + vec2(n2 - 0.5) * 0.2;
+    //float nTex = texture(SamplerHeatWave, distortedUV).r;
 
     // Foam shaping
-    float foam = smoothstep(0.65, 0.8, nTex);
+    //float foam = smoothstep(0.65, 0.8, nTex);
     // Sharper highlights
-    foam += pow(nTex, 4.0) * 0.2;
-    vec4 goldColor = vec4(GOLD * foam, 1.0);
+    //foam += pow(nTex, 4.0) * 0.2;
+    //vec4 goldColor = vec4(GOLD * foam, 0.5);
 
     //----heat wave
     float jacked_time = 5.5 * time;
 
     vec2 heatCoord = texCoord + (1.0 - texCoord.y) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
     vec4 heatColor = texture(SamplerBlend, heatCoord);
-    vec4 plasmaColor = texture(SamplerHeatWave, heatCoord + vec2(0.0, 0.15 * sin(jacked_time * 0.05) + 0.67));
 
     //----heat wave padding : expand the sea texture in 3 directions to "pad" the texture
     vec2 blowUpCoord[3] = {{0, -0.5 * HEAT_MASK_HEIGHT}, {HEAT_MASK_HEIGHT, 0}, {-HEAT_MASK_HEIGHT, 0}};

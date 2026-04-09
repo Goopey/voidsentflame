@@ -57,6 +57,7 @@ public class VoidSeaRenderer {
 
   // World Position
   private static final double HEIGHT = -42.5;
+  private static final double HEAT_HEIGHT = -26.5;
   private static final int OFFSET = 256;
   private static final int VIEW_DISTANCE_SCALE = 16;
   
@@ -80,7 +81,10 @@ public class VoidSeaRenderer {
   private ResourceHandle<TextureTarget> seaTargetHandle;
   private final RenderTarget mainTarget;
   private ResourceHandle<RenderTarget> mainTargetHandle;
+  private final RenderTarget distortionTarget;
+  private ResourceHandle<RenderTarget> distortionTargetHandle;
   private GpuTextureView heatWaveTextureView;
+  private GpuTextureView whiteTextureView;
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
 
   // Dimension Stuff
@@ -106,6 +110,13 @@ public class VoidSeaRenderer {
       true
     );
     this.blendTarget.copyDepthFrom(this.mainTarget);
+    this.distortionTarget = new TextureTarget(
+      "VoidSeaDistortionTexture",
+      this.mainTarget.width,
+      this.mainTarget.height,
+      true
+    );
+    this.distortionTarget.copyDepthFrom(this.mainTarget);
     this.seaTarget = new TextureTarget(
       "VoidSeaSeaTexture",
       this.mainTarget.width,
@@ -162,13 +173,15 @@ public class VoidSeaRenderer {
     if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
       this.blendTargetHandle = frameGraphBuilder.importExternal("VoidSeaBlendTexHandle", this.blendTarget);
       this.seaTargetHandle = frameGraphBuilder.importExternal("VoidSeaSeaTexHandle", this.seaTarget);
+      this.distortionTargetHandle = frameGraphBuilder.importExternal("VoidSeaDistortHandle", this.distortionTarget);
 
       FramePass pass1 = frameGraphBuilder.addPass("resizeClearCopyPass1");
       this.seaTargetHandle = pass1.readsAndWrites(this.seaTargetHandle);
       this.blendTargetHandle = pass1.readsAndWrites(this.blendTargetHandle);
       this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
+      this.distortionTargetHandle = pass1.readsAndWrites(this.distortionTargetHandle);
       pass1.executes(
-        () -> clearAndResizeTargets(this.mainTargetHandle, List.of(this.blendTargetHandle, this.seaTargetHandle))
+        () -> clearAndResizeTargets(this.mainTargetHandle, List.of(this.blendTargetHandle, this.seaTargetHandle, this.distortionTargetHandle))
       );
 
       FramePass pass2 = frameGraphBuilder.addPass("VoidSeaMeshPass2");
@@ -176,6 +189,13 @@ public class VoidSeaRenderer {
       this.seaTargetHandle = pass2.readsAndWrites(this.seaTargetHandle);
       pass2.executes(
         () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.seaTargetHandle)
+      );
+
+      FramePass passK = frameGraphBuilder.addPass("VoidSeaMeshDistortPass3");
+      passK.requires(pass1);
+      this.distortionTargetHandle = passK.readsAndWrites(this.distortionTargetHandle);
+      passK.executes(
+        () -> this.renderDistortion(cameraPos, matrix4fStack, this.whiteTextureView, this.distortionTargetHandle)
       );
 
       FramePass pass3 = frameGraphBuilder.addPass("VoidSeaBlendPass3");
@@ -193,7 +213,7 @@ public class VoidSeaRenderer {
       this.seaTargetHandle = pass4.readsAndWrites(this.seaTargetHandle);
       this.mainTargetHandle = pass4.readsAndWrites(this.mainTargetHandle);
       pass4.executes(
-        () -> this.renderDistortion(this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle)
+        () -> this.renderHeatWave(this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle)
       );
     } else {
       this.getSprites();
@@ -256,12 +276,59 @@ public class VoidSeaRenderer {
   }
 
   /**
+   * A method similar to renderSea but without a depthBuffer. Helps build the part of the world distortion effects that will be applied later.
+   * @param cameraPos the position of the camera/player. Used to lock the wave at the proper height in the world.
+   * @param matrix4fStack the orientation of the camera and other things. Critical for objects to stay in their proper position/orientation.
+   * @param texture the white texture
+   * @param targetHandle the target stuff will be rendered to
+   */
+  private void renderDistortion(Vec3 cameraPos, Matrix4fStack matrix4fStack, GpuTextureView texture, ResourceHandle<? extends RenderTarget> targetHandle) {
+    RenderTarget target = targetHandle.get();
+    GpuTextureView colorTextureView = target.getColorTextureView();
+    GpuTextureView depthTextureView = target.getDepthTextureView();
+
+    // setup dynamic uniforms
+    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
+      matrix4fStack,
+      new Vector4f(1f, 1f, 1f, 1f),
+      new Vector3f(0f, 0f, 0f),
+      new Matrix4f(),
+      0.0F
+    );
+
+    CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+
+    // setup other special uniforms
+    VFGpuBuffers.UseWorldPos(
+      this.positionBuffer,
+      new Vector3f((float) cameraPos.x, (float) (Math.min(HEAT_HEIGHT - cameraPos.y - AMPLITUDE, 0)) + AMPLITUDE, (float) cameraPos.z),
+      encoder
+    );
+
+    // setup render pass and actually use it
+    try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistort", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())) {
+      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_PIPELINE);
+      RenderSystem.bindDefaultUniforms(renderPass);
+      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+      // See void_sea_mesh_vert.vsh
+      renderPass.setUniform("ChunkOffset", this.positionBuffer.currentBuffer());
+
+      renderPass.bindSampler("Sampler0", texture);
+      renderPass.bindSampler("Sampler1", texture);
+
+      renderPass.setVertexBuffer(0, this.seaMeshBuffer);
+      renderPass.setIndexBuffer(this.seaMeshBuffer, VertexFormat.IndexType.SHORT);
+      renderPass.draw(0, this.seaMeshIndex);
+    }
+  }
+
+  /**
    * TODO : comment
    * @param writeTargetHandle
    * @param blendHandle
    * @param seaHandle
    */
-  private void renderDistortion(ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle) {
+  private void renderHeatWave(ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
     RenderTarget blend = blendHandle.get();
     RenderTarget sea = seaHandle.get();
@@ -321,7 +388,6 @@ public class VoidSeaRenderer {
     }
   }
 
-
   /**
    * TODO : comment
    * @param mainTargetHandle
@@ -344,8 +410,8 @@ public class VoidSeaRenderer {
       }
       if (target.getDepthTexture() != null) {
         RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(target.getDepthTexture(), 1.0);
+        target.copyDepthFrom(mainTarget);
       }
-      target.copyDepthFrom(mainTarget);
 
       // resize
       if (target.width != width || target.height != height) {
@@ -494,6 +560,9 @@ public class VoidSeaRenderer {
     ResourceLocation gpuResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/heat_wave.png");
     AbstractTexture abstText = Minecraft.getInstance().getTextureManager().getTexture(gpuResLoc);
     this.heatWaveTextureView = abstText.getTextureView();
+    gpuResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/white.png");
+    abstText = Minecraft.getInstance().getTextureManager().getTexture(gpuResLoc);
+    this.whiteTextureView = abstText.getTextureView();
   }
 
   /**
