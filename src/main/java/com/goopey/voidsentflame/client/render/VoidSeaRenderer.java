@@ -172,7 +172,11 @@ public class VoidSeaRenderer {
     Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
     float deltaTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
     Vec3 cameraPos = cameraEntity.getPosition(deltaTick);
-    Vector2f cameraRot = new Vector2f(cameraEntity.getXRot(deltaTick), cameraEntity.getYRot(deltaTick));
+    // convert to ranges from -1 to 1.
+    Vector2f cameraRot = new Vector2f(
+      cameraEntity.getXRot(deltaTick) / 90,
+      cameraEntity.getYRot(deltaTick) / 180
+    );
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
     matrix4fStack.pushMatrix();
@@ -444,6 +448,11 @@ public class VoidSeaRenderer {
     for (ResourceHandle<? extends RenderTarget> targetHandle : targetHandles) {
       RenderTarget target = targetHandle.get();
 
+      // resize
+      if (target.width != width || target.height != height) {
+        target.resize(width, height);
+      }
+
       // clear textures
       if (target.getColorTexture() != null) {
         RenderSystem.getDevice().createCommandEncoder().clearColorTexture(target.getColorTexture(),
@@ -454,11 +463,6 @@ public class VoidSeaRenderer {
       if (target.getDepthTexture() != null) {
         RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(target.getDepthTexture(), 1.0);
         target.copyDepthFrom(mainTarget);
-      }
-
-      // resize
-      if (target.width != width || target.height != height) {
-        target.resize(width, height);
       }
     }
   }
