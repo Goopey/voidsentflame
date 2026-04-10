@@ -174,8 +174,8 @@ public class VoidSeaRenderer {
     Vec3 cameraPos = cameraEntity.getPosition(deltaTick);
     // convert to ranges from -1 to 1.
     Vector2f cameraRot = new Vector2f(
-      cameraEntity.getXRot(deltaTick) / 90,
-      cameraEntity.getYRot(deltaTick) / 180
+      (float) ((cameraEntity.getXRot(deltaTick) / 90) * Math.PI),
+      (float) ((cameraEntity.getYRot(deltaTick) / 180) * Math.PI)
     );
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();

@@ -62,7 +62,9 @@ void main() {
     vec4 heatColor = texture(SamplerBlend, heatCoord);
 
     vec3 heatMask = texture(SamplerHeatWave, texCoord).rgb;
-    heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - texCoord.y) * (1.0 + cos(lookAngle.x)));
+    float strength = 1.0 - cos(lookAngle.x);
+    heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - texCoord.y) * strength);
+    //heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - texCoord.y));
 
     //----combine textures
     bool isWhite = all(greaterThanEqual(seaColor.rgb, vec3(1.0 - TOLERANCE)));

@@ -222,7 +222,7 @@ public class VFGpuBuffers {
   // Custom UBO names
   public enum VFGpuBuffersNames {
     WORLD_POS("ChunkOffset"),
-    LOOK_ANGLE("LOOK_ANGLE");
+    LOOK_ANGLE("LookAngle");
 
     public String name;
 
