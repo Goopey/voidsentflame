@@ -195,28 +195,29 @@ public class VoidSeaRenderer {
         () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.seaTargetHandle)
       );
 
-      FramePass passK1 = frameGraphBuilder.addPass("VoidSeaMeshDistortPass3");
-      passK1.requires(pass1);
-      this.distortionTargetHandle = passK1.readsAndWrites(this.distortionTargetHandle);
-      passK1.executes(
+      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaMeshDistortPass3");
+      pass3.requires(pass1);
+      this.distortionTargetHandle = pass3.readsAndWrites(this.distortionTargetHandle);
+      pass3.executes(
         () -> this.renderDistortion(cameraPos, matrix4fStack, this.blackTextureView, this.distortionTargetHandle)
       );
 
-      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaBlendPass3");
-      pass3.requires(pass2);
-      this.seaTargetHandle = pass3.readsAndWrites(this.seaTargetHandle);
-      this.mainTargetHandle = pass3.readsAndWrites(this.mainTargetHandle);
-      this.blendTargetHandle = pass3.readsAndWrites(this.blendTargetHandle);
-      pass3.executes(
+      FramePass pass4 = frameGraphBuilder.addPass("VoidSeaBlendPass4");
+      pass4.requires(pass2);
+      pass4.requires(pass3);
+      this.seaTargetHandle = pass4.readsAndWrites(this.seaTargetHandle);
+      this.mainTargetHandle = pass4.readsAndWrites(this.mainTargetHandle);
+      this.blendTargetHandle = pass4.readsAndWrites(this.blendTargetHandle);
+      pass4.executes(
         () -> this.renderBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
       );
 
-      FramePass pass4 = frameGraphBuilder.addPass("VoidSeaDistortPass4");
-      pass4.requires(pass3);
-      this.blendTargetHandle = pass4.readsAndWrites(this.blendTargetHandle);
-      this.seaTargetHandle = pass4.readsAndWrites(this.seaTargetHandle);
-      this.mainTargetHandle = pass4.readsAndWrites(this.mainTargetHandle);
-      pass4.executes(
+      FramePass pass5 = frameGraphBuilder.addPass("VoidSeaDistortPass5");
+      pass5.requires(pass4);
+      this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
+      this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
+      this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
+      pass5.executes(
         () -> this.renderHeatWave(this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle)
       );
     } else {
