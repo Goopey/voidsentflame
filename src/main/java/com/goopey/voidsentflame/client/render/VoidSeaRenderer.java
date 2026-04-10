@@ -72,19 +72,22 @@ public class VoidSeaRenderer {
   private static final int AMOUNT_OF_VERTICES = 155574;
   private final GpuBuffer seaMeshBuffer;
   private int seaMeshIndex;
+  private final GpuBuffer bottomDistortionBuffer;
+  private int bottomDistortionIndex;
   private final GpuBuffer screenBuffer;
   private int screenIndex;
   private final MappableRingBuffer positionBuffer;
+  // blend targets
   private final TextureTarget blendTarget;
   private ResourceHandle<TextureTarget> blendTargetHandle;
   private final TextureTarget seaTarget;
   private ResourceHandle<TextureTarget> seaTargetHandle;
   private final RenderTarget mainTarget;
   private ResourceHandle<RenderTarget> mainTargetHandle;
-  private final RenderTarget distortionTarget;
-  private ResourceHandle<RenderTarget> distortionTargetHandle;
+  private final TextureTarget distortionTarget;
+  private ResourceHandle<TextureTarget> distortionTargetHandle;
   private GpuTextureView heatWaveTextureView;
-  private GpuTextureView whiteTextureView;
+  private GpuTextureView blackTextureView;
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
 
   // Dimension Stuff
@@ -99,6 +102,7 @@ public class VoidSeaRenderer {
     this.getSprites();
     this.seaMeshBuffer = buildSea();
     this.screenBuffer = buildScreen();
+    this.bottomDistortionBuffer = buildBottomDistortion();
     this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
 
     // these values will be resized later
@@ -191,11 +195,11 @@ public class VoidSeaRenderer {
         () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.seaTargetHandle)
       );
 
-      FramePass passK = frameGraphBuilder.addPass("VoidSeaMeshDistortPass3");
-      passK.requires(pass1);
-      this.distortionTargetHandle = passK.readsAndWrites(this.distortionTargetHandle);
-      passK.executes(
-        () -> this.renderDistortion(cameraPos, matrix4fStack, this.whiteTextureView, this.distortionTargetHandle)
+      FramePass passK1 = frameGraphBuilder.addPass("VoidSeaMeshDistortPass3");
+      passK1.requires(pass1);
+      this.distortionTargetHandle = passK1.readsAndWrites(this.distortionTargetHandle);
+      passK1.executes(
+        () -> this.renderDistortion(cameraPos, matrix4fStack, this.blackTextureView, this.distortionTargetHandle)
       );
 
       FramePass pass3 = frameGraphBuilder.addPass("VoidSeaBlendPass3");
@@ -298,16 +302,23 @@ public class VoidSeaRenderer {
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
+    double height = HEAT_HEIGHT - cameraPos.y;
+
     // setup other special uniforms
     VFGpuBuffers.UseWorldPos(
       this.positionBuffer,
-      new Vector3f((float) cameraPos.x, (float) (Math.min(HEAT_HEIGHT - cameraPos.y - AMPLITUDE, 0)) + AMPLITUDE, (float) cameraPos.z),
+      new Vector3f((float) cameraPos.x, (float) (height), (float) cameraPos.z),
       encoder
     );
 
+
     // setup render pass and actually use it
-    try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistort", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())) {
-      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_PIPELINE);
+    try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistortTop", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())) {
+      if (height > 0) {
+        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_PIPELINE_B);
+      } else {
+        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_PIPELINE_T);
+      }
       RenderSystem.bindDefaultUniforms(renderPass);
       renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
       // See void_sea_mesh_vert.vsh
@@ -319,6 +330,25 @@ public class VoidSeaRenderer {
       renderPass.setVertexBuffer(0, this.seaMeshBuffer);
       renderPass.setIndexBuffer(this.seaMeshBuffer, VertexFormat.IndexType.SHORT);
       renderPass.draw(0, this.seaMeshIndex);
+    }
+
+    // setup bottom sphere
+    try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistortBottom", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())) {
+      if (height > 0) {
+        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_PIPELINE_B);
+      } else {
+        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_PIPELINE_T);
+      }
+      RenderSystem.bindDefaultUniforms(renderPass);
+      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+      renderPass.setUniform("ChunkOffset", this.positionBuffer.currentBuffer());
+
+      renderPass.bindSampler("Sampler0", texture);
+      renderPass.bindSampler("Sampler1", texture);
+
+      renderPass.setVertexBuffer(0, this.bottomDistortionBuffer);
+      renderPass.setIndexBuffer(this.bottomDistortionBuffer, VertexFormat.IndexType.SHORT);
+      renderPass.draw(0, this.bottomDistortionIndex);
     }
   }
 
@@ -362,7 +392,7 @@ public class VoidSeaRenderer {
    * @param seaHandle
    * @param worldHandle
    */
-  private void renderBlend(ResourceHandle<TextureTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<RenderTarget> worldHandle) {
+  private void renderBlend(ResourceHandle<? extends RenderTarget> writeTargetHandle, ResourceHandle<? extends RenderTarget> seaHandle, ResourceHandle<? extends RenderTarget> worldHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
     RenderTarget sea = seaHandle.get();
     RenderTarget world = worldHandle.get();
@@ -444,6 +474,34 @@ public class VoidSeaRenderer {
         gpuBuffer = RenderSystem.getDevice().createBuffer(
           () -> "Void Sea Vertex Buffer",
           GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX, 
+          uploadBuffer
+        );
+      }
+    }
+
+    return gpuBuffer;
+  }
+
+  private GpuBuffer buildBottomDistortion() {
+    VertexFormat format = DefaultVertexFormat.BLOCK;
+    VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
+    GpuBuffer gpuBuffer;
+
+    // 5 faces out of 6 with 6 vertices each
+    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * 5 * 6)) {
+      BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
+
+      putCubeMeshVertex(bufferBuilder, OFFSET, (int) (HEAT_HEIGHT + 30), -OFFSET);
+
+      // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
+      // Last step of making the positions we're rendering stuff in.
+      try (MeshData meshData = bufferBuilder.buildOrThrow()) {
+        this.bottomDistortionIndex = meshData.drawState().indexCount();
+        ByteBuffer uploadBuffer = meshData.vertexBuffer();
+
+        gpuBuffer = RenderSystem.getDevice().createBuffer(
+          () -> "Void Sea Distortion Bottom Buffer",
+          GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX,
           uploadBuffer
         );
       }
@@ -537,6 +595,51 @@ public class VoidSeaRenderer {
   }
 
   /**
+   * Helper method used to create the bottom box of the distortion effect
+   * @param builder the buffer builder needed to add vertices to a mesh
+   * @param size the size of the square
+   * @param topHeight how high the square should cover the sky
+   * @param bottomHeight the low the square should cover the sky
+   */
+  private void putCubeMeshVertex(BufferBuilder builder, int size, int topHeight, int bottomHeight) {
+    float u0 = 0, v0 = 0;
+    float u1 = 1f, v1 = 1f;
+
+    int[][][] box = {
+      {     // Face A
+        {size, topHeight, -size}, {size, topHeight, size}, {size, bottomHeight, size}, {size, bottomHeight, -size}
+      },
+      {     // Face B
+        {size, topHeight, size}, {-size, topHeight, size}, {-size, bottomHeight, size}, {size, bottomHeight, size}
+      },
+      {     // Face C
+        {-size, topHeight, size}, {-size, topHeight, -size}, {-size, bottomHeight, -size}, {-size, bottomHeight, size}
+      },
+      {     // Face D
+        {-size, topHeight, -size}, {size, topHeight, -size}, {size, bottomHeight, -size}, {-size, bottomHeight, -size}
+      },
+      {     // Face E
+        {-size, bottomHeight, size}, {size, bottomHeight, size}, {size, bottomHeight, -size}, {-size, bottomHeight, -size}
+      }
+    };
+
+    for (int[][] face : box) {
+      Vector3f pos1 = new Vector3f(face[0][0], face[0][1], face[0][2]);
+      Vector3f pos2 = new Vector3f(face[1][0], face[1][1], face[1][2]);
+      Vector3f pos3 = new Vector3f(face[2][0], face[2][1], face[2][2]);
+      Vector3f pos4 = new Vector3f(face[3][0], face[3][1], face[3][2]);
+
+      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
+      putBufferVertex(builder, pos2.x, pos2.y, pos2.z, u0, v1);
+      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
+
+      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
+      putBufferVertex(builder, pos4.x, pos4.y, pos4.z, u1, v0);
+      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
+    }
+  }
+
+  /**
    * Helper method which gets a sprite from the block TextureAtlas using it's name and the animated sprites for the gpu texture.
    * Initializes textures for VoidSeaRenderer.
    * 
@@ -560,9 +663,9 @@ public class VoidSeaRenderer {
     ResourceLocation gpuResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/heat_wave.png");
     AbstractTexture abstText = Minecraft.getInstance().getTextureManager().getTexture(gpuResLoc);
     this.heatWaveTextureView = abstText.getTextureView();
-    gpuResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/white.png");
+    gpuResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/black.png");
     abstText = Minecraft.getInstance().getTextureManager().getTexture(gpuResLoc);
-    this.whiteTextureView = abstText.getTextureView();
+    this.blackTextureView = abstText.getTextureView();
   }
 
   /**

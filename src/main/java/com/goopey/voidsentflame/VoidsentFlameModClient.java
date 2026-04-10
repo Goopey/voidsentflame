@@ -1,7 +1,5 @@
 package com.goopey.voidsentflame;
 
-import com.goopey.voidsentflame.client.render.BleedVisualEffect;
-//import com.goopey.voidsentflame.block.blockentity.render.VoidSeaLayerBlockEntityRenderer;
 import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 
