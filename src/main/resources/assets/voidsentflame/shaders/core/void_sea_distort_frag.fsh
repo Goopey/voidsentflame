@@ -61,14 +61,15 @@ void main() {
     vec2 heatCoord = texCoord + (1.0 - texCoord.y) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
     vec4 heatColor = texture(SamplerBlend, heatCoord);
 
-    vec4 heatMask = texture(SamplerHeatWave, texCoord);
+    vec3 heatMask = texture(SamplerHeatWave, texCoord).rgb;
+    heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - texCoord.y));
 
     //----combine textures
     bool isWhite = all(greaterThanEqual(seaColor.rgb, vec3(1.0 - TOLERANCE)));
-    bool isCloseToSea = isWhite && all(greaterThanEqual(heatMask.rgb, vec3(1.0 - TOLERANCE)));
+    bool isCloseToSea = isWhite && all(greaterThanEqual(heatMask, vec3(1.0 - TOLERANCE)));
 
     vec4 finalHeatColor = isCloseToSea ? blendColor : heatColor;
 
     //----output
-    fragColor = heatMask;
+    fragColor = vec4(heatMask, 1.0);
 }
