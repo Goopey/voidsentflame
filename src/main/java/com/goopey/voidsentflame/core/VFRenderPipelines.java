@@ -16,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 public class VFRenderPipelines {
   public static RenderPipeline.Snippet GLOBALS_TERRAIN_SNIPPET;
   public static RenderPipeline.Snippet WORLD_POS_SNIPPET;
+  public static RenderPipeline.Snippet LOOK_ANGLE_SNIPPET;
   public static RenderPipeline VOID_SEA_MESH_PIPELINE;
   public static RenderPipeline VOID_SEA_MESH_DISTORT_PIPELINE_T;
   public static RenderPipeline VOID_SEA_MESH_DISTORT_PIPELINE_B;
@@ -29,38 +30,38 @@ public class VFRenderPipelines {
     WORLD_POS_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
       .withUniform(VFGpuBuffersNames.WORLD_POS.name, UniformType.UNIFORM_BUFFER)
       .buildSnippet();
+    LOOK_ANGLE_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[0])
+      .withUniform(VFGpuBuffersNames.LOOK_ANGLE.name, UniformType.UNIFORM_BUFFER)
+      .buildSnippet();
 
     VOID_SEA_MESH_PIPELINE = RenderPipelines.register(
-      RenderPipeline.builder(new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
+      RenderPipeline.builder(new RenderPipeline.Snippet[]{WORLD_POS_SNIPPET})
         // sets a pipeline name, not an actual file
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_mesh"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_frag"))
-        .withUniform("ChunkOffset", UniformType.UNIFORM_BUFFER)
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
         .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .build());
     VOID_SEA_MESH_DISTORT_PIPELINE_T = RenderPipelines.register(
-      RenderPipeline.builder(new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
+      RenderPipeline.builder(new RenderPipeline.Snippet[]{WORLD_POS_SNIPPET})
         // sets a pipeline name, not an actual file
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distortion_mesh"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_mesh_frag"))
-        .withUniform("ChunkOffset", UniformType.UNIFORM_BUFFER)
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
         .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .build());
     VOID_SEA_MESH_DISTORT_PIPELINE_B = RenderPipelines.register(
-      RenderPipeline.builder(new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
+      RenderPipeline.builder(new RenderPipeline.Snippet[]{WORLD_POS_SNIPPET})
         // sets a pipeline name, not an actual file
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distortion_mesh"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_mesh_frag"))
-        .withUniform("ChunkOffset", UniformType.UNIFORM_BUFFER)
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
         .withCull(false)
@@ -82,7 +83,7 @@ public class VFRenderPipelines {
         .build()
     );
     VOID_SEA_DISTORTION_PIPELINE = RenderPipelines.register(
-      RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.GLOBALS_SNIPPET})
+      RenderPipeline.builder(new RenderPipeline.Snippet[]{LOOK_ANGLE_SNIPPET})
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distort"))
         .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_frag"))

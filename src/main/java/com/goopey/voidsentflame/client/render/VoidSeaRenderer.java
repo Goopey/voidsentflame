@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.goopey.voidsentflame.core.VFGpuBuffers;
+import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -77,6 +78,7 @@ public class VoidSeaRenderer {
   private final GpuBuffer screenBuffer;
   private int screenIndex;
   private final MappableRingBuffer positionBuffer;
+  private final MappableRingBuffer lookAngleBuffer;
   // blend targets
   private final TextureTarget blendTarget;
   private ResourceHandle<TextureTarget> blendTargetHandle;
@@ -104,6 +106,7 @@ public class VoidSeaRenderer {
     this.screenBuffer = buildScreen();
     this.bottomDistortionBuffer = buildBottomDistortion();
     this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
+    this.lookAngleBuffer = VFGpuBuffers.VFLookAngleUbo.get();
 
     // these values will be resized later
     this.mainTarget = Minecraft.getInstance().getMainRenderTarget();
@@ -169,6 +172,7 @@ public class VoidSeaRenderer {
     Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
     float deltaTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
     Vec3 cameraPos = cameraEntity.getPosition(deltaTick);
+    Vector2f cameraRot = new Vector2f(cameraEntity.getXRot(deltaTick), cameraEntity.getYRot(deltaTick));
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
     matrix4fStack.pushMatrix();
@@ -219,7 +223,7 @@ public class VoidSeaRenderer {
       this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
       this.distortionTargetHandle = pass5.readsAndWrites(this.distortionTargetHandle);
       pass5.executes(
-        () -> this.renderHeatWave(this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
+        () -> this.renderHeatWave(cameraRot, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
       );
     } else {
       this.getSprites();
@@ -313,7 +317,6 @@ public class VoidSeaRenderer {
       encoder
     );
 
-
     // setup render pass and actually use it
     try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistortTop", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())) {
       if (height > 0) {
@@ -324,7 +327,7 @@ public class VoidSeaRenderer {
       RenderSystem.bindDefaultUniforms(renderPass);
       renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
       // See void_sea_mesh_vert.vsh
-      renderPass.setUniform("ChunkOffset", this.positionBuffer.currentBuffer());
+      renderPass.setUniform(VFGpuBuffersNames.WORLD_POS.name, this.positionBuffer.currentBuffer());
 
       renderPass.bindSampler("Sampler0", texture);
       renderPass.bindSampler("Sampler1", texture);
@@ -343,7 +346,7 @@ public class VoidSeaRenderer {
       }
       RenderSystem.bindDefaultUniforms(renderPass);
       renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
-      renderPass.setUniform("ChunkOffset", this.positionBuffer.currentBuffer());
+      renderPass.setUniform(VFGpuBuffersNames.WORLD_POS.name, this.positionBuffer.currentBuffer());
 
       renderPass.bindSampler("Sampler0", texture);
       renderPass.bindSampler("Sampler1", texture);
@@ -356,11 +359,12 @@ public class VoidSeaRenderer {
 
   /**
    * TODO : comment
+   * @param cameraRot
    * @param writeTargetHandle
    * @param blendHandle
    * @param seaHandle
    */
-  private void renderHeatWave(ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle, ResourceHandle<TextureTarget> distortionHandle) {
+  private void renderHeatWave(Vector2f cameraRot,ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle, ResourceHandle<TextureTarget> distortionHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
     RenderTarget blend = blendHandle.get();
     RenderTarget distortion = distortionHandle.get();
@@ -373,11 +377,16 @@ public class VoidSeaRenderer {
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
+    VFGpuBuffers.UseLookAngle(
+      this.lookAngleBuffer, cameraRot, encoder
+    );
+
     try (RenderPass renderPass = encoder.createRenderPass(
       () -> "VoidSeaDistort", colorTextureViewT, OptionalInt.empty(), depthTextureViewT, OptionalDouble.empty())
     ) {
       renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORTION_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
+      renderPass.setUniform(VFGpuBuffersNames.LOOK_ANGLE.name, this.lookAngleBuffer.currentBuffer());
 
       renderPass.bindSampler("SamplerSea", colorTextureViewS);
       renderPass.bindSampler("SamplerBlend", colorTextureViewB);

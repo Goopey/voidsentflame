@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.BeanProperty;
 import org.joml.Matrix4fc;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -26,7 +27,7 @@ public class VFGpuBuffers {
 
   // Custom UBOs
   public static Supplier<MappableRingBuffer> VFWorldPosUbo;
-  public static Supplier<MappableRingBuffer> VFHeightPosUbo;
+  public static Supplier<MappableRingBuffer> VFLookAngleUbo;
 
   //#####################################################################
   //#####################################################################
@@ -158,6 +159,12 @@ public class VFGpuBuffers {
           new Std140SizeCalculator()
             .putVec3()
             .get());
+    VFLookAngleUbo = () -> new MappableRingBuffer(
+      () -> VFGpuBuffersNames.LOOK_ANGLE.name,
+        GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE,
+        new Std140SizeCalculator()
+          .putVec2()
+          .get());
   }
 
   /**
@@ -172,6 +179,21 @@ public class VFGpuBuffers {
     try (GpuBuffer.MappedView bufferView = encoder.mapBuffer(ubo.currentBuffer(), false, true)) {
       Std140Builder std140Builder = Std140Builder.intoBuffer(bufferView.data());
       std140Builder.putVec3(pos);
+    }
+  }
+
+  /**
+   * Manages using a VFLookAngleUbo UBO. Does the rotation and assigning of values
+   *
+   * @param ubo the VFLookAngleUBO MappableRingBuffer
+   * @param angle the angle to pass to the buffer
+   * @param encoder the Validated Encoder to add values to the encoder
+   */
+  public static void UseLookAngle(MappableRingBuffer ubo, Vector2f angle, CommandEncoder encoder) {
+    ubo.rotate();
+    try (GpuBuffer.MappedView bufferView = encoder.mapBuffer(ubo.currentBuffer(), false, true)) {
+      Std140Builder std140Builder = Std140Builder.intoBuffer(bufferView.data());
+      std140Builder.putVec2(angle);
     }
   }
 
@@ -199,7 +221,8 @@ public class VFGpuBuffers {
 
   // Custom UBO names
   public enum VFGpuBuffersNames {
-    WORLD_POS("VFWorldPosition");
+    WORLD_POS("ChunkOffset"),
+    LOOK_ANGLE("LOOK_ANGLE");
 
     public String name;
 

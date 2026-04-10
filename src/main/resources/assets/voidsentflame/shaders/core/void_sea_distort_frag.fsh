@@ -1,6 +1,7 @@
 #version 150
 
 #moj_import <minecraft:globals.glsl>
+#moj_import <voidsentflame:lookangle.glsl>
 
 uniform sampler2D SamplerSea;
 uniform sampler2D SamplerWorld;
@@ -33,6 +34,7 @@ void main() {
     vec4 seaColor = texture(SamplerSea, texCoord);
     vec4 worldColor = texture(SamplerWorld, texCoord);
     vec4 blendColor = texture(SamplerBlend, texCoord);
+    vec2 angle = lookAngle;
 
     //----gold foam
     //vec2 flow = vec2(0.015, -0.05) * time * 0.15;
@@ -68,5 +70,5 @@ void main() {
     vec4 finalHeatColor = isCloseToSea ? blendColor : heatColor;
 
     //----output
-    fragColor = finalHeatColor;
+    fragColor = heatMask;
 }
