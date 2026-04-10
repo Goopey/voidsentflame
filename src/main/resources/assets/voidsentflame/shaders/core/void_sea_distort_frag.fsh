@@ -37,15 +37,15 @@ void main() {
     //----gold foam
     //vec2 flow = vec2(0.015, -0.05) * time * 0.15;
     //vec2 uv1 = texCoord * 2.5 + flow;
-    //float n1 = texture(SamplerHeatWave, uv1).r;
+    //float n1 = texture(SamplerTex, uv1).r;
 
     // Secondary distortion
     //vec2 uv2 = texCoord * 4.0 - flow * 1.5;
-    //float n2 = texture(SamplerHeatWave, uv2).r;
+    //float n2 = texture(SamplerTex, uv2).r;
 
     // Distort coordinates (important for organic foam look)
     //vec2 distortedUV = uv1 + vec2(n2 - 0.5) * 0.2;
-    //float nTex = texture(SamplerHeatWave, distortedUV).r;
+    //float nTex = texture(SamplerTex, distortedUV).r;
 
     // Foam shaping
     //float foam = smoothstep(0.65, 0.8, nTex);
@@ -59,17 +59,11 @@ void main() {
     vec2 heatCoord = texCoord + (1.0 - texCoord.y) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
     vec4 heatColor = texture(SamplerBlend, heatCoord);
 
-    //----heat wave padding : expand the sea texture in 3 directions to "pad" the texture
-    vec2 blowUpCoord[3] = {{0, -0.5 * HEAT_MASK_HEIGHT}, {HEAT_MASK_HEIGHT, 0}, {-HEAT_MASK_HEIGHT, 0}};
-    vec4 offsetSea = vec4(0.0);
-    for (int i = 0; i < 3; i++) {
-        offsetSea += vec4(1.0) - texture(SamplerSea, texCoord + blowUpCoord[i]);
-    }
-    offsetSea = vec4(1.0) - offsetSea;
+    vec4 heatMask = texture(SamplerHeatWave, texCoord);
 
     //----combine textures
     bool isWhite = all(greaterThanEqual(seaColor.rgb, vec3(1.0 - TOLERANCE)));
-    bool isCloseToSea = isWhite && all(greaterThanEqual(offsetSea.rgb, vec3(1.0 - TOLERANCE)));
+    bool isCloseToSea = isWhite && all(greaterThanEqual(heatMask.rgb, vec3(1.0 - TOLERANCE)));
 
     vec4 finalHeatColor = isCloseToSea ? blendColor : heatColor;
 

@@ -217,8 +217,9 @@ public class VoidSeaRenderer {
       this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
       this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
       this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
+      this.distortionTargetHandle = pass5.readsAndWrites(this.distortionTargetHandle);
       pass5.executes(
-        () -> this.renderHeatWave(this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle)
+        () -> this.renderHeatWave(this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
       );
     } else {
       this.getSprites();
@@ -271,8 +272,8 @@ public class VoidSeaRenderer {
       // See void_sea_mesh_vert.vsh
       renderPass.setUniform("ChunkOffset", this.positionBuffer.currentBuffer());
 
-      renderPass.bindSampler("Sampler0", frame);
-      renderPass.bindSampler("Sampler1", frame);
+      renderPass.bindSampler("Sampler0", this.blackTextureView);
+      renderPass.bindSampler("Sampler1", this.blackTextureView);
 
       renderPass.setVertexBuffer(0, this.seaMeshBuffer);
       renderPass.setIndexBuffer(this.seaMeshBuffer, VertexFormat.IndexType.SHORT);
@@ -359,14 +360,16 @@ public class VoidSeaRenderer {
    * @param blendHandle
    * @param seaHandle
    */
-  private void renderHeatWave(ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle) {
+  private void renderHeatWave(ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle, ResourceHandle<TextureTarget> distortionHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
     RenderTarget blend = blendHandle.get();
+    RenderTarget distortion = distortionHandle.get();
     RenderTarget sea = seaHandle.get();
     GpuTextureView colorTextureViewT = writeTarget.getColorTextureView();
     GpuTextureView depthTextureViewT = writeTarget.getDepthTextureView();
     GpuTextureView colorTextureViewS = sea.getColorTextureView();
     GpuTextureView colorTextureViewB = blend.getColorTextureView();
+    GpuTextureView colorTextureViewD = distortion.getColorTextureView();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
@@ -379,7 +382,7 @@ public class VoidSeaRenderer {
       renderPass.bindSampler("SamplerSea", colorTextureViewS);
       renderPass.bindSampler("SamplerBlend", colorTextureViewB);
       renderPass.bindSampler("SamplerWorld", colorTextureViewT);
-      renderPass.bindSampler("SamplerHeatWave", this.heatWaveTextureView);
+      renderPass.bindSampler("SamplerHeatWave", colorTextureViewD);
 
       renderPass.setVertexBuffer(0, this.screenBuffer);
       renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);
