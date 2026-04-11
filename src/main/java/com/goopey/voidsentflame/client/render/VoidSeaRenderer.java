@@ -226,31 +226,33 @@ public class VoidSeaRenderer {
         () -> this.renderDistortion(cameraPos, matrix4fStack, this.blackTextureView, this.distortionTargetHandle)
       );
 
-      FramePass passL = frameGraphBuilder.addPass("VoidSeaMeshDistortGradientPass4");
-      passL.requires(pass1);
-      this.distortionGradientTargetHandle = passL.readsAndWrites(this.distortionGradientTargetHandle);
-      passL.executes(
+      FramePass pass4 = frameGraphBuilder.addPass("VoidSeaMeshDistortGradientPass4");
+      pass4.requires(pass1);
+      this.distortionGradientTargetHandle = pass4.readsAndWrites(this.distortionGradientTargetHandle);
+      pass4.executes(
         () -> this.renderDistortionGradient(cameraPos, matrix4fStack, this.distortionGradientTargetHandle)
       );
 
-      FramePass pass4 = frameGraphBuilder.addPass("VoidSeaBlendPass4");
-      pass4.requires(pass2);
-      pass4.requires(pass3);
-      this.seaTargetHandle = pass4.readsAndWrites(this.seaTargetHandle);
-      this.mainTargetHandle = pass4.readsAndWrites(this.mainTargetHandle);
-      this.blendTargetHandle = pass4.readsAndWrites(this.blendTargetHandle);
-      pass4.executes(
+      FramePass pass5 = frameGraphBuilder.addPass("VoidSeaBlendPass5");
+      pass5.requires(pass2);
+      pass5.requires(pass3);
+      pass5.requires(pass4);
+      this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
+      this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
+      this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
+      pass5.executes(
         () -> this.renderBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
       );
 
-      FramePass pass5 = frameGraphBuilder.addPass("VoidSeaDistortPass5");
-      pass5.requires(pass4);
-      this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
-      this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
-      this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
-      this.distortionTargetHandle = pass5.readsAndWrites(this.distortionTargetHandle);
-      pass5.executes(
-        () -> this.renderHeatWave(cameraRot, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
+      FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
+      pass6.requires(pass5);
+      this.blendTargetHandle = pass6.readsAndWrites(this.blendTargetHandle);
+      this.seaTargetHandle = pass6.readsAndWrites(this.seaTargetHandle);
+      this.mainTargetHandle = pass6.readsAndWrites(this.mainTargetHandle);
+      this.distortionTargetHandle = pass6.readsAndWrites(this.distortionTargetHandle);
+      this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
+      pass6.executes(
+        () -> this.renderHeatWave(cameraRot, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle)
       );
     } else {
       this.getSprites();
@@ -428,33 +430,31 @@ public class VoidSeaRenderer {
    * @param blendHandle
    * @param seaHandle
    */
-  private void renderHeatWave(Vector2f cameraRot,ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle, ResourceHandle<TextureTarget> distortionHandle) {
+  private void renderHeatWave(Vector2f cameraRot,ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle, ResourceHandle<TextureTarget> distortionHandle, ResourceHandle<TextureTarget> distortionGradientHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
     RenderTarget blend = blendHandle.get();
     RenderTarget distortion = distortionHandle.get();
+    RenderTarget distortionGradient = distortionGradientHandle.get();
     RenderTarget sea = seaHandle.get();
     GpuTextureView colorTextureViewT = writeTarget.getColorTextureView();
     GpuTextureView depthTextureViewT = writeTarget.getDepthTextureView();
     GpuTextureView colorTextureViewS = sea.getColorTextureView();
     GpuTextureView colorTextureViewB = blend.getColorTextureView();
     GpuTextureView colorTextureViewD = distortion.getColorTextureView();
+    GpuTextureView colorTextureViewDG = distortionGradient.getColorTextureView();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-
-    VFGpuBuffers.UseLookAngle(
-      this.lookAngleBuffer, cameraRot, encoder
-    );
 
     try (RenderPass renderPass = encoder.createRenderPass(
       () -> "VoidSeaDistort", colorTextureViewT, OptionalInt.empty(), depthTextureViewT, OptionalDouble.empty())
     ) {
       renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORTION_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
-      renderPass.setUniform(VFGpuBuffersNames.LOOK_ANGLE.name, this.lookAngleBuffer.currentBuffer());
 
       renderPass.bindSampler("SamplerSea", colorTextureViewS);
       renderPass.bindSampler("SamplerBlend", colorTextureViewB);
       renderPass.bindSampler("SamplerWorld", colorTextureViewT);
+      renderPass.bindSampler("SamplerDistortionGradient", colorTextureViewDG);
       renderPass.bindSampler("SamplerHeatWave", colorTextureViewD);
 
       renderPass.setVertexBuffer(0, this.screenBuffer);

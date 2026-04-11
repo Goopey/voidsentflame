@@ -1,11 +1,11 @@
 #version 150
 
 #moj_import <minecraft:globals.glsl>
-#moj_import <voidsentflame:lookangle.glsl>
 
 uniform sampler2D SamplerSea;
 uniform sampler2D SamplerWorld;
 uniform sampler2D SamplerBlend;
+uniform sampler2D SamplerDistortionGradient;
 uniform sampler2D SamplerHeatWave;
 
 //----white mask
@@ -34,7 +34,7 @@ void main() {
     vec4 seaColor = texture(SamplerSea, texCoord);
     vec4 worldColor = texture(SamplerWorld, texCoord);
     vec4 blendColor = texture(SamplerBlend, texCoord);
-    //vec2 angle = lookAngle;
+    vec4 gradientColor = texture(SamplerDistortionGradient, texCoord);
 
     //----gold foam
     //vec2 flow = vec2(0.015, -0.05) * time * 0.15;
@@ -62,8 +62,7 @@ void main() {
     vec4 heatColor = texture(SamplerBlend, heatCoord);
 
     vec3 heatMask = texture(SamplerHeatWave, texCoord).rgb;
-    float strength = 1.0 - cos(lookAngle.x);
-    heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - texCoord.y) * strength);
+    heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - texCoord.y));
     //heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - texCoord.y));
 
     //----combine textures

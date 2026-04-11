@@ -95,7 +95,7 @@ public class VFRenderPipelines {
         .build()
     );
     VOID_SEA_DISTORTION_PIPELINE = RenderPipelines.register(
-      RenderPipeline.builder(new RenderPipeline.Snippet[]{LOOK_ANGLE_SNIPPET})
+      RenderPipeline.builder(new RenderPipeline.Snippet[0])
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distort"))
         .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_frag"))
@@ -103,6 +103,7 @@ public class VFRenderPipelines {
         .withSampler("SamplerSea")
         .withSampler("SamplerWorld")
         .withSampler("SamplerBlend")
+        .withSampler("SamplerDistortionGradient")
         .withSampler("SamplerHeatWave")
         .withColorWrite(true, false)
         .withDepthWrite(true)
