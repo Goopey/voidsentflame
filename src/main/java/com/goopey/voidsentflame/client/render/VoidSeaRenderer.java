@@ -75,6 +75,8 @@ public class VoidSeaRenderer {
   private int seaMeshIndex;
   private final GpuBuffer bottomDistortionBuffer;
   private int bottomDistortionIndex;
+  private final GpuBuffer distortionGradientBuffer;
+  private int distortionGradientIndex;
   private final GpuBuffer screenBuffer;
   private int screenIndex;
   private final MappableRingBuffer positionBuffer;
@@ -88,6 +90,8 @@ public class VoidSeaRenderer {
   private ResourceHandle<RenderTarget> mainTargetHandle;
   private final TextureTarget distortionTarget;
   private ResourceHandle<TextureTarget> distortionTargetHandle;
+  private final TextureTarget distortionGradientTarget;
+  private ResourceHandle<TextureTarget> distortionGradientTargetHandle;
   private GpuTextureView heatWaveTextureView;
   private GpuTextureView blackTextureView;
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
@@ -105,6 +109,7 @@ public class VoidSeaRenderer {
     this.seaMeshBuffer = buildSea();
     this.screenBuffer = buildScreen();
     this.bottomDistortionBuffer = buildBottomDistortion();
+    this.distortionGradientBuffer = buildDistortionGradient();
     this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
     this.lookAngleBuffer = VFGpuBuffers.VFLookAngleUbo.get();
 
@@ -124,6 +129,13 @@ public class VoidSeaRenderer {
       true
     );
     this.distortionTarget.copyDepthFrom(this.mainTarget);
+    this.distortionGradientTarget = new TextureTarget(
+      "VoidSeaDistortionGradientTexture",
+      this.mainTarget.width,
+      this.mainTarget.height,
+      true
+    );
+    this.distortionGradientTarget.copyDepthFrom(this.mainTarget);
     this.seaTarget = new TextureTarget(
       "VoidSeaSeaTexture",
       this.mainTarget.width,
@@ -186,14 +198,18 @@ public class VoidSeaRenderer {
       this.blendTargetHandle = frameGraphBuilder.importExternal("VoidSeaBlendTexHandle", this.blendTarget);
       this.seaTargetHandle = frameGraphBuilder.importExternal("VoidSeaSeaTexHandle", this.seaTarget);
       this.distortionTargetHandle = frameGraphBuilder.importExternal("VoidSeaDistortHandle", this.distortionTarget);
+      this.distortionGradientTargetHandle = frameGraphBuilder.importExternal("VoidSeaDistortGradientHandle", this.distortionGradientTarget);
 
       FramePass pass1 = frameGraphBuilder.addPass("resizeClearCopyPass1");
       this.seaTargetHandle = pass1.readsAndWrites(this.seaTargetHandle);
       this.blendTargetHandle = pass1.readsAndWrites(this.blendTargetHandle);
       this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
       this.distortionTargetHandle = pass1.readsAndWrites(this.distortionTargetHandle);
+      this.distortionGradientTargetHandle = pass1.readsAndWrites(this.distortionGradientTargetHandle);
       pass1.executes(
-        () -> clearAndResizeTargets(this.mainTargetHandle, List.of(this.blendTargetHandle, this.seaTargetHandle, this.distortionTargetHandle))
+        () -> clearAndResizeTargets(this.mainTargetHandle, List.of(
+          this.blendTargetHandle, this.seaTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle
+        ))
       );
 
       FramePass pass2 = frameGraphBuilder.addPass("VoidSeaMeshPass2");
@@ -208,6 +224,13 @@ public class VoidSeaRenderer {
       this.distortionTargetHandle = pass3.readsAndWrites(this.distortionTargetHandle);
       pass3.executes(
         () -> this.renderDistortion(cameraPos, matrix4fStack, this.blackTextureView, this.distortionTargetHandle)
+      );
+
+      FramePass passL = frameGraphBuilder.addPass("VoidSeaMeshDistortGradientPass4");
+      passL.requires(pass1);
+      this.distortionGradientTargetHandle = passL.readsAndWrites(this.distortionGradientTargetHandle);
+      passL.executes(
+        () -> this.renderDistortionGradient(cameraPos, matrix4fStack, this.distortionGradientTargetHandle)
       );
 
       FramePass pass4 = frameGraphBuilder.addPass("VoidSeaBlendPass4");
@@ -363,6 +386,43 @@ public class VoidSeaRenderer {
 
   /**
    * TODO : comment
+   * @param cameraPos
+   * @param matrix4fStack
+   * @param targetHandle
+   */
+  private void renderDistortionGradient(Vec3 cameraPos, Matrix4fStack matrix4fStack, ResourceHandle<? extends RenderTarget> targetHandle) {
+    RenderTarget target = targetHandle.get();
+    GpuTextureView colorTextureView = target.getColorTextureView();
+    GpuTextureView depthTextureView = target.getDepthTextureView();
+
+    // setup dynamic uniforms
+    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
+      matrix4fStack,
+      new Vector4f(1f, 1f, 1f, 1f),
+      new Vector3f(0f, 0f, 0f),
+      new Matrix4f(),
+      0.0F
+    );
+
+    CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+
+    // setup render pass and actually use it
+    try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistortionGradient", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())) {
+      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORTION_GRADIENT_PIPELINE);
+      RenderSystem.bindDefaultUniforms(renderPass);
+      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+
+      renderPass.bindSampler("Sampler0", this.blackTextureView);
+      renderPass.bindSampler("Sampler1", this.blackTextureView);
+
+      renderPass.setVertexBuffer(0, this.distortionGradientBuffer);
+      renderPass.setIndexBuffer(this.distortionGradientBuffer, VertexFormat.IndexType.SHORT);
+      renderPass.draw(0, this.distortionGradientIndex);
+    }
+  }
+
+  /**
+   * TODO : comment
    * @param cameraRot
    * @param writeTargetHandle
    * @param blendHandle
@@ -508,7 +568,7 @@ public class VoidSeaRenderer {
     try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * 5 * 6)) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
 
-      putCubeMeshVertex(bufferBuilder, OFFSET, (int) (HEAT_HEIGHT + 30), -OFFSET);
+      putOpenCubeMeshVertex(bufferBuilder, OFFSET, (int) (HEAT_HEIGHT + 30), -OFFSET);
 
       // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
       // Last step of making the positions we're rendering stuff in.
@@ -518,6 +578,34 @@ public class VoidSeaRenderer {
 
         gpuBuffer = RenderSystem.getDevice().createBuffer(
           () -> "Void Sea Distortion Bottom Buffer",
+          GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX,
+          uploadBuffer
+        );
+      }
+    }
+
+    return gpuBuffer;
+  }
+
+  private GpuBuffer buildDistortionGradient() {
+    VertexFormat format = DefaultVertexFormat.BLOCK;
+    VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
+    GpuBuffer gpuBuffer;
+
+    // 6 faces out of 6 with 6 vertices each
+    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * 6 * 6)) {
+      BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
+
+      putCubeMeshVertex(bufferBuilder, 2, 2, -2);
+
+      // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
+      // Last step of making the positions we're rendering stuff in.
+      try (MeshData meshData = bufferBuilder.buildOrThrow()) {
+        this.distortionGradientIndex = meshData.drawState().indexCount();
+        ByteBuffer uploadBuffer = meshData.vertexBuffer();
+
+        gpuBuffer = RenderSystem.getDevice().createBuffer(
+          () -> "Void Sea Distortion Gradient Buffer",
           GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX,
           uploadBuffer
         );
@@ -618,7 +706,7 @@ public class VoidSeaRenderer {
    * @param topHeight how high the square should cover the sky
    * @param bottomHeight the low the square should cover the sky
    */
-  private void putCubeMeshVertex(BufferBuilder builder, int size, int topHeight, int bottomHeight) {
+  private void putOpenCubeMeshVertex(BufferBuilder builder, int size, int topHeight, int bottomHeight) {
     float u0 = 0, v0 = 0;
     float u1 = 1f, v1 = 1f;
 
@@ -637,6 +725,54 @@ public class VoidSeaRenderer {
       },
       {     // Face E
         {-size, bottomHeight, size}, {size, bottomHeight, size}, {size, bottomHeight, -size}, {-size, bottomHeight, -size}
+      }
+    };
+
+    for (int[][] face : box) {
+      Vector3f pos1 = new Vector3f(face[0][0], face[0][1], face[0][2]);
+      Vector3f pos2 = new Vector3f(face[1][0], face[1][1], face[1][2]);
+      Vector3f pos3 = new Vector3f(face[2][0], face[2][1], face[2][2]);
+      Vector3f pos4 = new Vector3f(face[3][0], face[3][1], face[3][2]);
+
+      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
+      putBufferVertex(builder, pos2.x, pos2.y, pos2.z, u0, v1);
+      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
+
+      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
+      putBufferVertex(builder, pos4.x, pos4.y, pos4.z, u1, v0);
+      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
+    }
+  }
+
+  /**
+   * Helper method used to create the box of the distortion effect
+   * @param builder the buffer builder needed to add vertices to a mesh
+   * @param size the size of the square
+   * @param topHeight how high the square should cover the sky
+   * @param bottomHeight the low the square should cover the sky
+   */
+  private void putCubeMeshVertex(BufferBuilder builder, int size, int topHeight, int bottomHeight) {
+    float u0 = 0, v0 = 0;
+    float u1 = 1f, v1 = 1f;
+
+    int[][][] box = {
+      {     // Face A
+        {size, topHeight, -size}, {size, topHeight, size}, {size, bottomHeight, size}, {size, bottomHeight, -size}
+      },
+      {     // Face B
+        {size, topHeight, size}, {-size, topHeight, size}, {-size, bottomHeight, size}, {size, bottomHeight, size}
+      },
+      {     // Face C
+        {-size, topHeight, size}, {-size, topHeight, -size}, {-size, bottomHeight, -size}, {-size, bottomHeight, size}
+      },
+      {     // Face D
+        {-size, topHeight, -size}, {size, topHeight, -size}, {size, bottomHeight, -size}, {-size, bottomHeight, -size}
+      },
+      {     // Face E - Bottom Face
+        {-size, bottomHeight, size}, {size, bottomHeight, size}, {size, bottomHeight, -size}, {-size, bottomHeight, -size}
+      },
+      {     // Face F - Top Face
+        {-size, topHeight, size}, {size, topHeight, size}, {size, topHeight, -size}, {-size, topHeight, -size}
       }
     };
 

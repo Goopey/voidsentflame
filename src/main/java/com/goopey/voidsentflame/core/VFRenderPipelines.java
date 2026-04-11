@@ -20,6 +20,7 @@ public class VFRenderPipelines {
   public static RenderPipeline VOID_SEA_MESH_PIPELINE;
   public static RenderPipeline VOID_SEA_MESH_DISTORT_PIPELINE_T;
   public static RenderPipeline VOID_SEA_MESH_DISTORT_PIPELINE_B;
+  public static RenderPipeline VOID_SEA_MESH_DISTORTION_GRADIENT_PIPELINE;
   public static RenderPipeline VOID_SEA_BLEND_PIPELINE;
   public static RenderPipeline VOID_SEA_DISTORTION_PIPELINE;
 
@@ -44,6 +45,17 @@ public class VFRenderPipelines {
         .withColorWrite(true, false)
         .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
+        .build());
+    VOID_SEA_MESH_DISTORTION_GRADIENT_PIPELINE = RenderPipelines.register(
+      RenderPipeline.builder(new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
+        // sets a pipeline name, not an actual file
+        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_mesh_distortion_gradient"))
+        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/vert"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_distortion_gradient_frag"))
+        .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
+        .withColorWrite(true, false)
+        .withCull(false)
+        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
         .build());
     VOID_SEA_MESH_DISTORT_PIPELINE_T = RenderPipelines.register(
       RenderPipeline.builder(new RenderPipeline.Snippet[]{WORLD_POS_SNIPPET})
