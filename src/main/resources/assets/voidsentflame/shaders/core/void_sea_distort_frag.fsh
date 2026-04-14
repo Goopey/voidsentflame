@@ -5,8 +5,8 @@
 uniform sampler2D SamplerSea;
 uniform sampler2D SamplerWorld;
 uniform sampler2D SamplerBlend;
-uniform sampler2D SamplerDistortionGradient;
 uniform sampler2D SamplerHeatWave;
+uniform sampler2D SamplerDistortionGradient;
 
 //----white mask
 const float TOLERANCE = 0.05f;
@@ -62,7 +62,7 @@ void main() {
     vec4 heatColor = texture(SamplerBlend, heatCoord);
 
     vec3 heatMask = texture(SamplerHeatWave, texCoord).rgb;
-    heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - texCoord.y));
+    heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - gradientColor.rbg));
     //heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - texCoord.y));
 
     //----combine textures
@@ -72,6 +72,6 @@ void main() {
     vec4 finalHeatColor = isCloseToSea ? blendColor : heatColor;
 
     //----output
-    //fragColor = vec4(heatMask, 1.0);
-    fragColor = finalHeatColor;
+    fragColor = vec4(heatMask, 1.0);
+    //fragColor = finalHeatColor;
 }

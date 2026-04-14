@@ -236,12 +236,11 @@ public class VoidSeaRenderer {
 
       FramePass pass4 = frameGraphBuilder.addPass("VoidSeaMeshDistortGradientPass4");
       pass4.requires(pass1);
-      this.mainTargetHandle = pass4.readsAndWrites(this.mainTargetHandle);
-//      this.distortionGradientTargetHandle = pass4.readsAndWrites(this.distortionGradientTargetHandle);
+      this.distortionGradientTargetHandle = pass4.readsAndWrites(this.distortionGradientTargetHandle);
       pass4.executes(
-        () -> this.renderDistortionGradient(cameraPos, matrix4fStack, this.mainTargetHandle, this.mainTargetHandle)
+        () -> this.renderDistortionGradient(cameraPos, matrix4fStack, this.distortionGradientTargetHandle)
       );
-      /**
+
       FramePass pass5 = frameGraphBuilder.addPass("VoidSeaBlendPass5");
       pass5.requires(pass2);
       pass5.requires(pass3);
@@ -262,7 +261,7 @@ public class VoidSeaRenderer {
       this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
       pass6.executes(
         () -> this.renderHeatWave(cameraRot, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle)
-      );*/
+      );
     } else {
       this.getSprites();
     }
@@ -401,12 +400,10 @@ public class VoidSeaRenderer {
    * @param matrix4fStack
    * @param targetHandle
    */
-  private void renderDistortionGradient(Vec3 cameraPos, Matrix4fStack matrix4fStack, ResourceHandle<? extends RenderTarget> targetHandle, ResourceHandle<? extends RenderTarget> worldHandle) {
+  private void renderDistortionGradient(Vec3 cameraPos, Matrix4fStack matrix4fStack, ResourceHandle<? extends RenderTarget> targetHandle) {
     RenderTarget target = targetHandle.get();
     GpuTextureView colorTextureView = target.getColorTextureView();
     GpuTextureView depthTextureView = target.getDepthTextureView();
-    RenderTarget world = worldHandle.get();
-    GpuTextureView colorTextureViewW = world.getColorTextureView();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
@@ -475,8 +472,8 @@ public class VoidSeaRenderer {
       renderPass.bindSampler("SamplerSea", colorTextureViewS);
       renderPass.bindSampler("SamplerBlend", colorTextureViewB);
       renderPass.bindSampler("SamplerWorld", colorTextureViewT);
-      renderPass.bindSampler("SamplerDistortionGradient", colorTextureViewDG);
       renderPass.bindSampler("SamplerHeatWave", colorTextureViewD);
+      renderPass.bindSampler("SamplerDistortionGradient", colorTextureViewDG);
 
       renderPass.setVertexBuffer(0, this.screenBuffer);
       renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);

@@ -50,11 +50,10 @@ public class VFRenderPipelines {
       RenderPipeline.builder(new RenderPipeline.Snippet[]{WORLD_POS_SNIPPET})
         // sets a pipeline name, not an actual file
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_mesh_distortion_gradient"))
-        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/vert"))
+        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_distortion_gradient_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_distortion_gradient_frag"))
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, true)
-        .withSampler("SamplerWorld")
         .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .withBlend(BlendFunction.TRANSLUCENT)
