@@ -13,9 +13,14 @@ import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.CommandEncoder;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.chunk.*;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
+import net.neoforged.neoforge.client.IRenderableSection;
 import org.joml.*;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
@@ -77,6 +82,8 @@ public class VoidSeaRenderer {
   private int bottomDistortionIndex;
   private final GpuBuffer distortionGradientBuffer;
   private int distortionGradientIndex;
+  private final GpuBuffer distortionGradientLayerBuffer;
+  private int distortionGradientLayerIndex;
   private final GpuBuffer screenBuffer;
   private int screenIndex;
   private final MappableRingBuffer positionBuffer;
@@ -109,7 +116,8 @@ public class VoidSeaRenderer {
     this.seaMeshBuffer = buildSea();
     this.screenBuffer = buildScreen();
     this.bottomDistortionBuffer = buildBottomDistortion();
-    this.distortionGradientBuffer = buildDistortionGradient();
+    this.distortionGradientBuffer = buildDistortionGradientBox();
+    this.distortionGradientLayerBuffer = buildDistortionGradientLayer();
     this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
     this.lookAngleBuffer = VFGpuBuffers.VFLookAngleUbo.get();
 
@@ -228,11 +236,12 @@ public class VoidSeaRenderer {
 
       FramePass pass4 = frameGraphBuilder.addPass("VoidSeaMeshDistortGradientPass4");
       pass4.requires(pass1);
-      this.distortionGradientTargetHandle = pass4.readsAndWrites(this.distortionGradientTargetHandle);
+      this.mainTargetHandle = pass4.readsAndWrites(this.mainTargetHandle);
+//      this.distortionGradientTargetHandle = pass4.readsAndWrites(this.distortionGradientTargetHandle);
       pass4.executes(
-        () -> this.renderDistortionGradient(cameraPos, matrix4fStack, this.distortionGradientTargetHandle)
+        () -> this.renderDistortionGradient(cameraPos, matrix4fStack, this.mainTargetHandle, this.mainTargetHandle)
       );
-
+      /**
       FramePass pass5 = frameGraphBuilder.addPass("VoidSeaBlendPass5");
       pass5.requires(pass2);
       pass5.requires(pass3);
@@ -253,7 +262,7 @@ public class VoidSeaRenderer {
       this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
       pass6.executes(
         () -> this.renderHeatWave(cameraRot, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle)
-      );
+      );*/
     } else {
       this.getSprites();
     }
@@ -392,10 +401,14 @@ public class VoidSeaRenderer {
    * @param matrix4fStack
    * @param targetHandle
    */
-  private void renderDistortionGradient(Vec3 cameraPos, Matrix4fStack matrix4fStack, ResourceHandle<? extends RenderTarget> targetHandle) {
+  private void renderDistortionGradient(Vec3 cameraPos, Matrix4fStack matrix4fStack, ResourceHandle<? extends RenderTarget> targetHandle, ResourceHandle<? extends RenderTarget> worldHandle) {
     RenderTarget target = targetHandle.get();
     GpuTextureView colorTextureView = target.getColorTextureView();
     GpuTextureView depthTextureView = target.getDepthTextureView();
+    RenderTarget world = worldHandle.get();
+    GpuTextureView colorTextureViewW = world.getColorTextureView();
+
+    CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
     // setup dynamic uniforms
     GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
@@ -406,20 +419,28 @@ public class VoidSeaRenderer {
       0.0F
     );
 
-    CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+    int height = (int) (HEAT_HEIGHT - HEIGHT);
+    for (int i = 0; i < height; i++) {
+      int val = height - i;
 
-    // setup render pass and actually use it
-    try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistortionGradient", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())) {
-      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORTION_GRADIENT_PIPELINE);
-      RenderSystem.bindDefaultUniforms(renderPass);
-      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+      VFGpuBuffers.UseWorldPos(
+        this.positionBuffer,
+        new Vector3f(0, (float) (-cameraPos.y - val), 0),
+        encoder
+      );
 
-      renderPass.bindSampler("Sampler0", this.blackTextureView);
-      renderPass.bindSampler("Sampler1", this.blackTextureView);
+      final int i2 = val;
+      // setup render pass and actually use it
+      try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistortionGradientLayer" + i2, colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())) {
+        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORTION_GRADIENT_PIPELINE);
+        RenderSystem.bindDefaultUniforms(renderPass);
+        renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+        renderPass.setUniform("ChunkOffset", this.positionBuffer.currentBuffer());
 
-      renderPass.setVertexBuffer(0, this.distortionGradientBuffer);
-      renderPass.setIndexBuffer(this.distortionGradientBuffer, VertexFormat.IndexType.SHORT);
-      renderPass.draw(0, this.distortionGradientIndex);
+        renderPass.setVertexBuffer(0, this.distortionGradientLayerBuffer);
+        renderPass.setIndexBuffer(this.distortionGradientLayerBuffer, VertexFormat.IndexType.SHORT);
+        renderPass.draw(0, this.distortionGradientLayerIndex);
+      }
     }
   }
 
@@ -587,16 +608,18 @@ public class VoidSeaRenderer {
     return gpuBuffer;
   }
 
-  private GpuBuffer buildDistortionGradient() {
+  private GpuBuffer buildDistortionGradientBox() {
     VertexFormat format = DefaultVertexFormat.BLOCK;
     VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
     GpuBuffer gpuBuffer;
 
     // 6 faces out of 6 with 6 vertices each
-    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * 6 * 6)) {
+    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(
+      DefaultVertexFormat.BLOCK.getVertexSize() * 6 * 6)
+    ) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
 
-      putCubeMeshVertex(bufferBuilder, 2, 2, -2);
+      putCubeMeshVertex(bufferBuilder, OFFSET, (int) HEAT_HEIGHT, (int) HEIGHT);
 
       // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
       // Last step of making the positions we're rendering stuff in.
@@ -606,6 +629,36 @@ public class VoidSeaRenderer {
 
         gpuBuffer = RenderSystem.getDevice().createBuffer(
           () -> "Void Sea Distortion Gradient Buffer",
+          GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX,
+          uploadBuffer
+        );
+      }
+    }
+
+    return gpuBuffer;
+  }
+
+  private GpuBuffer buildDistortionGradientLayer() {
+    VertexFormat format = DefaultVertexFormat.BLOCK;
+    VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
+    GpuBuffer gpuBuffer;
+
+    // 6 faces out of 6 with 6 vertices each
+    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(
+      DefaultVertexFormat.BLOCK.getVertexSize() * 6)
+    ) {
+      BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
+
+      putPlaneMeshVertex(bufferBuilder, OFFSET, (int) HEAT_HEIGHT);
+
+      // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
+      // Last step of making the positions we're rendering stuff in.
+      try (MeshData meshData = bufferBuilder.buildOrThrow()) {
+        this.distortionGradientLayerIndex = meshData.drawState().indexCount();
+        ByteBuffer uploadBuffer = meshData.vertexBuffer();
+
+        gpuBuffer = RenderSystem.getDevice().createBuffer(
+          () -> "Void Sea Distortion Gradient Layer Buffer",
           GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX,
           uploadBuffer
         );
@@ -745,7 +798,7 @@ public class VoidSeaRenderer {
   }
 
   /**
-   * Helper method used to create the box of the distortion effect
+   * Helper method used to create the gradient box of the distortion effect
    * @param builder the buffer builder needed to add vertices to a mesh
    * @param size the size of the square
    * @param topHeight how high the square should cover the sky
@@ -773,6 +826,38 @@ public class VoidSeaRenderer {
       },
       {     // Face F - Top Face
         {-size, topHeight, size}, {size, topHeight, size}, {size, topHeight, -size}, {-size, topHeight, -size}
+      }
+    };
+
+    for (int[][] face : box) {
+      Vector3f pos1 = new Vector3f(face[0][0], face[0][1], face[0][2]);
+      Vector3f pos2 = new Vector3f(face[1][0], face[1][1], face[1][2]);
+      Vector3f pos3 = new Vector3f(face[2][0], face[2][1], face[2][2]);
+      Vector3f pos4 = new Vector3f(face[3][0], face[3][1], face[3][2]);
+
+      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
+      putBufferVertex(builder, pos2.x, pos2.y, pos2.z, u0, v1);
+      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
+
+      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
+      putBufferVertex(builder, pos4.x, pos4.y, pos4.z, u1, v0);
+      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
+    }
+  }
+
+  /**
+   * Helper method used to create the box of the distortion effect
+   * @param builder the buffer builder needed to add vertices to a mesh
+   * @param size the size of the square
+   * @param height how high the square should be in the world
+   */
+  private void putPlaneMeshVertex(BufferBuilder builder, int size, int height) {
+    float u0 = 0, v0 = 0;
+    float u1 = 1f, v1 = 1f;
+
+    int[][][] box = {
+      {     // Face F - Top Face
+        {-size, height, size}, {size, height, size}, {size, height, -size}, {-size, height, -size}
       }
     };
 

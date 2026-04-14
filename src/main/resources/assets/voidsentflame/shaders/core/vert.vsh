@@ -4,6 +4,7 @@
 #moj_import <minecraft:dynamictransforms.glsl>
 #moj_import <minecraft:projection.glsl>
 #moj_import <minecraft:globals.glsl>
+#moj_import <voidsentflame:chunkoffset.glsl>
 
 // basic inputs, position, color, uv0, uv2, normal
 in vec3 Position;
@@ -11,10 +12,6 @@ in vec4 Color;
 in vec2 UV0;
 in ivec2 UV2;
 in vec3 Normal;
-
-uniform sampler2D Sampler0; // texture sampler
-uniform sampler2D Sampler1; // lightmap sampler
-uniform sampler2D Sampler2; // screen map
 
 // basic outputs, fog, texture coordinates and color
 out vec4 vertexColor;
@@ -26,9 +23,10 @@ vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
 }
 
 void main() {
-    vec3 pos = Position + ModelOffset;
+    vec3 pos = Position + ModelOffset + COffset;
+    float grad =  ((Position.y + 64) / 320);
 
     texCoord0 = UV0;
-    vertexColor = pos.y > 0 ? vec4(1.0, 1.0, 1.0, 1.0) : vec4(0.0, 0.0, 0.0, 1.0);
+    vertexColor = vec4(grad, grad, grad, 0.1);
     gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
 }

@@ -72,5 +72,6 @@ void main() {
     vec4 finalHeatColor = isCloseToSea ? blendColor : heatColor;
 
     //----output
-    fragColor = vec4(heatMask, 1.0);
+    //fragColor = vec4(heatMask, 1.0);
+    fragColor = finalHeatColor;
 }

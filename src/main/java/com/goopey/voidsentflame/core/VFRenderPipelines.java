@@ -47,15 +47,17 @@ public class VFRenderPipelines {
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .build());
     VOID_SEA_MESH_DISTORTION_GRADIENT_PIPELINE = RenderPipelines.register(
-      RenderPipeline.builder(new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
+      RenderPipeline.builder(new RenderPipeline.Snippet[]{WORLD_POS_SNIPPET})
         // sets a pipeline name, not an actual file
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_mesh_distortion_gradient"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_distortion_gradient_frag"))
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
-        .withColorWrite(true, false)
+        .withColorWrite(true, true)
+        .withSampler("SamplerWorld")
         .withCull(false)
-        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+        .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
+        .withBlend(BlendFunction.TRANSLUCENT)
         .build());
     VOID_SEA_MESH_DISTORT_PIPELINE_T = RenderPipelines.register(
       RenderPipeline.builder(new RenderPipeline.Snippet[]{WORLD_POS_SNIPPET})
