@@ -24,7 +24,9 @@ vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
 
 void main() {
     vec3 pos = Position + ModelOffset + COffset;
-    float grad =  ((Position.y + 64) / 320);
+    float layer = max(min(-26.5 - COffset.y, 16.0), 0.0);
+    layer = 0.5 * layer * (layer + 1) / 320;
+    float grad = ((Position.y + 64.0) / 320.0) - layer;
 
     texCoord0 = UV0;
     vertexColor = vec4(grad, grad, grad, 0.1);

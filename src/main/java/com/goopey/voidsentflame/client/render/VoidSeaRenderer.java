@@ -260,7 +260,7 @@ public class VoidSeaRenderer {
       this.distortionTargetHandle = pass6.readsAndWrites(this.distortionTargetHandle);
       this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
       pass6.executes(
-        () -> this.renderHeatWave(cameraRot, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle)
+        () -> this.renderHeatWave(cameraPos, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle)
       );
     } else {
       this.getSprites();
@@ -443,12 +443,12 @@ public class VoidSeaRenderer {
 
   /**
    * TODO : comment
-   * @param cameraRot
+   * @param cameraPos
    * @param writeTargetHandle
    * @param blendHandle
    * @param seaHandle
    */
-  private void renderHeatWave(Vector2f cameraRot,ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle, ResourceHandle<TextureTarget> distortionHandle, ResourceHandle<TextureTarget> distortionGradientHandle) {
+  private void renderHeatWave(Vec3 cameraPos,ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle, ResourceHandle<TextureTarget> distortionHandle, ResourceHandle<TextureTarget> distortionGradientHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
     RenderTarget blend = blendHandle.get();
     RenderTarget distortion = distortionHandle.get();
@@ -463,11 +463,18 @@ public class VoidSeaRenderer {
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
+    VFGpuBuffers.UseWorldPos(
+      this.positionBuffer,
+      new Vector3f(0, (float) (cameraPos.y), 0),
+      encoder
+    );
+
     try (RenderPass renderPass = encoder.createRenderPass(
       () -> "VoidSeaDistort", colorTextureViewT, OptionalInt.empty(), depthTextureViewT, OptionalDouble.empty())
     ) {
       renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORTION_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
+      renderPass.setUniform("ChunkOffset", this.positionBuffer.currentBuffer());
 
       renderPass.bindSampler("SamplerSea", colorTextureViewS);
       renderPass.bindSampler("SamplerBlend", colorTextureViewB);

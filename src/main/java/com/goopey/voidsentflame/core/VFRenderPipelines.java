@@ -16,7 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 public class VFRenderPipelines {
   public static RenderPipeline.Snippet GLOBALS_TERRAIN_SNIPPET;
   public static RenderPipeline.Snippet WORLD_POS_SNIPPET;
-  public static RenderPipeline.Snippet LOOK_ANGLE_SNIPPET;
+  public static RenderPipeline.Snippet POS_SNIPPET;
   public static RenderPipeline VOID_SEA_MESH_PIPELINE;
   public static RenderPipeline VOID_SEA_MESH_DISTORT_PIPELINE_T;
   public static RenderPipeline VOID_SEA_MESH_DISTORT_PIPELINE_B;
@@ -31,8 +31,8 @@ public class VFRenderPipelines {
     WORLD_POS_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[]{GLOBALS_TERRAIN_SNIPPET})
       .withUniform(VFGpuBuffersNames.WORLD_POS.name, UniformType.UNIFORM_BUFFER)
       .buildSnippet();
-    LOOK_ANGLE_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[0])
-      .withUniform(VFGpuBuffersNames.LOOK_ANGLE.name, UniformType.UNIFORM_BUFFER)
+    POS_SNIPPET = RenderPipeline.builder(new RenderPipeline.Snippet[0])
+      .withUniform(VFGpuBuffersNames.WORLD_POS.name, UniformType.UNIFORM_BUFFER)
       .buildSnippet();
 
     VOID_SEA_MESH_PIPELINE = RenderPipelines.register(
@@ -96,7 +96,7 @@ public class VFRenderPipelines {
         .build()
     );
     VOID_SEA_DISTORTION_PIPELINE = RenderPipelines.register(
-      RenderPipeline.builder(new RenderPipeline.Snippet[0])
+      RenderPipeline.builder(new RenderPipeline.Snippet[]{POS_SNIPPET})
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distort"))
         .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_frag"))

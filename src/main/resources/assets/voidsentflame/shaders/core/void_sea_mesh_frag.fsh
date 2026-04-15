@@ -31,5 +31,24 @@ void main() {
 
     vec4 fogColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 
+    //----gold foam
+    //vec2 flow = vec2(0.015, -0.05) * time * 0.15;
+    //vec2 uv1 = texCoord * 2.5 + flow;
+    //float n1 = texture(SamplerTex, uv1).r;
+
+    // Secondary distortion
+    //vec2 uv2 = texCoord * 4.0 - flow * 1.5;
+    //float n2 = texture(SamplerTex, uv2).r;
+
+    // Distort coordinates (important for organic foam look)
+    //vec2 distortedUV = uv1 + vec2(n2 - 0.5) * 0.2;
+    //float nTex = texture(SamplerTex, distortedUV).r;
+
+    // Foam shaping
+    //float foam = smoothstep(0.65, 0.8, nTex);
+    // Sharper highlights
+    //foam += pow(nTex, 4.0) * 0.2;
+    //vec4 goldColor = vec4(GOLD * foam, 0.5);
+
     fragColor = fogColor;
 }

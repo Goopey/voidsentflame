@@ -1,6 +1,7 @@
 #version 150
 
 #moj_import <minecraft:globals.glsl>
+#moj_import <voidsentflame:chunkoffset.glsl>
 
 uniform sampler2D SamplerSea;
 uniform sampler2D SamplerWorld;
@@ -26,6 +27,11 @@ const vec3 GOLD = vec3(1.0, 0.85, 0.25);
 //----gametime
 const float SECONDS_PER_DAY = 1200.00;
 
+// waves constants
+const float waveFrequency = 0.15;
+const float waveAmplitude = 1.5;
+const float timeFrequency = 4.0;
+
 in vec2 texCoord;
 out vec4 fragColor;
 
@@ -36,42 +42,32 @@ void main() {
     vec4 blendColor = texture(SamplerBlend, texCoord);
     vec4 gradientColor = texture(SamplerDistortionGradient, texCoord);
 
-    //----gold foam
-    //vec2 flow = vec2(0.015, -0.05) * time * 0.15;
-    //vec2 uv1 = texCoord * 2.5 + flow;
-    //float n1 = texture(SamplerTex, uv1).r;
-
-    // Secondary distortion
-    //vec2 uv2 = texCoord * 4.0 - flow * 1.5;
-    //float n2 = texture(SamplerTex, uv2).r;
-
-    // Distort coordinates (important for organic foam look)
-    //vec2 distortedUV = uv1 + vec2(n2 - 0.5) * 0.2;
-    //float nTex = texture(SamplerTex, distortedUV).r;
-
-    // Foam shaping
-    //float foam = smoothstep(0.65, 0.8, nTex);
-    // Sharper highlights
-    //foam += pow(nTex, 4.0) * 0.2;
-    //vec4 goldColor = vec4(GOLD * foam, 0.5);
+    // calculate wave height
+    float waves = sin((COffset.x - COffset.z + timeFrequency * time) * waveFrequency) * waveAmplitude - waveAmplitude;
 
     //----heat wave
     float jacked_time = 5.5 * time;
 
-    vec2 heatCoord = texCoord + (1.0 - texCoord.y) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
+    vec3 heatWaveMask = texture(SamplerHeatWave, texCoord).rgb;
+    vec3 heatMask = 1.0 - ((1.0 - heatWaveMask) * (1.0 - gradientColor.rbg));
+    if ((COffset.y + waves) < -29.0) {
+      float layer = 0.1171 + (max(42.5 + COffset.y, 0) + 16.0) / 64;
+      heatMask = vec3(min(layer, heatMask.r));
+    }
+
+    vec2 heatCoord = texCoord + (1.0 - texCoord.y) * (1.0 - heatMask.r) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
     vec4 heatColor = texture(SamplerBlend, heatCoord);
 
-    vec3 heatMask = texture(SamplerHeatWave, texCoord).rgb;
-    heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - gradientColor.rbg));
-    //heatMask = 1.0 - ((1.0 - heatMask) * (1.0 - texCoord.y));
-
     //----combine textures
-    bool isWhite = all(greaterThanEqual(seaColor.rgb, vec3(1.0 - TOLERANCE)));
-    bool isCloseToSea = isWhite && all(greaterThanEqual(heatMask, vec3(1.0 - TOLERANCE)));
+    bool isNotSea = all(greaterThanEqual(seaColor.rgb, vec3(1.0 - TOLERANCE)));
+    bool isCloseToSea = isNotSea && all(greaterThanEqual(heatMask, vec3(1.0 - TOLERANCE)));
+    if (isNotSea) {
+      heatColor += vec4((1.0 - heatMask.r), (1.0 - heatMask.r), 0.0, 1.0);
+    }
 
     vec4 finalHeatColor = isCloseToSea ? blendColor : heatColor;
 
     //----output
-    fragColor = vec4(heatMask, 1.0);
-    //fragColor = finalHeatColor;
+    //fragColor = vec4(heatMask, 1.0);
+    fragColor = finalHeatColor;
 }
