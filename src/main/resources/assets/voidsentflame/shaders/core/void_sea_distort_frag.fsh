@@ -49,25 +49,34 @@ void main() {
     float jacked_time = 5.5 * time;
 
     vec3 heatWaveMask = texture(SamplerHeatWave, texCoord).rgb;
-    vec3 heatMask = 1.0 - ((1.0 - heatWaveMask) * (1.0 - gradientColor.rbg));
-    if ((COffset.y + waves) < -29.0) {
-      float layer = 0.1171 + (max(42.5 + COffset.y, 0) + 16.0) / 64;
-      heatMask = vec3(min(layer, heatMask.r));
-    }
+    bool submerged = all(greaterThanEqual(heatWaveMask, vec3(1.0 - TOLERANCE)));
 
+    vec3 heatMask = 1.0 - ((1.0 - heatWaveMask) * (1.0 - gradientColor.rbg));
+    if (!submerged) {
+        float layer = 0.1171 + (max(42.5 + COffset.y, 0) + 16.0) / 64;
+        heatMask = vec3(min(layer, heatMask.r));
+    }
     vec2 heatCoord = texCoord + (1.0 - texCoord.y) * (1.0 - heatMask.r) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
     vec4 heatColor = texture(SamplerBlend, heatCoord);
+    // add effect where screen turns yellow when underneath wave
+    if (!submerged) {
+        heatColor += vec4((1.0 - heatMask.r) / 8, (1.0 - heatMask.g) / 8, 0.0, 1.0);
+    }
 
     //----combine textures
     bool isNotSea = all(greaterThanEqual(seaColor.rgb, vec3(1.0 - TOLERANCE)));
-    bool isCloseToSea = isNotSea && all(greaterThanEqual(heatMask, vec3(1.0 - TOLERANCE)));
-    if (isNotSea) {
-      heatColor += vec4((1.0 - heatMask.r), (1.0 - heatMask.r), 0.0, 1.0);
-    }
+    bool isCloseToSea = isNotSea && submerged;
+//    if (isNotSea) {
+//      //----bake in lighting
+//      heatColor += vec4((1.0 - heatMask.r) / 10, (1.0 - heatMask.g) / 10, 0.0, 1.0);
+//      //----terrain gold foam
+//      // TODO : add terrain gold foam
+//      //heatColor += vec4((1.0 - heatMask.r), (1.0 - heatMask.r), 0.0, 1.0);
+//    }
 
     vec4 finalHeatColor = isCloseToSea ? blendColor : heatColor;
 
     //----output
-    //fragColor = vec4(heatMask, 1.0);
     fragColor = finalHeatColor;
+//    fragColor = vec4(heatMask, 1.0);
 }

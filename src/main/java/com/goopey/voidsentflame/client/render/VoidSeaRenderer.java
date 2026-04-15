@@ -21,6 +21,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.client.IRenderableSection;
+import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
@@ -248,8 +249,10 @@ public class VoidSeaRenderer {
       this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
       this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
       this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
+      this.distortionTargetHandle = pass5.readsAndWrites(this.distortionTargetHandle);
+      this.distortionGradientTargetHandle = pass5.readsAndWrites(this.distortionGradientTargetHandle);
       pass5.executes(
-        () -> this.renderBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
+        () -> this.renderBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle)
       );
 
       FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
@@ -419,7 +422,10 @@ public class VoidSeaRenderer {
     int height = (int) (HEAT_HEIGHT - HEIGHT);
     for (int i = 0; i < height; i++) {
       int val = height - i;
-
+      // don't render layers above the camera. Distortion shader takes care of the submerging effect.
+      if (cameraPos.y - 0.5 < HEAT_HEIGHT - val) {
+        break;
+      }
       VFGpuBuffers.UseWorldPos(
         this.positionBuffer,
         new Vector3f(0, (float) (-cameraPos.y - val), 0),
@@ -494,14 +500,18 @@ public class VoidSeaRenderer {
    * @param seaHandle
    * @param worldHandle
    */
-  private void renderBlend(ResourceHandle<? extends RenderTarget> writeTargetHandle, ResourceHandle<? extends RenderTarget> seaHandle, ResourceHandle<? extends RenderTarget> worldHandle) {
+  private void renderBlend(@NotNull ResourceHandle<? extends RenderTarget> writeTargetHandle, ResourceHandle<? extends RenderTarget> seaHandle, ResourceHandle<? extends RenderTarget> worldHandle, ResourceHandle<? extends RenderTarget> distortionHandle, ResourceHandle<? extends RenderTarget> distortionGradientHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
     RenderTarget sea = seaHandle.get();
     RenderTarget world = worldHandle.get();
+    RenderTarget distortion = distortionHandle.get();
+    RenderTarget distortionGradient = distortionGradientHandle.get();
     GpuTextureView colorTextureViewT = writeTarget.getColorTextureView();
     GpuTextureView depthTextureViewT = writeTarget.getDepthTextureView();
     GpuTextureView colorTextureViewS = sea.getColorTextureView();
     GpuTextureView colorTextureViewW = world.getColorTextureView();
+    GpuTextureView colorTextureViewD = distortion.getColorTextureView();
+    GpuTextureView colorTextureViewDG = distortionGradient.getColorTextureView();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
@@ -513,6 +523,8 @@ public class VoidSeaRenderer {
 
       renderPass.bindSampler("SamplerSea", colorTextureViewS);
       renderPass.bindSampler("SamplerWorld", colorTextureViewW);
+      renderPass.bindSampler("SamplerHeatWave", colorTextureViewD);
+      renderPass.bindSampler("SamplerDistortionGradient", colorTextureViewDG);
 
       renderPass.setVertexBuffer(0, this.screenBuffer);
       renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);
