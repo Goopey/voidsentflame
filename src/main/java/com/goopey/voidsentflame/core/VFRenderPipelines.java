@@ -88,8 +88,6 @@ public class VFRenderPipelines {
         .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
         .withSampler("SamplerSea")
         .withSampler("SamplerWorld")
-        .withSampler("SamplerDistortionGradient")
-        .withSampler("SamplerHeatWave")
         .withColorWrite(true, false)
         .withDepthWrite(true)
         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)

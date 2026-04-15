@@ -249,10 +249,8 @@ public class VoidSeaRenderer {
       this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
       this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
       this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
-      this.distortionTargetHandle = pass5.readsAndWrites(this.distortionTargetHandle);
-      this.distortionGradientTargetHandle = pass5.readsAndWrites(this.distortionGradientTargetHandle);
       pass5.executes(
-        () -> this.renderBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle)
+        () -> this.renderBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
       );
 
       FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
@@ -500,18 +498,14 @@ public class VoidSeaRenderer {
    * @param seaHandle
    * @param worldHandle
    */
-  private void renderBlend(@NotNull ResourceHandle<? extends RenderTarget> writeTargetHandle, ResourceHandle<? extends RenderTarget> seaHandle, ResourceHandle<? extends RenderTarget> worldHandle, ResourceHandle<? extends RenderTarget> distortionHandle, ResourceHandle<? extends RenderTarget> distortionGradientHandle) {
+  private void renderBlend(@NotNull ResourceHandle<? extends RenderTarget> writeTargetHandle, ResourceHandle<? extends RenderTarget> seaHandle, ResourceHandle<? extends RenderTarget> worldHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
     RenderTarget sea = seaHandle.get();
     RenderTarget world = worldHandle.get();
-    RenderTarget distortion = distortionHandle.get();
-    RenderTarget distortionGradient = distortionGradientHandle.get();
     GpuTextureView colorTextureViewT = writeTarget.getColorTextureView();
     GpuTextureView depthTextureViewT = writeTarget.getDepthTextureView();
     GpuTextureView colorTextureViewS = sea.getColorTextureView();
     GpuTextureView colorTextureViewW = world.getColorTextureView();
-    GpuTextureView colorTextureViewD = distortion.getColorTextureView();
-    GpuTextureView colorTextureViewDG = distortionGradient.getColorTextureView();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
@@ -523,8 +517,6 @@ public class VoidSeaRenderer {
 
       renderPass.bindSampler("SamplerSea", colorTextureViewS);
       renderPass.bindSampler("SamplerWorld", colorTextureViewW);
-      renderPass.bindSampler("SamplerHeatWave", colorTextureViewD);
-      renderPass.bindSampler("SamplerDistortionGradient", colorTextureViewDG);
 
       renderPass.setVertexBuffer(0, this.screenBuffer);
       renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);

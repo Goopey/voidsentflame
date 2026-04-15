@@ -58,10 +58,6 @@ void main() {
     }
     vec2 heatCoord = texCoord + (1.0 - texCoord.y) * (1.0 - heatMask.r) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
     vec4 heatColor = texture(SamplerBlend, heatCoord);
-    // add effect where screen turns yellow when underneath wave
-    if (!submerged) {
-        heatColor += vec4((1.0 - heatMask.r) / 8, (1.0 - heatMask.g) / 8, 0.0, 1.0);
-    }
 
     //----combine textures
     bool isNotSea = all(greaterThanEqual(seaColor.rgb, vec3(1.0 - TOLERANCE)));
@@ -78,5 +74,4 @@ void main() {
 
     //----output
     fragColor = finalHeatColor;
-//    fragColor = vec4(heatMask, 1.0);
 }
