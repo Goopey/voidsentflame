@@ -23,6 +23,7 @@ out float cylindricalVertexDistance;
 out vec4 vertexColor;
 out vec2 texCoord0;
 out vec4 normal;
+out vec4 vertexPos;
 
 // curvature constants
 const float sphereRadius4 = 65536.0;
@@ -66,5 +67,6 @@ void main() {
     vertexColor = Color * minecraft_sample_lightmap(Sampler1, UV2);
     sphericalVertexDistance = fog_spherical_distance(displacedPosition);
     cylindricalVertexDistance = fog_cylindrical_distance(displacedPosition);
-    gl_Position = ProjMat * ModelViewMat * vec4(displacedPosition, 1.0);
+    vertexPos = vec4(displacedPosition, 1.0);
+    gl_Position = ProjMat * ModelViewMat * vertexPos;
 }
