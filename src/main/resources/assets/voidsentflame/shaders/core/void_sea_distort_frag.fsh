@@ -50,7 +50,7 @@ void main() {
 
     vec3 heatWaveMask = texture(SamplerHeatWave, texCoord).rgb;
     bool submerged = all(greaterThanEqual(heatWaveMask, vec3(1.0 - TOLERANCE)));
-    float heightStrength = 1.0 - ((64 + COffset.y) / 320);
+    float heightStrength = 1.0 - min((64 + COffset.y) / 180, 1.0);
 
 //    vec3 heatMask = 1.0 - ((1.0 - heatWaveMask) * (1.0 - gradientColor.rbg));
 //    if (!submerged) {
