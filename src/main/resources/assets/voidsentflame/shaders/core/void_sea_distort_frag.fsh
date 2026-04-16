@@ -7,7 +7,7 @@ uniform sampler2D SamplerSea;
 uniform sampler2D SamplerWorld;
 uniform sampler2D SamplerBlend;
 uniform sampler2D SamplerHeatWave;
-uniform sampler2D SamplerDistortionGradient;
+//uniform sampler2D SamplerDistortionGradient;
 
 //----white mask
 const float TOLERANCE = 0.05f;
@@ -40,7 +40,7 @@ void main() {
     vec4 seaColor = texture(SamplerSea, texCoord);
     vec4 worldColor = texture(SamplerWorld, texCoord);
     vec4 blendColor = texture(SamplerBlend, texCoord);
-    vec4 gradientColor = texture(SamplerDistortionGradient, texCoord);
+//    vec4 gradientColor = texture(SamplerDistortionGradient, texCoord);
 
     // calculate wave height
     float waves = sin((COffset.x - COffset.z + timeFrequency * time) * waveFrequency) * waveAmplitude - waveAmplitude;
@@ -50,13 +50,17 @@ void main() {
 
     vec3 heatWaveMask = texture(SamplerHeatWave, texCoord).rgb;
     bool submerged = all(greaterThanEqual(heatWaveMask, vec3(1.0 - TOLERANCE)));
+    float heightStrength = 1.0 - ((64 + COffset.y) / 320);
 
-    vec3 heatMask = 1.0 - ((1.0 - heatWaveMask) * (1.0 - gradientColor.rbg));
-    if (!submerged) {
-        float layer = 0.1171 + (max(42.5 + COffset.y, 0) + 16.0) / 64;
-        heatMask = vec3(min(layer, heatMask.r));
-    }
-    vec2 heatCoord = texCoord + (1.0 - texCoord.y) * (1.0 - heatMask.r) * HEAT_STRENGTH * sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
+//    vec3 heatMask = 1.0 - ((1.0 - heatWaveMask) * (1.0 - gradientColor.rbg));
+//    if (!submerged) {
+//        float layer = 0.1171 + (max(42.5 + COffset.y, 0) + 16.0) / 64;
+//        heatMask = vec3(min(layer, heatMask.r));
+//    }
+    vec2 heatCoord = texCoord +
+        heightStrength * HEAT_STRENGTH *
+        (1.0 - texCoord.y) * (1.0 - heatWaveMask.r) *
+        sin(HEAT_SCALE * jacked_time + length(texCoord) * 10.0);
     vec4 heatColor = texture(SamplerBlend, heatCoord);
 
     //----combine textures

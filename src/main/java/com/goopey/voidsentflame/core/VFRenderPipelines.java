@@ -104,7 +104,7 @@ public class VFRenderPipelines {
         .withSampler("SamplerSea")
         .withSampler("SamplerWorld")
         .withSampler("SamplerBlend")
-        .withSampler("SamplerDistortionGradient")
+//        .withSampler("SamplerDistortionGradient") TODO : Fix Gradient
         .withSampler("SamplerHeatWave")
         .withColorWrite(true, false)
         .withDepthWrite(true)

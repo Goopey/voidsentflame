@@ -235,17 +235,19 @@ public class VoidSeaRenderer {
         () -> this.renderDistortion(cameraPos, matrix4fStack, this.blackTextureView, this.distortionTargetHandle)
       );
 
+      //TODO : Fix gradient
+      /**
       FramePass pass4 = frameGraphBuilder.addPass("VoidSeaMeshDistortGradientPass4");
       pass4.requires(pass1);
       this.distortionGradientTargetHandle = pass4.readsAndWrites(this.distortionGradientTargetHandle);
       pass4.executes(
         () -> this.renderDistortionGradient(cameraPos, matrix4fStack, this.distortionGradientTargetHandle)
-      );
+      );*/
 
       FramePass pass5 = frameGraphBuilder.addPass("VoidSeaBlendPass5");
       pass5.requires(pass2);
       pass5.requires(pass3);
-      pass5.requires(pass4);
+//      pass5.requires(pass4);
       this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
       this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
       this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
@@ -259,9 +261,9 @@ public class VoidSeaRenderer {
       this.seaTargetHandle = pass6.readsAndWrites(this.seaTargetHandle);
       this.mainTargetHandle = pass6.readsAndWrites(this.mainTargetHandle);
       this.distortionTargetHandle = pass6.readsAndWrites(this.distortionTargetHandle);
-      this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
+//      this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
       pass6.executes(
-        () -> this.renderHeatWave(cameraPos, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle)
+        () -> this.renderHeatWave(cameraPos, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
       );
     } else {
       this.getSprites();
@@ -452,18 +454,18 @@ public class VoidSeaRenderer {
    * @param blendHandle
    * @param seaHandle
    */
-  private void renderHeatWave(Vec3 cameraPos,ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle, ResourceHandle<TextureTarget> distortionHandle, ResourceHandle<TextureTarget> distortionGradientHandle) {
+  private void renderHeatWave(Vec3 cameraPos,ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle, ResourceHandle<TextureTarget> distortionHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
     RenderTarget blend = blendHandle.get();
     RenderTarget distortion = distortionHandle.get();
-    RenderTarget distortionGradient = distortionGradientHandle.get();
+//    RenderTarget distortionGradient = distortionGradientHandle.get();
     RenderTarget sea = seaHandle.get();
     GpuTextureView colorTextureViewT = writeTarget.getColorTextureView();
     GpuTextureView depthTextureViewT = writeTarget.getDepthTextureView();
     GpuTextureView colorTextureViewS = sea.getColorTextureView();
     GpuTextureView colorTextureViewB = blend.getColorTextureView();
     GpuTextureView colorTextureViewD = distortion.getColorTextureView();
-    GpuTextureView colorTextureViewDG = distortionGradient.getColorTextureView();
+//    GpuTextureView colorTextureViewDG = distortionGradient.getColorTextureView();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
@@ -484,7 +486,7 @@ public class VoidSeaRenderer {
       renderPass.bindSampler("SamplerBlend", colorTextureViewB);
       renderPass.bindSampler("SamplerWorld", colorTextureViewT);
       renderPass.bindSampler("SamplerHeatWave", colorTextureViewD);
-      renderPass.bindSampler("SamplerDistortionGradient", colorTextureViewDG);
+//      renderPass.bindSampler("SamplerDistortionGradient", colorTextureViewDG);
 
       renderPass.setVertexBuffer(0, this.screenBuffer);
       renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);
