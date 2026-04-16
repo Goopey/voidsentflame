@@ -38,7 +38,7 @@ void main() {
     vec2 pFlow = flow(vertexPos.xz, time);
     float t = turbulence(pFlow);
     float veins = smoothstep(0.6, 0.8, t);
-    vec4 mixedColor = vec4(mix(color.rgb, GOLD, veins), 1.0);
+    vec4 mixedColor = vec4(mix(GOLD, color.rgb, veins), 1.0);
 
     vec4 fogColor = apply_fog(mixedColor, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 
