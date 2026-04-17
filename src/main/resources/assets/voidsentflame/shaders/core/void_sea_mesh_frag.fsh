@@ -28,7 +28,7 @@ void main() {
     float x = pos.x;
     float z = pos.z;
 
-    float time = GameTime * secondsPerDay;
+    float time = GameTime * secondsPerDay * 0.5;
     vec2 offsetPos = vec2((texCoord0.x - time), texCoord0.y);
 
     //----gold foam texture
