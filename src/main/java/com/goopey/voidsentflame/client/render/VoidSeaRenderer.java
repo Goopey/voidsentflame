@@ -88,6 +88,7 @@ public class VoidSeaRenderer {
   private final GpuBuffer screenBuffer;
   private int screenIndex;
   private final MappableRingBuffer positionBuffer;
+  private final MappableRingBuffer positionBuffer2;
   private final MappableRingBuffer lookAngleBuffer;
   // blend targets
   private final TextureTarget blendTarget;
@@ -120,6 +121,7 @@ public class VoidSeaRenderer {
     this.distortionGradientBuffer = buildDistortionGradientBox();
     this.distortionGradientLayerBuffer = buildDistortionGradientLayer();
     this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
+    this.positionBuffer2 = VFGpuBuffers.VFWorldPosUbo.get();
     this.lookAngleBuffer = VFGpuBuffers.VFLookAngleUbo.get();
 
     // these values will be resized later
@@ -255,11 +257,12 @@ public class VoidSeaRenderer {
         () -> this.renderBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
       );
 
+
       FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
       pass6.requires(pass5);
+      this.mainTargetHandle = pass6.readsAndWrites(this.mainTargetHandle);
       this.blendTargetHandle = pass6.readsAndWrites(this.blendTargetHandle);
       this.seaTargetHandle = pass6.readsAndWrites(this.seaTargetHandle);
-      this.mainTargetHandle = pass6.readsAndWrites(this.mainTargetHandle);
       this.distortionTargetHandle = pass6.readsAndWrites(this.distortionTargetHandle);
 //      this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
       pass6.executes(
@@ -458,20 +461,21 @@ public class VoidSeaRenderer {
     RenderTarget writeTarget = writeTargetHandle.get();
     RenderTarget blend = blendHandle.get();
     RenderTarget distortion = distortionHandle.get();
-//    RenderTarget distortionGradient = distortionGradientHandle.get();
+    //RenderTarget distortionGradient = distortionGradientHandle.get();
     RenderTarget sea = seaHandle.get();
+
     GpuTextureView colorTextureViewT = writeTarget.getColorTextureView();
     GpuTextureView depthTextureViewT = writeTarget.getDepthTextureView();
     GpuTextureView colorTextureViewS = sea.getColorTextureView();
     GpuTextureView colorTextureViewB = blend.getColorTextureView();
     GpuTextureView colorTextureViewD = distortion.getColorTextureView();
-//    GpuTextureView colorTextureViewDG = distortionGradient.getColorTextureView();
+    //GpuTextureView colorTextureViewDG = distortionGradient.getColorTextureView();
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
     VFGpuBuffers.UseWorldPos(
-      this.positionBuffer,
-      new Vector3f(0, (float) (cameraPos.y), 0),
+      this.positionBuffer2,
+      new Vector3f(0f, (float) (cameraPos.y()), 0f),
       encoder
     );
 
@@ -480,7 +484,7 @@ public class VoidSeaRenderer {
     ) {
       renderPass.setPipeline(VFRenderPipelines.VOID_SEA_DISTORTION_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
-      renderPass.setUniform("ChunkOffset", this.positionBuffer.currentBuffer());
+      renderPass.setUniform("ChunkOffset", this.positionBuffer2.currentBuffer());
 
       renderPass.bindSampler("SamplerSea", colorTextureViewS);
       renderPass.bindSampler("SamplerBlend", colorTextureViewB);
