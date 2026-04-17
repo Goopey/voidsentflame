@@ -95,7 +95,7 @@ float ABV(vec2 vec) {
 
     for (int i = 0; i < 6; i++) {
         value += amplitude * abs(signedNoise(vec));
-        vec *= 1.;
+        vec *= 1.0;
         amplitude *= 0.89;
     }
 
