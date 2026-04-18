@@ -39,22 +39,43 @@ void main() {
     vec2 r = vec2(0.);
     r.x = fbm(vertexPos.xz + 1.0 * q + vec2(1.7, 9.2)+ 0.15 * time);
     r.y = fbm(vertexPos.xz + 1.0 * q + vec2(8.3, 2.8)+ 0.126 * time);
-//
-    float f = ABVRidge((vertexPos.xz / 4.0) + r + vec2(time));
 
-    vec4 color = mix(vec4(0.990, 0.990, 0.750, 1.0),
-                vec4(0.850, 0.750, 0.270, 1.0),
-                clamp((f * f) * 4.0, 0.0, 1.0));
+    float f = ABVRidge((vertexPos.xz / 8.0) + r + vec2(time));
+
+    vec4 color = mix(vec4(0.903, 0.990, 0.135, 1.0),
+        vec4(0.981, 0.995, 0.153, 1.0),
+        clamp((f * f) * 4.0, 0.0, 1.0));
     color = mix(color,
-                vec4(0.0, 0.0, 0.0, 1.0),
-                clamp(length(q), 0.0, 1.0));
-    color = mix(color,
-                vec4(1.000, 0.950, 0.150, 1.0),
-                clamp(length(r.x), 0.0, 1.0));
+        vec4(1.000, 0.754, 0.123, 1.0),
+        clamp(length(r.x), 0.0, 1.0));
     color *= (f * f * f + 0.6 * f * f + 0.5 * f);
+    color *= color * color * color * color * color;
+
+    //----yellow cloud texture
+    q.x = fbm2(vertexPos.xz  + 0.00 * time);
+    q.y = fbm2(vertexPos.xz  + vec2(1.0));
+    r.x = fbm2(vertexPos.xz  + 1.0 * q + vec2(1.7, 9.2)+ 0.15 * time);
+    r.y = fbm2(vertexPos.xz  + 1.0 * q + vec2(8.3, 2.8)+ 0.126 * time);
+    f = fbm2(vertexPos.xz / 4.0 + r + vec2(time));
+
+    vec4 color2 = mix(vec4(0.455, 0.319, 0.095, 1.000),
+        vec4(0.795, 0.197, 0.067, 1.000),
+        clamp((f * f) * 1.0, 0.0, 1.0));
+    color2 = mix(color2,
+        vec4(0.770,0.561,0.163,1.000),
+        clamp(length(q), 0.0, 1.0));
+    color2 = mix(color2,
+        vec4(0.805,0.703,0.112,1.000),
+        clamp(length(r.x)/0.5, 0.0, 1.0));
+    color2 = (f * f * f + 0.6 * f * f + 0.5 * f) * color2 * 1.5;
+
+    //----combine noise textures
+    color += color2;
 
     //----calculate fog
-    vec4 fogColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
+    vec4 fogColor = apply_fog(
+        color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd,
+        FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 
     fragColor = fogColor;
 }

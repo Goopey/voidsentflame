@@ -319,8 +319,8 @@ public class VoidSeaRenderer {
       // See void_sea_mesh_vert.vsh
       renderPass.setUniform("ChunkOffset", this.positionBuffer.currentBuffer());
 
-      renderPass.bindSampler("Sampler0", this.blackTextureView);
-      renderPass.bindSampler("Sampler1", this.blackTextureView);
+      renderPass.bindSampler("Sampler0", frame);
+      renderPass.bindSampler("Sampler1", frame);
 
       renderPass.setVertexBuffer(0, this.seaMeshBuffer);
       renderPass.setIndexBuffer(this.seaMeshBuffer, VertexFormat.IndexType.SHORT);

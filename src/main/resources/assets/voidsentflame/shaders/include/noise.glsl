@@ -73,7 +73,7 @@ float signedNoise(vec2 v) {
 //                          FBM
 //##########################################################
 
-float fbm(vec2 vec) {
+float fbm(vec2 v) {
     // Initial values
     float value = 0.0;
     float amplitude = .5;
@@ -81,12 +81,26 @@ float fbm(vec2 vec) {
 
     // Loop of octaves
     for (int i = 0; i < 6; i++) {
-        value += amplitude * mixNoise(vec);
-        vec *= 2.;
+        value += amplitude * mixNoise(v);
+        v *= 0.7;
         amplitude *= .5;
     }
 
     return value;
+}
+
+float fbm2(vec2 v) {
+    float v2 = 0.0;
+    float a = 0.5;
+    vec2 shift = vec2(100.0);
+    // Rotate to reduce axial bias
+    mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.50));
+    for (int i = 0; i < 6; ++i) {
+        v2 += a * mixNoise(v);
+        v = rot * v * 2.0 + shift;
+        a *= 0.5;
+    }
+    return v2;
 }
 
 float ABV(vec2 vec) {

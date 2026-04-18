@@ -59,7 +59,7 @@ void main() {
 
     float time = GameTime * secondsPerDay;
     float curvature = (y * sphereCurvature)/sphereRadius - sphereCurvature * sphereRadius;
-    float waves = sin((sx - sz + timeFrequency * time) * waveFrequency) * waveAmplitude - waveAmplitude;
+    float waves = sin((sx + sz + timeFrequency * time) * waveFrequency) * waveAmplitude - waveAmplitude;
 
     vec3 displacedPosition = vec3(x, pos.y + curvature + waves, z);
     
