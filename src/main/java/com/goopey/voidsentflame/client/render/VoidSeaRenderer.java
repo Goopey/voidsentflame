@@ -13,14 +13,9 @@ import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.CommandEncoder;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.chunk.*;
-import net.minecraft.core.BlockPos;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
-import net.neoforged.neoforge.client.IRenderableSection;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
@@ -170,7 +165,7 @@ public class VoidSeaRenderer {
    *
    * @param event the event bus event. Needed to
    */
-  public void render(RenderLevelStageEvent.AfterEntities event) {
+  public void render(RenderLevelStageEvent.AfterParticles event) {
     // Check if in Rubicon
     Minecraft mc = Minecraft.getInstance();
     Level level = mc.level;
@@ -254,7 +249,7 @@ public class VoidSeaRenderer {
       this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
       this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
       pass5.executes(
-        () -> this.renderBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
+        () -> this.renderBlitAndBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
       );
 
       FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
@@ -503,7 +498,7 @@ public class VoidSeaRenderer {
    * @param seaHandle
    * @param worldHandle
    */
-  private void renderBlend(@NotNull ResourceHandle<? extends RenderTarget> writeTargetHandle, ResourceHandle<? extends RenderTarget> seaHandle, ResourceHandle<? extends RenderTarget> worldHandle) {
+  private void renderBlitAndBlend(@NotNull ResourceHandle<? extends RenderTarget> writeTargetHandle, ResourceHandle<? extends RenderTarget> seaHandle, ResourceHandle<? extends RenderTarget> worldHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
     RenderTarget sea = seaHandle.get();
     RenderTarget world = worldHandle.get();

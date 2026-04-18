@@ -49,7 +49,7 @@ public class VoidsentFlameModClient {
     }
  
     @SubscribeEvent
-    public static void onRenderLevel(RenderLevelStageEvent.AfterEntities event) {
+    public static void onRenderLevel(RenderLevelStageEvent.AfterParticles event) {
       // Rubicon dimension effects
       VoidSeaRenderer.getInstance().render(event);
     }
