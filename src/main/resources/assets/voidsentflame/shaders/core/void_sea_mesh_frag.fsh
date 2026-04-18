@@ -42,7 +42,8 @@ void main() {
 
     float f = ABVRidge((vertexPos.xz / 8.0) + r + vec2(time));
 
-    vec4 color = mix(vec4(0.903, 0.990, 0.135, 1.0),
+    vec4 color = vec4(1.0);
+    color = mix(color,
         vec4(0.981, 0.995, 0.153, 1.0),
         clamp((f * f) * 4.0, 0.0, 1.0));
     color = mix(color,
@@ -58,7 +59,8 @@ void main() {
     r.y = fbm2(vertexPos.xz  + 1.0 * q + vec2(8.3, 2.8)+ 0.126 * time);
     f = fbm2(vertexPos.xz / 4.0 + r + vec2(time));
 
-    vec4 color2 = mix(vec4(0.455, 0.319, 0.095, 1.000),
+    vec4 color2 = vec4(1.0);
+    color2 = mix(color2,
         vec4(0.795, 0.197, 0.067, 1.000),
         clamp((f * f) * 1.0, 0.0, 1.0));
     color2 = mix(color2,
@@ -71,7 +73,7 @@ void main() {
 
     //----combine noise textures
     color += color2;
-    color = min(color, 1.0);
+    color = clamp(color, vec4(0.0), vec4(vec3(0.94), 1.0));
 
     //----calculate fog
     vec4 fogColor = apply_fog(

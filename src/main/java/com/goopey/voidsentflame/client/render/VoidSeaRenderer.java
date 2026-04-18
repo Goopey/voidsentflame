@@ -257,7 +257,6 @@ public class VoidSeaRenderer {
         () -> this.renderBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
       );
 
-
       FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
       pass6.requires(pass5);
       this.mainTargetHandle = pass6.readsAndWrites(this.mainTargetHandle);

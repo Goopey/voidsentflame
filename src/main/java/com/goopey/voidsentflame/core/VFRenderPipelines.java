@@ -89,9 +89,10 @@ public class VFRenderPipelines {
         .withSampler("SamplerSea")
         .withSampler("SamplerWorld")
         .withColorWrite(true, false)
-        .withDepthWrite(true)
+        .withDepthWrite(false)
         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
         .withCull(false)
+        .withoutStencilTest()
         .withoutBlend()
         .build()
     );
@@ -107,7 +108,7 @@ public class VFRenderPipelines {
 //        .withSampler("SamplerDistortionGradient") TODO : Fix Gradient
         .withSampler("SamplerHeatWave")
         .withColorWrite(true, false)
-        .withDepthWrite(true)
+        .withDepthWrite(false)
         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
         .withCull(false)
         .withoutBlend()
