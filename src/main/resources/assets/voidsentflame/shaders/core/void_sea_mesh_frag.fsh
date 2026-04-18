@@ -71,6 +71,7 @@ void main() {
 
     //----combine noise textures
     color += color2;
+    color = min(color, 1.0);
 
     //----calculate fog
     vec4 fogColor = apply_fog(
