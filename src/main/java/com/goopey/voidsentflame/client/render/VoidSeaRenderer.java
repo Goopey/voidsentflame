@@ -6,6 +6,7 @@ import java.util.*;
 
 import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
+import com.goopey.voidsentflame.world.dimension.RubiconDimension;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -37,32 +38,21 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
+import static com.goopey.voidsentflame.world.dimension.RubiconDimension.VoidSeaConstants;
+
 public class VoidSeaRenderer {
   // Singleton Instance
   private static final VoidSeaRenderer INSTANCE = new VoidSeaRenderer();
-
-  // Render Waves
-  public static final float WAVE_AMPLITUDE = 1.5f;
-  public static final float WAVE_FREQUENCY = 0.15f;
-  public static final float TIME_FREQUENCY = 4.f;
-  public static final float SECONDS_PER_DAY = 1200.f;
   
   // Render Triangles
   private static final int QUAD_SIZE = 3;
   private static final float PADDING = 1.1f;
 
-  // World Position
-  public static final double HEIGHT = -42.5;
-  private static final double HEAT_HEIGHT = -26.5;
-  private static final int OFFSET = 256;
-  private static final int VIEW_DISTANCE_SCALE = 16;
   
   // Sprite/Model Stuff
   private TextureAtlasSprite SPRITE;
@@ -100,9 +90,6 @@ public class VoidSeaRenderer {
   private GpuTextureView heatWaveTextureView;
   private GpuTextureView blackTextureView;
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
-
-  // Dimension Stuff
-  public static final ResourceKey<Level> RUBICON = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("voidsentflame:rubicon"));
 
   //#################################################
   //                 INSTANCE
@@ -172,7 +159,7 @@ public class VoidSeaRenderer {
     Level level = mc.level;
     LevelRenderer levelRenderer = event.getLevelRenderer();
     if (!RenderSystem.isOnRenderThread()) { return; }
-    if (level.dimension() != RUBICON) { return; }
+    if (level.dimension() != RubiconDimension.RUBICON) { return; }
     // account for which frame of the animation the texture is
     int frame = (int) (level.getGameTime() % 20) / 4;
 
@@ -186,7 +173,7 @@ public class VoidSeaRenderer {
 
     // scale size depending on render distance
     // TODO : needs readjusting
-    float renderDistance = (float) (levelRenderer.getLastViewDistance()/Math.max(VIEW_DISTANCE_SCALE, 12));
+    float renderDistance = (float) (levelRenderer.getLastViewDistance()/Math.max(VoidSeaConstants.VIEW_DISTANCE_SCALE, 12));
 
     // get cameraPos and lock the wave model at the proper height in the world
     Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
@@ -303,7 +290,7 @@ public class VoidSeaRenderer {
     // setup other special uniforms
     VFGpuBuffers.UseWorldPos(
       this.positionBuffer,
-      new Vector3f((float) cameraPos.x, (float) (HEIGHT - cameraPos.y), (float) cameraPos.z),
+      new Vector3f((float) cameraPos.x, (float) (VoidSeaConstants.HEIGHT - cameraPos.y), (float) cameraPos.z),
       encoder
     );
 
@@ -347,7 +334,7 @@ public class VoidSeaRenderer {
 
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
-    double height = HEAT_HEIGHT - cameraPos.y;
+    double height = VoidSeaConstants.HEAT_HEIGHT - cameraPos.y;
 
     // setup other special uniforms
     VFGpuBuffers.UseWorldPos(
@@ -418,11 +405,11 @@ public class VoidSeaRenderer {
       0.0F
     );
 
-    int height = (int) (HEAT_HEIGHT - HEIGHT);
+    int height = (int) (VoidSeaConstants.HEAT_HEIGHT - VoidSeaConstants.HEIGHT);
     for (int i = 0; i < height; i++) {
       int val = height - i;
       // don't render layers above the camera. Distortion shader takes care of the submerging effect.
-      if (cameraPos.y - 0.5 < HEAT_HEIGHT - val) {
+      if (cameraPos.y - 0.5 < VoidSeaConstants.HEAT_HEIGHT - val) {
         break;
       }
       VFGpuBuffers.UseWorldPos(
@@ -571,7 +558,7 @@ public class VoidSeaRenderer {
     try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * AMOUNT_OF_VERTICES)) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
       
-      putMesh(bufferBuilder, OFFSET, QUAD_SIZE, PADDING);
+      putMesh(bufferBuilder, VoidSeaConstants.OFFSET, QUAD_SIZE, PADDING);
 
       // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
       // Last step of making the positions we're rendering stuff in.
@@ -599,7 +586,7 @@ public class VoidSeaRenderer {
     try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * 5 * 6)) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
 
-      putOpenCubeMeshVertex(bufferBuilder, OFFSET, (int) (HEAT_HEIGHT + 30), -OFFSET);
+      putOpenCubeMeshVertex(bufferBuilder, VoidSeaConstants.OFFSET, (int) (VoidSeaConstants.HEAT_HEIGHT + 30), -VoidSeaConstants.OFFSET);
 
       // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
       // Last step of making the positions we're rendering stuff in.
@@ -629,7 +616,7 @@ public class VoidSeaRenderer {
     ) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
 
-      putCubeMeshVertex(bufferBuilder, OFFSET, (int) HEAT_HEIGHT, (int) HEIGHT);
+      putCubeMeshVertex(bufferBuilder, VoidSeaConstants.OFFSET, (int) VoidSeaConstants.HEAT_HEIGHT, (int) VoidSeaConstants.HEIGHT);
 
       // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
       // Last step of making the positions we're rendering stuff in.
@@ -659,7 +646,7 @@ public class VoidSeaRenderer {
     ) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
 
-      putPlaneMeshVertex(bufferBuilder, OFFSET, (int) HEAT_HEIGHT);
+      putPlaneMeshVertex(bufferBuilder, VoidSeaConstants.OFFSET, (int) VoidSeaConstants.HEAT_HEIGHT);
 
       // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
       // Last step of making the positions we're rendering stuff in.
@@ -888,7 +875,7 @@ public class VoidSeaRenderer {
   }
 
   /**
-   * Helper method which gets a sprite from the block TextureAtlas using it's name and the animated sprites for the gpu texture.
+   * Helper method which gets a sprite from the block TextureAtlas using its name and the animated sprites for the gpu texture.
    * Initializes textures for VoidSeaRenderer.
    * 
    * @return TextureAtlasSprite A Sprite in the TextureAtlas

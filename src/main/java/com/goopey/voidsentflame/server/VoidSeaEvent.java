@@ -1,11 +1,12 @@
 package com.goopey.voidsentflame.server;
 
-import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
+import com.goopey.voidsentflame.world.dimension.RubiconDimension;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import com.goopey.voidsentflame.world.dimension.RubiconDimension.VoidSeaConstants;
 
 public class VoidSeaEvent {
   /**
@@ -16,6 +17,7 @@ public class VoidSeaEvent {
     Level level = event.getEntity().level();
     Entity entity = event.getEntity();
 
+    lowerGrav(entity);
     killEntity(entity, level);
   }
 
@@ -25,13 +27,13 @@ public class VoidSeaEvent {
    * @param level the level needed to check if the player is in the right dimension
    */
   private static void killEntity(Entity entity, Level level) {
-    if (level.dimension() == VoidSeaRenderer.RUBICON && !level.isClientSide()) {
-      double height = VoidSeaRenderer.HEIGHT + entity.getBbHeight() - 0.2;
+    if (level.dimension() == RubiconDimension.RUBICON && !level.isClientSide()) {
+      double height = VoidSeaConstants.HEIGHT + entity.getBbHeight() - 0.2;
 
       if (entity instanceof Player) {
-        double time = ((level.getGameTime() % 24000.0) / 24000.0) * VoidSeaRenderer.SECONDS_PER_DAY;
-        double waves = Math.sin(VoidSeaRenderer.WAVE_FREQUENCY * (entity.getX() + entity.getZ() + VoidSeaRenderer.TIME_FREQUENCY * time)) *
-          VoidSeaRenderer.WAVE_AMPLITUDE - VoidSeaRenderer.WAVE_AMPLITUDE;
+        double time = ((level.getGameTime() % 24000.0) / 24000.0) * VoidSeaConstants.SECONDS_PER_DAY;
+        double waves = Math.sin(VoidSeaConstants.WAVE_FREQUENCY * (entity.getX() + entity.getZ() + VoidSeaConstants.TIME_FREQUENCY * time)) *
+          VoidSeaConstants.WAVE_AMPLITUDE - VoidSeaConstants.WAVE_AMPLITUDE;
         height += waves;
       }
 
@@ -39,5 +41,21 @@ public class VoidSeaEvent {
         entity.kill((ServerLevel) level);
       }
     }
+  }
+
+  /**
+   * Function which manages slowing entities as they get closer to the void sea in the Rubicon.
+   * @param entity the entity that will be slowed as they get closer to the bottom of the world
+   */
+  private static void lowerGrav(Entity entity) {
+    // check if the entity is supposed to be affected by gravity
+    if (entity.getGravity() != 0.0) { return; }
+
+    double slowStr = Math.clamp((entity.getY() - VoidSeaConstants.HEIGHT) / Math.abs(VoidSeaConstants.HEIGHT), 0.1, 1.0);
+    double slowStrH = Math.clamp(slowStr * 2, 0.25, 1.0);
+    double slowStrV = entity.getDeltaMovement().y() > 0 ? 1.0 : slowStr;
+    entity.setDeltaMovement(
+      entity.getDeltaMovement().multiply(slowStrH, slowStrV, slowStrH)
+    );
   }
 }
