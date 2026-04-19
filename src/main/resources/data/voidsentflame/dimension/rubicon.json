@@ -70,24 +70,11 @@
         "final_density": {
           "type": "minecraft:range_choice", "input": "voidsentflame:chebyshev_distance",
           "min_inclusive": 0, "max_exclusive": 180,
-          "when_in_range": "voidsentflame:rubicon/biomes/crucible_3d_noise", "when_out_of_range": {
+          "when_in_range": "voidsentflame:rubicon/biomes/crucible_3d_noise",
+          "when_out_of_range": {
             "type": "minecraft:range_choice", "input": "voidsentflame:chebyshev_distance",
             "min_inclusive": 180, "max_exclusive": 190,
-            "when_out_of_range": 0, "when_in_range": {
-              "type": "minecraft:min", "argument1": "voidsentflame:rubicon/biomes/crucible_3d_noise", "argument2": {
-                "type": "minecraft:add", "argument1": {
-                  "type": "minecraft:y_clamped_gradient", "from_y": -64, "to_y": 320, "from_value": 28, "to_value": -356
-                }, "argument2": {
-                  "type": "minecraft:mul", "argument1": 33, "argument2": {
-                    "type": "moredfs:power", "exponent": 0.5, "base": {
-                      "type": "minecraft:abs", "argument": {
-                        "type": "minecraft:add", "argument1": -190, "argument2": "voidsentflame:chebyshev_distance" 
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "when_out_of_range": 0, "when_in_range": "voidsentflame:rubicon/biomes/crucible_3d_noise_slope"
           }
         },
         "vein_toggle": {
@@ -167,16 +154,16 @@
               "type": "minecraft:vertical_gradient",
               "random_name": "minecraft:bedrock_floor",
               "true_at_and_below": {
-                "above_bottom": 0
+                "above_bottom": 12
               },
               "false_at_and_above": {
-                "above_bottom": 5
+                "above_bottom": 24
               }
             },
             "then_run": {
               "type": "minecraft:block",
               "result_state": {
-                "Name": "minecraft:bedrock"
+                "Name": "voidsentflame:rubicon_air_block"
               }
             }
           },
