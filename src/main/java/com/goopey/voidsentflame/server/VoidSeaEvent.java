@@ -48,11 +48,9 @@ public class VoidSeaEvent {
    * @param entity the entity that will be slowed as they get closer to the bottom of the world
    */
   private static void lowerGrav(Entity entity) {
-    // check if the entity is supposed to be affected by gravity
-    if (entity.getGravity() != 0.0) { return; }
-
-    double slowStr = Math.clamp((entity.getY() - VoidSeaConstants.HEIGHT) / Math.abs(VoidSeaConstants.HEIGHT), 0.1, 1.0);
-    double slowStrH = Math.clamp(slowStr * 2, 0.25, 1.0);
+    double a = Math.sqrt(entity.getY() + (VoidSeaConstants.HEIGHT * -1.5));
+    double slowStr = Math.clamp(a / 8, 0.5, 1.0);
+    double slowStrH = Math.clamp(slowStr * 2, 0.5, 1.0);
     double slowStrV = entity.getDeltaMovement().y() > 0 ? 1.0 : slowStr;
     entity.setDeltaMovement(
       entity.getDeltaMovement().multiply(slowStrH, slowStrV, slowStrH)
