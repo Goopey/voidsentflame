@@ -49,16 +49,17 @@ public class VoidSeaRenderer {
   private static final VoidSeaRenderer INSTANCE = new VoidSeaRenderer();
 
   // Render Waves
-  private static final float AMPLITUDE = 0.5f;
-  private static final float FREQUENCY = 0.5f;
-  private static final float SPEED = 0.05f;
+  public static final float WAVE_AMPLITUDE = 1.5f;
+  public static final float WAVE_FREQUENCY = 0.15f;
+  public static final float TIME_FREQUENCY = 4.f;
+  public static final float SECONDS_PER_DAY = 1200.f;
   
   // Render Triangles
   private static final int QUAD_SIZE = 3;
   private static final float PADDING = 1.1f;
 
   // World Position
-  private static final double HEIGHT = -42.5;
+  public static final double HEIGHT = -42.5;
   private static final double HEAT_HEIGHT = -26.5;
   private static final int OFFSET = 256;
   private static final int VIEW_DISTANCE_SCALE = 16;
@@ -101,7 +102,7 @@ public class VoidSeaRenderer {
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
 
   // Dimension Stuff
-  private static final ResourceKey<Level> RUBICON = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("voidsentflame:rubicon"));
+  public static final ResourceKey<Level> RUBICON = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("voidsentflame:rubicon"));
 
   //#################################################
   //                 INSTANCE
@@ -170,6 +171,7 @@ public class VoidSeaRenderer {
     Minecraft mc = Minecraft.getInstance();
     Level level = mc.level;
     LevelRenderer levelRenderer = event.getLevelRenderer();
+    if (!RenderSystem.isOnRenderThread()) { return; }
     if (level.dimension() != RUBICON) { return; }
     // account for which frame of the animation the texture is
     int frame = (int) (level.getGameTime() % 20) / 4;
