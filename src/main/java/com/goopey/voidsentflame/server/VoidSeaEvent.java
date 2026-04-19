@@ -6,17 +6,25 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
-import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 public class VoidSeaEvent {
   /**
-   * This functions manages killing entities who fall underneath the void sea effect.
+   * This functions manages all the events that can happen when a living entity touches or gets close to the void sea.
    * @param event the entityTickEvent
    */
-  public static void voidSeaTickKillEntity(EntityTickEvent.Post event) {
+  public static void voidSeaTick(EntityTickEvent.Post event) {
     Level level = event.getEntity().level();
     Entity entity = event.getEntity();
 
+    killEntity(entity, level);
+  }
+
+  /**
+   * Function which manages killing entities if they touch the void sea in the Rubicon.
+   * @param entity the entity that will die if it is too low in the world
+   * @param level the level needed to check if the player is in the right dimension
+   */
+  private static void killEntity(Entity entity, Level level) {
     if (level.dimension() == VoidSeaRenderer.RUBICON && !level.isClientSide()) {
       double height = VoidSeaRenderer.HEIGHT + entity.getBbHeight() - 0.2;
 

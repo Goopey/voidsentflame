@@ -40,7 +40,7 @@ public class VoidsentFlameModClient {
 
     @SubscribeEvent
     public static void onWorldTick(EntityTickEvent.Post event) {
-      VoidSeaEvent.voidSeaTickKillEntity(event);
+      VoidSeaEvent.voidSeaTick(event);
     }
 
     @SubscribeEvent
