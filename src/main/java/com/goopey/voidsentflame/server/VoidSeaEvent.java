@@ -52,6 +52,9 @@ public class VoidSeaEvent {
     double slowStr = Math.clamp(a / 8, 0.5, 1.0);
     double slowStrH = Math.clamp(slowStr * 2, 0.5, 1.0);
     double slowStrV = entity.getDeltaMovement().y() > 0 ? 1.0 : slowStr;
+
+    if (slowStrV < 0.75) { entity.resetFallDistance(); }
+
     entity.setDeltaMovement(
       entity.getDeltaMovement().multiply(slowStrH, slowStrV, slowStrH)
     );
