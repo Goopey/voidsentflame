@@ -173,7 +173,8 @@ public class VoidSeaRenderer {
 
     // scale size depending on render distance
     // TODO : needs readjusting
-    float renderDistance = (float) (Math.max(levelRenderer.getLastViewDistance(), 12) / VoidSeaConstants.VIEW_DISTANCE_SCALE);
+    float renderDistanceScale = (float) (Math.max(levelRenderer.getLastViewDistance(), 12) / VoidSeaConstants.VIEW_DISTANCE_SCALE);
+    renderDistanceScale = renderDistanceScale * renderDistanceScale * 1.2f;
 
     // get cameraPos and lock the wave model at the proper height in the world
     Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
@@ -182,7 +183,7 @@ public class VoidSeaRenderer {
 
     Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
     matrix4fStack.pushMatrix();
-    matrix4fStack.scale(renderDistance, 1, renderDistance);
+    matrix4fStack.scale(renderDistanceScale, 1, renderDistanceScale);
 
     // avoid crashes if the sprites were cleared 
     if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
