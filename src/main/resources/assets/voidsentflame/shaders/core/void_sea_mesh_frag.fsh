@@ -77,7 +77,7 @@ void main() {
 
     //----calculate fog
     vec4 fogColor = apply_fog(
-        color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd,
+        color, 0.0, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd,
         FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 
     fragColor = fogColor;

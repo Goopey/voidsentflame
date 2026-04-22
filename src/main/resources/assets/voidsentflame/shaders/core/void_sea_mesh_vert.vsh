@@ -66,7 +66,7 @@ void main() {
     texCoord0 = UV0;
     vertexColor = Color * minecraft_sample_lightmap(Sampler1, UV2);
     sphericalVertexDistance = fog_spherical_distance(displacedPosition);
-    cylindricalVertexDistance = fog_cylindrical_distance(displacedPosition);
+    cylindricalVertexDistance = fog_cylindrical_distance(vec3(displacedPosition.x, 0.0, displacedPosition.z));
     vertexPos = vec4(displacedPosition, 1.0);
     gl_Position = ProjMat * ModelViewMat * vertexPos;
 }
