@@ -48,6 +48,6 @@ public class RubiconDimension {
     public static final double HEIGHT = -42.5;
     public static final double HEAT_HEIGHT = -26.5;
     public static final int OFFSET = 256;
-    public static final int VIEW_DISTANCE_SCALE = 16;
+    public static final int VIEW_DISTANCE_SCALE = 12;
   }
 }
