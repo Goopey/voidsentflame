@@ -4,6 +4,8 @@ import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 
 import com.goopey.voidsentflame.server.VoidSeaEvent;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.SkyRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -63,6 +65,8 @@ public class VoidsentFlameModClient {
 //       TODO : remove test code (examples for addListeners)
 //      CloudRenderer e;
 //      GameRenderer e5;
+      LevelRenderer e2;
+      SkyRenderer e;
 //      PeriodicNotificationManager e2;
 //      FoliageColorReloadListener e3;
 //      ClientHooks e4;
