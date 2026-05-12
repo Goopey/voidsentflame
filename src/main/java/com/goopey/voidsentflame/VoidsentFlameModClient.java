@@ -4,6 +4,7 @@ import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 
 import com.goopey.voidsentflame.server.VoidSeaEvent;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SkyRenderer;
 import net.neoforged.api.distmarker.Dist;
@@ -17,6 +18,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderBuffersEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.lifecycle.ClientStoppingEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
@@ -41,7 +43,7 @@ public class VoidsentFlameModClient {
     }
 
     @SubscribeEvent
-    public static void onWorldTick(EntityTickEvent.Post event) {
+    public static void onEntityTick(EntityTickEvent.Post event) {
       VoidSeaEvent.voidSeaTick(event);
     }
 
@@ -57,6 +59,11 @@ public class VoidsentFlameModClient {
     }
 
     @SubscribeEvent
+    public static void onRenderSky(RenderLevelStageEvent.AfterSky event) {
+
+    }
+
+    @SubscribeEvent
     public static void onRegisterReloadListeners(AddClientReloadListenersEvent event) {
         // TODO : fix no registering when not on renderThread
 //      event.addListener(BleedVisualEffect.LOCATION, BleedVisualEffect.INSTANCE);
@@ -65,11 +72,17 @@ public class VoidsentFlameModClient {
 //       TODO : remove test code (examples for addListeners)
 //      CloudRenderer e;
 //      GameRenderer e5;
-      LevelRenderer e2;
-      SkyRenderer e;
+//      SkyRenderer e;
+//      Minecraft e;
+//      LevelRenderer e;
 //      PeriodicNotificationManager e2;
 //      FoliageColorReloadListener e3;
 //      ClientHooks e4;
+    }
+
+    @SubscribeEvent
+    public static void onClientStopping(ClientStoppingEvent event) {
+
     }
 
     @SubscribeEvent
