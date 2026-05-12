@@ -2,12 +2,9 @@ package com.goopey.voidsentflame;
 
 import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 
-import com.goopey.voidsentflame.client.render.VoidsentFlameSkyRenderer;
+import com.goopey.voidsentflame.client.render.RubiconSkyRenderer;
 import com.goopey.voidsentflame.server.VoidSeaEvent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.SkyRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -66,24 +63,12 @@ public class VoidsentFlameModClient {
 
     @SubscribeEvent
     public static void onRegisterReloadListeners(AddClientReloadListenersEvent event) {
-        // TODO : fix no registering when not on renderThread
-      // VoidsentFlameMod.LOGGER.info("###################################" + event.getLastVanillaListener().getClass().toGenericString());
-      // VoidsentFlameMod.LOGGER.info("###################################" + event.getRegistry());
-//       TODO : remove test code (examples for addListeners)
-//      CloudRenderer e;
-//      GameRenderer e5;
-//      SkyRenderer e;
-//      Minecraft e;
-//      LevelRenderer e;
-//      PeriodicNotificationManager e2;
-//      FoliageColorReloadListener e3;
-//      ClientHooks e4;
-      event.addListener(VoidsentFlameSkyRenderer.LOCATION, VoidsentFlameSkyRenderer.INSTANCE);
+      event.addListener(RubiconSkyRenderer.LOCATION, RubiconSkyRenderer.INSTANCE);
     }
 
     @SubscribeEvent
     public static void onClientStopping(ClientStoppingEvent event) {
-      VoidsentFlameSkyRenderer.INSTANCE.close();
+      RubiconSkyRenderer.INSTANCE.close();
     }
 
     @SubscribeEvent
