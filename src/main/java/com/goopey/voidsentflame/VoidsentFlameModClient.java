@@ -72,14 +72,4 @@ public class VoidsentFlameModClient {
       VoidSeaRenderer.getInstance().close();
       RubiconSkyRenderer.INSTANCE.close();
     }
-
-    @SubscribeEvent
-    public static void registerRenderPipelinesEvent(RegisterRenderPipelinesEvent event) {
-        // TODO : move registering custom RenderPipelines to proper event
-    }
-
-    @SubscribeEvent
-    public static void registerRenderBuffersEvent(RegisterRenderBuffersEvent event) {
-        // TODO : move registering custom RenderBuffers to proper event
-    }
 }
