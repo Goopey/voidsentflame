@@ -3,8 +3,6 @@ package com.goopey.voidsentflame.util;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import org.joml.Vector3f;
 
-import java.util.Arrays;
-
 public class VertexMeshHelper {
   public static final int[][][] boxCoords = {
     {        // Face A
@@ -59,7 +57,9 @@ public class VertexMeshHelper {
    * @param packedOverlay the rgb value of the light to be baked in that is hitting the object
    */
   public static void putOpenCubeMeshVertex(BufferBuilder builder, int size, int topHeight, int bottomHeight, int packedLight, int packedOverlay) {
-    int[][][] box = Arrays.copyOfRange(boxCoords, 0, 5);
+    int[][][] box = {
+      boxCoords[0], boxCoords[1], boxCoords[2], boxCoords[3], boxCoords[4]
+    };
     cubeMeshLoop(builder, box, size, topHeight, bottomHeight, packedLight, packedOverlay);
   }
 
