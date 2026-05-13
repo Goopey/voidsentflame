@@ -151,7 +151,6 @@ public class VoidSeaRenderer {
   /**
    * Main method. Called when creating the Void Sea visual effect. Manages calling renderPasses, checking dimension,
    * passing textures.
-   *
    * @param event the event bus event. Needed to
    */
   public void render(RenderLevelStageEvent.AfterParticles event) {
@@ -652,8 +651,10 @@ public class VoidSeaRenderer {
   }
 
   /**
-   * TODO : comment
-   * @return
+   * Fills a GpuBuffer with a Vertex Mesh to draw a plane. These planes are made transparent in a later step and are
+   * stacked multiple times.
+   * Used to make the distortion stronger as it goes down.
+   * @return a GpuBuffer which contains the data needed to draw a large quad in the world
    */
   private GpuBuffer buildDistortionGradientLayer() {
     VertexFormat format = DefaultVertexFormat.BLOCK;
@@ -689,8 +690,8 @@ public class VoidSeaRenderer {
   }
 
   /**
-   * TODO : comment
-   * @return
+   * Fills a GpuBuffer with a Vertex Mesh to draw things on the screen.
+   * @return a GpuBuffer which contains the data needed to draw a screenQuad
    */
   private GpuBuffer buildScreen() {
     VertexFormat format = DefaultVertexFormat.POSITION_TEX;
@@ -699,20 +700,14 @@ public class VoidSeaRenderer {
 
     try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(6 * format.getVertexSize())) {
       BufferBuilder builder = new BufferBuilder(byteBufferBuilder, mode, format);
-      // TODO : hardcode values to improve performance
-      float x0 = -1f, x1 = 1f;
-      float y0 = -1f, y1 = 1f;
-      float z0 = 0f, z1 = 0f;
-      float v0 = 0f, v1 = 1f;
-      float u0 = 0f, u1 = 1f;
 
-      putBufferVertex(builder, x0, y0, z0, u0, v0);
-      putBufferVertex(builder, x0, y1, z1, u0, v1);
-      putBufferVertex(builder, x1, y1, z1, u1, v1);
+      putBufferVertex(builder, -1f, -1f, 0f, 0f, 0f);
+      putBufferVertex(builder, -1f, 1f, 0f, 0f, 1f);
+      putBufferVertex(builder, 1f, 1f, 0f, 1f, 1f);
 
-      putBufferVertex(builder, x1, y1, z1, u1, v1);
-      putBufferVertex(builder, x1, y0, z0, u1, v0);
-      putBufferVertex(builder, x0, y0, z0, u0, v0);
+      putBufferVertex(builder, 1f, 1f, 0f, 1f, 1f);
+      putBufferVertex(builder, 1f, -1f, 0f, 1f, 0f);
+      putBufferVertex(builder, -1f, -1f, 0f, 0f, 0f);
 
       try (MeshData meshdata = builder.buildOrThrow()) {
         this.screenIndex = meshdata.drawState().indexCount();
