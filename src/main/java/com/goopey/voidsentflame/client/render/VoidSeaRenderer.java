@@ -16,6 +16,8 @@ import com.mojang.blaze3d.resource.CrossFrameResourcePool;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import net.minecraft.client.renderer.*;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +47,14 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 import static com.goopey.voidsentflame.world.dimension.RubiconDimension.VoidSeaConstants;
 
-public class VoidSeaRenderer {
+public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoCloseable {
   // Singleton Instance
   private static final VoidSeaRenderer INSTANCE = new VoidSeaRenderer();
-  
+
+  // ResourceManagerReloadListener event listener
+  public static final String NAME = "void_sea";
+  public static final ResourceLocation LOCATION = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "shaders/" + NAME + ".reload");
+
   // Render Triangles
   private static final int QUAD_SIZE = 3;
   private static final float PADDING = 1.1f;
@@ -61,19 +67,19 @@ public class VoidSeaRenderer {
   // MAGIC NUMBER, DO NOT CHANGE
   // (int) (((2 * OFFSET * PADDING/ QUAD_SIZE) * (2 * OFFSET * PADDING/ QUAD_SIZE)) * 6);
   private static final int AMOUNT_OF_VERTICES = 155574;
-  private final GpuBuffer seaMeshBuffer;
+  private GpuBuffer seaMeshBuffer;
   private int seaMeshIndex;
-  private final GpuBuffer bottomDistortionBuffer;
+  private GpuBuffer bottomDistortionBuffer;
   private int bottomDistortionIndex;
   // TODO : implement distortionGradient
 //  private final GpuBuffer distortionGradientBuffer;
 //  private int distortionGradientIndex;
 //  private final GpuBuffer distortionGradientLayerBuffer;
 //  private int distortionGradientLayerIndex;
-  private final GpuBuffer screenBuffer;
+  private GpuBuffer screenBuffer;
   private int screenIndex;
-  private final MappableRingBuffer positionBuffer;
-  private final MappableRingBuffer positionBuffer2;
+  private MappableRingBuffer positionBuffer;
+  private MappableRingBuffer positionBuffer2;
   // blend targets
   private final TextureTarget blendTarget;
   private ResourceHandle<TextureTarget> blendTargetHandle;
@@ -92,18 +98,7 @@ public class VoidSeaRenderer {
   //                 INSTANCE
   //#################################################
 
-  private VoidSeaRenderer() {
-    // Cache
-    this.getSprites();
-    this.seaMeshBuffer = buildSea();
-    this.screenBuffer = buildScreen();
-    this.bottomDistortionBuffer = buildBottomDistortion();
-//    this.distortionGradientBuffer = buildDistortionGradientBox();
-//    this.distortionGradientLayerBuffer = buildDistortionGradientLayer();
-    this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
-    this.positionBuffer2 = VFGpuBuffers.VFWorldPosUbo.get();
-
-    // these values will be resized later
+  private VoidSeaRenderer() {// these values will be resized later
     this.mainTarget = Minecraft.getInstance().getMainRenderTarget();
     this.blendTarget = new TextureTarget(
       "VoidSeaBlendTexture",
@@ -137,6 +132,38 @@ public class VoidSeaRenderer {
 
   public static VoidSeaRenderer getInstance() {
     return INSTANCE;
+  }
+
+  /**
+   * This method takes care of automatically closing all skyRenderer classes this main class manages.
+   */
+  @Override
+  public void close() {
+    this.closeSprites();
+    this.blackTextureView.close();
+//    this.distortionGradientBuffer.close();
+//    this.distortionGradientLayerBuffer.close();
+    this.seaMeshBuffer.close();
+    this.screenBuffer.close();
+    this.bottomDistortionBuffer.close();
+    this.positionBuffer.close();
+    this.positionBuffer2.close();
+  }
+
+  /**
+   * Used to initialize the resources needed by a skyRenderer when the game reloads assets
+   * @param resourceManager Minecraft's resource manager. Provides controlled access to the game's files while running.
+   */
+  @Override
+  public void onResourceManagerReload(@NotNull ResourceManager resourceManager) {
+    this.getSprites();
+    buildSea();
+    buildScreen();
+    buildBottomDistortion();
+//    this.distortionGradientBuffer = buildDistortionGradientBox();
+//    this.distortionGradientLayerBuffer = buildDistortionGradientLayer();
+    this.positionBuffer = VFGpuBuffers.VFWorldPosUbo.get();
+    this.positionBuffer2 = VFGpuBuffers.VFWorldPosUbo.get();
   }
 
   //######################################################
@@ -181,8 +208,9 @@ public class VoidSeaRenderer {
     matrix4fStack.pushMatrix();
     matrix4fStack.scale(renderDistanceScale, 1, renderDistanceScale);
 
+    // TODO : remove this
     // avoid crashes if the sprites were cleared 
-    if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
+//    if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
       this.blendTargetHandle = frameGraphBuilder.importExternal("VoidSeaBlendTexHandle", this.blendTarget);
       this.seaTargetHandle = frameGraphBuilder.importExternal("VoidSeaSeaTexHandle", this.seaTarget);
       this.distortionTargetHandle = frameGraphBuilder.importExternal("VoidSeaDistortHandle", this.distortionTarget);
@@ -243,9 +271,10 @@ public class VoidSeaRenderer {
       pass6.executes(
         () -> this.renderHeatWave(cameraPos, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
       );
-    } else {
-      this.getSprites();
-    }
+      //TODO : remove this
+//    } else {
+//      this.getSprites();
+//    }
 
     frameGraphBuilder.execute(this.resourcePool);
     matrix4fStack.popMatrix();
@@ -555,9 +584,8 @@ public class VoidSeaRenderer {
 
   /**
    * Fills a GpuBuffer with a Vertex Mesh to draw a very large grid that can wiggle to draw an ocean.
-   * @return a GpuBuffer which contains the data needed to draw a large quad in the world
    */
-  private GpuBuffer buildSea() {
+  private void buildSea() {
     VertexFormat format = DefaultVertexFormat.BLOCK;
     VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
     GpuBuffer gpuBuffer;
@@ -581,15 +609,14 @@ public class VoidSeaRenderer {
       }
     }
 
-    return gpuBuffer;
+    this.seaMeshBuffer = gpuBuffer;
   }
 
   /**
    * Makes a box with an open top to cover the environment with distortions when the player is inside the distortion
    * layers. Also used to cover the bottom of the world's terrain.
-   * @return a GpuBuffer which contains the data needed to draw a large quad in the world
    */
-  private GpuBuffer buildBottomDistortion() {
+  private void buildBottomDistortion() {
     VertexFormat format = DefaultVertexFormat.BLOCK;
     VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
     GpuBuffer gpuBuffer;
@@ -617,7 +644,7 @@ public class VoidSeaRenderer {
       }
     }
 
-    return gpuBuffer;
+    this.bottomDistortionBuffer = gpuBuffer;
   }
 
 //  /**
@@ -701,9 +728,8 @@ public class VoidSeaRenderer {
 
   /**
    * Fills a GpuBuffer with a Vertex Mesh shaped like a quad. Used to draw things straight across the screen.
-   * @return a GpuBuffer which contains the data needed to draw a screenQuad
    */
-  private GpuBuffer buildScreen() {
+  private void buildScreen() {
     VertexFormat format = DefaultVertexFormat.POSITION_TEX;
     VertexFormat.Mode mode = VertexFormat.Mode.QUADS;
     GpuBuffer gpuBuffer;
@@ -729,7 +755,7 @@ public class VoidSeaRenderer {
       }
     }
 
-    return gpuBuffer;
+    this.screenBuffer = gpuBuffer;
   }
 
   //############################################
@@ -796,6 +822,16 @@ public class VoidSeaRenderer {
     ResourceLocation gpuResLoc = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "textures/black.png");
     AbstractTexture abstractTexture = Minecraft.getInstance().getTextureManager().getTexture(gpuResLoc);
     this.blackTextureView = abstractTexture.getTextureView();
+  }
+
+  /**
+   * Manages closing the sprites generated by getSprites() at the end of the lifecycle.
+   */
+  private void closeSprites() {
+    for (GpuTextureView sprite : GPU_SPRITE_ANIM_VIEW){
+      sprite.close();
+    }
+    this.blackTextureView.close();
   }
 
   /**

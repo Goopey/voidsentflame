@@ -58,16 +58,18 @@ public class VoidsentFlameModClient {
 
     @SubscribeEvent
     public static void onRenderSky(RenderLevelStageEvent.AfterSky event) {
-
+      RubiconSkyRenderer.INSTANCE.render(event);
     }
 
     @SubscribeEvent
     public static void onRegisterReloadListeners(AddClientReloadListenersEvent event) {
+      event.addListener(VoidSeaRenderer.LOCATION, VoidSeaRenderer.getInstance());
       event.addListener(RubiconSkyRenderer.LOCATION, RubiconSkyRenderer.INSTANCE);
     }
 
     @SubscribeEvent
     public static void onClientStopping(ClientStoppingEvent event) {
+      VoidSeaRenderer.getInstance().close();
       RubiconSkyRenderer.INSTANCE.close();
     }
 
@@ -77,7 +79,7 @@ public class VoidsentFlameModClient {
     }
 
     @SubscribeEvent
-    public static void registerRenderPipelinesEvent(RegisterRenderBuffersEvent event) {
+    public static void registerRenderBuffersEvent(RegisterRenderBuffersEvent event) {
         // TODO : move registering custom RenderBuffers to proper event
     }
 }
