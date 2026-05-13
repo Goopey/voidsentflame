@@ -11,6 +11,8 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import com.goopey.voidsentflame.world.dimension.RubiconDimension.VoidSeaConstants;
 
+import java.util.Random;
+
 public class VoidSeaEvent {
   /**
    * This functions manages all the events that can happen when a living entity touches or gets close to the void sea.
@@ -22,6 +24,10 @@ public class VoidSeaEvent {
 
     lowerGrav(entity);
     killEntity(entity, level);
+
+    if (entity instanceof Player) {
+      playSfx((Player) entity);
+    }
   }
 
   /**
@@ -64,5 +70,16 @@ public class VoidSeaEvent {
     entity.setDeltaMovement(
       entity.getDeltaMovement().multiply(slowStrH, slowStrV, slowStrH)
     );
+  }
+
+  /**
+   * Plays ambience sound effects when the player is close enough.
+   * @param player the player which will have sound effects play.
+   */
+  private static void playSfx(Player player) {
+    double a = Math.sqrt(player.getY() + (VoidSeaConstants.HEIGHT * -1.5));
+    double slowStr = Math.clamp(a / 8, 0.25, 1.0);
+
+    player.playSound(null, (float) slowStr, new Random().nextFloat(0.9f, 1.05f));
   }
 }
