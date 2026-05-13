@@ -4,7 +4,6 @@ import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 
 import com.goopey.voidsentflame.client.render.RubiconSkyRenderer;
 import com.goopey.voidsentflame.server.VoidSeaEvent;
-import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -13,8 +12,6 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RegisterRenderBuffersEvent;
-import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.lifecycle.ClientStoppingEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
@@ -36,8 +33,7 @@ public class VoidsentFlameModClient {
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
       // Some client setup code
-      VoidsentFlameMod.LOGGER.info("HELLO FROM CLIENT SETUP");
-      VoidsentFlameMod.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+      VoidsentFlameMod.LOGGER.info("HELLO FROM VOIDSENTFLAME");
     }
 
     @SubscribeEvent
