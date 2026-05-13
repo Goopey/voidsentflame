@@ -6,6 +6,7 @@ import java.util.*;
 
 import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
+import com.goopey.voidsentflame.util.VertexMeshHelper;
 import com.goopey.voidsentflame.world.dimension.RubiconDimension;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
@@ -547,6 +548,10 @@ public class VoidSeaRenderer {
   //                BUILD SEA
   //############################################
 
+  /**
+   * TODO : comment
+   * @return
+   */
   private GpuBuffer buildSea() {
     VertexFormat format = DefaultVertexFormat.BLOCK;
     VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
@@ -574,6 +579,10 @@ public class VoidSeaRenderer {
     return gpuBuffer;
   }
 
+  /**
+   * TODO : comment
+   * @return
+   */
   private GpuBuffer buildBottomDistortion() {
     VertexFormat format = DefaultVertexFormat.BLOCK;
     VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
@@ -583,7 +592,10 @@ public class VoidSeaRenderer {
     try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * 5 * 6)) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
 
-      putOpenCubeMeshVertex(bufferBuilder, VoidSeaConstants.OFFSET, (int) (VoidSeaConstants.HEAT_HEIGHT + 30), -VoidSeaConstants.OFFSET);
+      VertexMeshHelper.putOpenCubeMeshVertex(
+        bufferBuilder, VoidSeaConstants.OFFSET, (int) (VoidSeaConstants.HEAT_HEIGHT + 30), -VoidSeaConstants.OFFSET,
+        VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY
+      );
 
       // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
       // Last step of making the positions we're rendering stuff in.
@@ -602,6 +614,10 @@ public class VoidSeaRenderer {
     return gpuBuffer;
   }
 
+  /**
+   * TODO : comment
+   * @return
+   */
   private GpuBuffer buildDistortionGradientBox() {
     VertexFormat format = DefaultVertexFormat.BLOCK;
     VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
@@ -613,7 +629,10 @@ public class VoidSeaRenderer {
     ) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
 
-      putCubeMeshVertex(bufferBuilder, VoidSeaConstants.OFFSET, (int) VoidSeaConstants.HEAT_HEIGHT, (int) VoidSeaConstants.HEIGHT);
+      VertexMeshHelper.putCubeMeshVertex(
+        bufferBuilder, VoidSeaConstants.OFFSET, (int) VoidSeaConstants.HEAT_HEIGHT, (int) VoidSeaConstants.HEIGHT,
+        VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY
+      );
 
       // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
       // Last step of making the positions we're rendering stuff in.
@@ -632,6 +651,10 @@ public class VoidSeaRenderer {
     return gpuBuffer;
   }
 
+  /**
+   * TODO : comment
+   * @return
+   */
   private GpuBuffer buildDistortionGradientLayer() {
     VertexFormat format = DefaultVertexFormat.BLOCK;
     VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
@@ -643,7 +666,10 @@ public class VoidSeaRenderer {
     ) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
 
-      putPlaneMeshVertex(bufferBuilder, VoidSeaConstants.OFFSET, (int) VoidSeaConstants.HEAT_HEIGHT);
+      VertexMeshHelper.putQuadMeshVertex(
+        bufferBuilder, VoidSeaConstants.OFFSET, (int) VoidSeaConstants.HEAT_HEIGHT,
+        VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY
+      );
 
       // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
       // Last step of making the positions we're rendering stuff in.
@@ -662,6 +688,10 @@ public class VoidSeaRenderer {
     return gpuBuffer;
   }
 
+  /**
+   * TODO : comment
+   * @return
+   */
   private GpuBuffer buildScreen() {
     VertexFormat format = DefaultVertexFormat.POSITION_TEX;
     VertexFormat.Mode mode = VertexFormat.Mode.QUADS;
@@ -747,131 +777,6 @@ public class VoidSeaRenderer {
   }
 
   /**
-   * Helper method used to create the bottom box of the distortion effect
-   * @param builder the buffer builder needed to add vertices to a mesh
-   * @param size the size of the square
-   * @param topHeight how high the square should cover the sky
-   * @param bottomHeight the low the square should cover the sky
-   */
-  private void putOpenCubeMeshVertex(BufferBuilder builder, int size, int topHeight, int bottomHeight) {
-    float u0 = 0, v0 = 0;
-    float u1 = 1f, v1 = 1f;
-
-    int[][][] box = {
-      {     // Face A
-        {size, topHeight, -size}, {size, topHeight, size}, {size, bottomHeight, size}, {size, bottomHeight, -size}
-      },
-      {     // Face B
-        {size, topHeight, size}, {-size, topHeight, size}, {-size, bottomHeight, size}, {size, bottomHeight, size}
-      },
-      {     // Face C
-        {-size, topHeight, size}, {-size, topHeight, -size}, {-size, bottomHeight, -size}, {-size, bottomHeight, size}
-      },
-      {     // Face D
-        {-size, topHeight, -size}, {size, topHeight, -size}, {size, bottomHeight, -size}, {-size, bottomHeight, -size}
-      },
-      {     // Face E
-        {-size, bottomHeight, size}, {size, bottomHeight, size}, {size, bottomHeight, -size}, {-size, bottomHeight, -size}
-      }
-    };
-
-    for (int[][] face : box) {
-      Vector3f pos1 = new Vector3f(face[0][0], face[0][1], face[0][2]);
-      Vector3f pos2 = new Vector3f(face[1][0], face[1][1], face[1][2]);
-      Vector3f pos3 = new Vector3f(face[2][0], face[2][1], face[2][2]);
-      Vector3f pos4 = new Vector3f(face[3][0], face[3][1], face[3][2]);
-
-      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
-      putBufferVertex(builder, pos2.x, pos2.y, pos2.z, u0, v1);
-      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
-
-      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
-      putBufferVertex(builder, pos4.x, pos4.y, pos4.z, u1, v0);
-      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
-    }
-  }
-
-  /**
-   * Helper method used to create the gradient box of the distortion effect
-   * @param builder the buffer builder needed to add vertices to a mesh
-   * @param size the size of the square
-   * @param topHeight how high the square should cover the sky
-   * @param bottomHeight the low the square should cover the sky
-   */
-  private void putCubeMeshVertex(BufferBuilder builder, int size, int topHeight, int bottomHeight) {
-    float u0 = 0, v0 = 0;
-    float u1 = 1f, v1 = 1f;
-
-    int[][][] box = {
-      {     // Face A
-        {size, topHeight, -size}, {size, topHeight, size}, {size, bottomHeight, size}, {size, bottomHeight, -size}
-      },
-      {     // Face B
-        {size, topHeight, size}, {-size, topHeight, size}, {-size, bottomHeight, size}, {size, bottomHeight, size}
-      },
-      {     // Face C
-        {-size, topHeight, size}, {-size, topHeight, -size}, {-size, bottomHeight, -size}, {-size, bottomHeight, size}
-      },
-      {     // Face D
-        {-size, topHeight, -size}, {size, topHeight, -size}, {size, bottomHeight, -size}, {-size, bottomHeight, -size}
-      },
-      {     // Face E - Bottom Face
-        {-size, bottomHeight, size}, {size, bottomHeight, size}, {size, bottomHeight, -size}, {-size, bottomHeight, -size}
-      },
-      {     // Face F - Top Face
-        {-size, topHeight, size}, {size, topHeight, size}, {size, topHeight, -size}, {-size, topHeight, -size}
-      }
-    };
-
-    for (int[][] face : box) {
-      Vector3f pos1 = new Vector3f(face[0][0], face[0][1], face[0][2]);
-      Vector3f pos2 = new Vector3f(face[1][0], face[1][1], face[1][2]);
-      Vector3f pos3 = new Vector3f(face[2][0], face[2][1], face[2][2]);
-      Vector3f pos4 = new Vector3f(face[3][0], face[3][1], face[3][2]);
-
-      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
-      putBufferVertex(builder, pos2.x, pos2.y, pos2.z, u0, v1);
-      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
-
-      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
-      putBufferVertex(builder, pos4.x, pos4.y, pos4.z, u1, v0);
-      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
-    }
-  }
-
-  /**
-   * Helper method used to create the box of the distortion effect
-   * @param builder the buffer builder needed to add vertices to a mesh
-   * @param size the size of the square
-   * @param height how high the square should be in the world
-   */
-  private void putPlaneMeshVertex(BufferBuilder builder, int size, int height) {
-    float u0 = 0, v0 = 0;
-    float u1 = 1f, v1 = 1f;
-
-    int[][][] box = {
-      {     // Face F - Top Face
-        {-size, height, size}, {size, height, size}, {size, height, -size}, {-size, height, -size}
-      }
-    };
-
-    for (int[][] face : box) {
-      Vector3f pos1 = new Vector3f(face[0][0], face[0][1], face[0][2]);
-      Vector3f pos2 = new Vector3f(face[1][0], face[1][1], face[1][2]);
-      Vector3f pos3 = new Vector3f(face[2][0], face[2][1], face[2][2]);
-      Vector3f pos4 = new Vector3f(face[3][0], face[3][1], face[3][2]);
-
-      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
-      putBufferVertex(builder, pos2.x, pos2.y, pos2.z, u0, v1);
-      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
-
-      putBufferVertex(builder, pos3.x, pos3.y, pos3.z, u1, v1);
-      putBufferVertex(builder, pos4.x, pos4.y, pos4.z, u1, v0);
-      putBufferVertex(builder, pos1.x, pos1.y, pos1.z, u0, v0);
-    }
-  }
-
-  /**
    * Helper method which gets a sprite from the block TextureAtlas using its name and the animated sprites for the gpu texture.
    * Initializes textures for VoidSeaRenderer.
    * 
@@ -902,7 +807,6 @@ public class VoidSeaRenderer {
 
   /**
    * Used to add a vertex at specific coordinates with an upwards normal
-   * 
    * @param builder the builder needed to add the vertices to a mesh
    * @param x the 1st position of the vertex
    * @param y the 2nd position of the vertex
@@ -911,11 +815,11 @@ public class VoidSeaRenderer {
    * @param v the 2nd UV position
    */
   private void putBufferVertex(BufferBuilder builder, float x, float y, float z, float u, float v) {
-    builder.addVertex(x, y, z)
-    .setColor(1f, 1f, 1f, 1f)
-    .setUv(u, v)
-    .setOverlay(VFRenderConsts.RUBICON_PACKED_OVERLAY)
-    .setLight(VFRenderConsts.RUBICON_PACKED_LIGHT)
-    .setNormal(0, 1f, 0);
+    VertexMeshHelper.putBufferVertex(
+      builder,
+      VFRenderConsts.RUBICON_PACKED_LIGHT,
+      VFRenderConsts.RUBICON_PACKED_OVERLAY,
+      x, y, z, u, v
+    );
   }
 }
