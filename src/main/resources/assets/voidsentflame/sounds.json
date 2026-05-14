@@ -1,0 +1,10 @@
+{
+  "void_sea_ambient_sound": {
+    "sounds": [
+      {
+        "name" : "voidsentflame:void_sea_ambient",
+        "stream" : false
+      }
+    ]
+  }
+}
