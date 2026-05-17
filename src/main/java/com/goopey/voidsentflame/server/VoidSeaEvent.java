@@ -2,6 +2,7 @@ package com.goopey.voidsentflame.server;
 
 import com.goopey.voidsentflame.core.init.SoundInit;
 import com.goopey.voidsentflame.world.dimension.RubiconDimension;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -78,10 +79,10 @@ public class VoidSeaEvent {
    * @param player the player which will have sound effects play.
    */
   private static void playSfx(Player player) {
-//    double a = Math.sqrt(player.getY() + (VoidSeaConstants.HEIGHT * -1.5));
-//    double slowStr = Math.clamp(a / 8, 0.25, 1.0);
+    double a = Math.sqrt(player.getY() + (VoidSeaConstants.HEIGHT * -1.5));
+    double slowStr = 1.0 - Math.clamp(a / 8, 0.25, 1.0);
 
+    // TODO : fix sfx
 //    player.playSound(SoundInit.VOID_SEA_AMBIENT.get(), (float) slowStr, new Random().nextFloat(0.9f, 1.05f));
-    player.playSound(SoundInit.VOID_SEA_AMBIENT.get(), 1f, new Random().nextFloat(0.9f, 1.05f));
   }
 }
