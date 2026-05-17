@@ -11,7 +11,7 @@ import net.minecraft.world.level.block.LiquidBlock;
 
 public class VoidFluidBlock extends LiquidBlock {
 	public VoidFluidBlock(BlockBehaviour.Properties properties) {
-		super(FluidInit.VOID_FLUID.get(), properties.mapColor(MapColor.COLOR_YELLOW).strength(1000000000f).hasPostProcess((bs, br, bp) -> true).emissiveRendering((bs, br, bp) -> true).lightLevel(s -> 15).noCollission().noLootTable()
+		super(FluidInit.VOID_FLUID.get(), properties.mapColor(MapColor.COLOR_YELLOW).strength(1000000000f).hasPostProcess((bs, br, bp) -> true).emissiveRendering((bs, br, bp) -> true).lightLevel(s -> 15).noCollision().noLootTable()
 				.liquid().pushReaction(PushReaction.DESTROY).sound(SoundType.EMPTY).replaceable());
 	}
 

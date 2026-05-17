@@ -15,17 +15,23 @@ import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.client.data.models.blockstates.PropertyDispatch;
 import net.minecraft.client.data.models.model.ModelLocationUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
+import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.data.models.model.TexturedModel;
 import net.minecraft.client.renderer.block.model.Variant;
 import net.minecraft.client.renderer.block.model.VariantMutator;
+import net.minecraft.client.resources.model.BlockStateModelLoader;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.NetherPortalBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.neoforged.neoforge.client.model.generators.loaders.ObjModelBuilder;
+import net.neoforged.neoforge.client.model.generators.template.ExtendedModelTemplateBuilder;
 
 public class ModModelProvider extends ModelProvider {
   public static final VariantMutator X_ROT_90 = VariantMutator.X_ROT.withValue(Quadrant.R90);
@@ -45,6 +51,7 @@ public class ModModelProvider extends ModelProvider {
     createPortalBlocks(pBModel);
     createXYRandomOrientationBlocks(pBModel);
 
+    pBModel.createAirLikeBlock(BlockInit.VOID_SEA_LAYER_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
     pBModel.createAirLikeBlock(BlockInit.RUBICON_AIR_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
     pBModel.createNonTemplateModelBlock(BlockInit.VOID_FLUID_BLOCK.get());
   }
@@ -78,6 +85,12 @@ public class ModModelProvider extends ModelProvider {
    *                    MODEL METHODS
    * ######################################################
    */
+
+  private static void getExistingModelFile(BlockModelGenerators pBModel, Block block) {
+    ResourceLocation model = ModelLocationUtils.getModelLocation(block);
+    Variant variant = plainModel(model);
+    pBModel.blockStateOutput.accept(MultiVariantGenerator.dispatch(block, new MultiVariant(WeightedList.of(variant))));
+  }
 
   private static void createPortalBlock(BlockModelGenerators pBModel, NetherPortalBlock block) {
     pBModel.blockStateOutput.accept(
