@@ -24,18 +24,31 @@ public class BlockInit {
   public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(VoidsentFlameMod.MODID);
 
   public static final DeferredHolder<Block, Block> VOID_STONE_BLOCK = 
-    register("void_stone_block", blockProperties -> new Block(blockProperties), BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(6F, 30F).sound(SoundType.STONE).requiresCorrectToolForDrops());
+    register("void_stone_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(5F, 30F).sound(SoundType.STONE).requiresCorrectToolForDrops());
 
   public static final DeferredBlock<RubiconPortalBlock> RUBICON_PORTAL_BLOCK = 
-    register("rubicon_portal_block", blockProperties -> new RubiconPortalBlock(blockProperties), BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL).noLootTable());
+    register("rubicon_portal_block", RubiconPortalBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL).noLootTable());
 
   public static final DeferredBlock<RubiconAirBlock> RUBICON_AIR_BLOCK =
-    register("rubicon_air_block", blockProperties -> new RubiconAirBlock(blockProperties), 
+    register("rubicon_air_block", RubiconAirBlock::new,
     BlockBehaviour.Properties.of().sound(SoundType.EMPTY).strength(-1, 3600000).noCollision().noOcclusion().isRedstoneConductor((bs, br, bp) -> false).replaceable().instrument(NoteBlockInstrument.WITHER_SKELETON).noLootTable());
 
-  public static final DeferredBlock<VoidFluidBlock> VOID_FLUID_BLOCK = register("void_fluid", blockProperties -> new VoidFluidBlock(blockProperties), BlockBehaviour.Properties.of());
-  
-  public static final DeferredBlock<Block> VOID_SEA_LAYER_BLOCK = register("void_sea_layer_block", blockProperties -> new VoidSeaLayerBlock(blockProperties), BlockBehaviour.Properties.of());
+  public static final DeferredBlock<VoidFluidBlock> VOID_FLUID_BLOCK =
+    register("void_fluid", VoidFluidBlock::new, BlockBehaviour.Properties.of());
+
+  public static final DeferredBlock<Block> VOID_SEA_LAYER_BLOCK =
+    register("void_sea_layer_block", VoidSeaLayerBlock::new, BlockBehaviour.Properties.of());
+
+  public static final DeferredBlock<Block> CLAYISH_DUST_BLOCK =
+    register("clayish_dust_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.CLAY).strength(1.5f, 10f).sound(SoundType.SAND));
+
+  public static final DeferredBlock<Block> IRON_SCRAP_BLOCK =
+    register("iron_scrap_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_BROWN).strength(7f, 40f).sound(SoundType.IRON).requiresCorrectToolForDrops());
+
+  //####################################################
+  //                  HELPER METHODS
+  //####################################################
+
   /**
    * Default function used to register a block and its item counterpart.
    * This particular variant creates blockItems without any particular properties.

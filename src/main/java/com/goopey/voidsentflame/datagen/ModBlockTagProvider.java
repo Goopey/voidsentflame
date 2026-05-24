@@ -1,5 +1,6 @@
 package com.goopey.voidsentflame.datagen;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
@@ -18,6 +19,13 @@ public class ModBlockTagProvider extends BlockTagsProvider {
   @Override
   protected void addTags(Provider provider) {
     tag(BlockTags.MINEABLE_WITH_PICKAXE)
-      .add(BlockInit.VOID_STONE_BLOCK.get());
+      .addAll(List.of(
+        BlockInit.VOID_STONE_BLOCK.get(),
+        BlockInit.IRON_SCRAP_BLOCK.get()
+      ));
+    tag(BlockTags.MINEABLE_WITH_SHOVEL)
+      .addAll(List.of(
+        BlockInit.CLAYISH_DUST_BLOCK.get()
+      ));
   }
 }

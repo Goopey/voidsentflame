@@ -5,6 +5,7 @@ import java.util.Set;
 
 import com.goopey.voidsentflame.core.init.BlockInit;
 
+import com.goopey.voidsentflame.core.init.ItemInit;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
@@ -35,6 +36,10 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
   protected void generate() {
     // blocks which drop themselves
     dropSelf(BlockInit.VOID_STONE_BLOCK.get());
+    dropSelf(BlockInit.IRON_SCRAP_BLOCK.get());
+
+    // extra drops
+    add(BlockInit.CLAYISH_DUST_BLOCK.get(), createMultipleDrops(BlockInit.CLAYISH_DUST_BLOCK.get(), ItemInit.CLAYISH_DUST_BALL.get(), 4, 4));
   }
 
   protected LootTable.Builder createMultipleDrops(Block pBlock, Item pItem, float minDrops, float maxDrops) {

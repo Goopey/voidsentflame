@@ -15,23 +15,18 @@ import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.client.data.models.blockstates.PropertyDispatch;
 import net.minecraft.client.data.models.model.ModelLocationUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
-import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.data.models.model.TexturedModel;
 import net.minecraft.client.renderer.block.model.Variant;
 import net.minecraft.client.renderer.block.model.VariantMutator;
-import net.minecraft.client.resources.model.BlockStateModelLoader;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.NetherPortalBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.neoforged.neoforge.client.model.generators.loaders.ObjModelBuilder;
-import net.neoforged.neoforge.client.model.generators.template.ExtendedModelTemplateBuilder;
 
 public class ModModelProvider extends ModelProvider {
   public static final VariantMutator X_ROT_90 = VariantMutator.X_ROT.withValue(Quadrant.R90);
@@ -47,19 +42,22 @@ public class ModModelProvider extends ModelProvider {
     createItems(itemModels);
   }
 
-  private static void createBlocks(BlockModelGenerators pBModel) {
-    createPortalBlocks(pBModel);
-    createXYRandomOrientationBlocks(pBModel);
+  private static void createBlocks(BlockModelGenerators models) {
+    createPortalBlocks(models);
+    createXYRandomOrientationBlocks(models);
 
-    pBModel.createAirLikeBlock(BlockInit.VOID_SEA_LAYER_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
-    pBModel.createAirLikeBlock(BlockInit.RUBICON_AIR_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
-    pBModel.createNonTemplateModelBlock(BlockInit.VOID_FLUID_BLOCK.get());
+    models.createAirLikeBlock(BlockInit.VOID_SEA_LAYER_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
+    models.createAirLikeBlock(BlockInit.RUBICON_AIR_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
+    models.createNonTemplateModelBlock(BlockInit.VOID_FLUID_BLOCK.get());
+    models.createTrivialCube(BlockInit.CLAYISH_DUST_BLOCK.get());
+    models.createTrivialCube(BlockInit.IRON_SCRAP_BLOCK.get());
   }
 
-  private static void createItems(ItemModelGenerators pIModels) {
-    pIModels.generateFlatItem(ItemInit.RUNIC_FRUIT_ITEM.get(), ModelTemplates.FLAT_ITEM);
-    pIModels.generateFlatItem(ItemInit.RUBICON_IGNITER_ITEM.get(), ModelTemplates.FLAT_ITEM);
-    pIModels.generateFlatItem(ItemInit.VOID_FLUID_BUCKET.get(), ModelTemplates.FLAT_ITEM);
+  private static void createItems(ItemModelGenerators models) {
+    models.generateFlatItem(ItemInit.RUNIC_FRUIT_ITEM.get(), ModelTemplates.FLAT_ITEM);
+    models.generateFlatItem(ItemInit.RUBICON_IGNITER_ITEM.get(), ModelTemplates.FLAT_ITEM);
+    models.generateFlatItem(ItemInit.VOID_FLUID_BUCKET.get(), ModelTemplates.FLAT_ITEM);
+    models.generateFlatItem(ItemInit.CLAYISH_DUST_BALL.get(), ModelTemplates.FLAT_ITEM);
   }
 
   /**
@@ -68,12 +66,12 @@ public class ModModelProvider extends ModelProvider {
    * ##################################################################
    */
 
-  private static void createPortalBlocks(BlockModelGenerators pBModel) {
-    createPortalBlock(pBModel, BlockInit.RUBICON_PORTAL_BLOCK.get());
+  private static void createPortalBlocks(BlockModelGenerators models) {
+    createPortalBlock(models, BlockInit.RUBICON_PORTAL_BLOCK.get());
   }
 
-  private static void createXYRandomOrientationBlocks(BlockModelGenerators pBModel) {
-    createXYRandomOrientationBlock(pBModel, BlockInit.VOID_STONE_BLOCK.get());
+  private static void createXYRandomOrientationBlocks(BlockModelGenerators models) {
+    createXYRandomOrientationBlock(models, BlockInit.VOID_STONE_BLOCK.get());
   }
 
   // private void createFluidBlocks(BlockModelGenerators pBModel) {
