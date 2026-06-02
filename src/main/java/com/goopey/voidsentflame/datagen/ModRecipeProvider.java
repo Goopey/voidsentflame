@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
 
+import com.goopey.voidsentflame.core.init.BlockInit;
+import com.goopey.voidsentflame.core.init.ItemInit;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.data.recipes.RecipeCategory;
@@ -12,6 +14,7 @@ import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.*;
@@ -31,32 +34,26 @@ public class ModRecipeProvider extends RecipeProvider {
   protected void buildRecipes() {
     // Copied over from Kaupenjoe's datagen tutorial
     // Kept here as a blueprint of possible recipes to implement
-    // TODO : Add recipes
 
-    // List<ItemLike> BISMUTH_SMELTABLES = List.of(ModItems.RAW_BISMUTH, ModBlocks.BISMUTH_ORE, ModBlocks.BISMUTH_DEEPSLATE_ORE);
+     List<ItemLike> SCRAP_SMELTABLES = List.of(BlockInit.IRON_SCRAP_BLOCK);
 
-    // ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.BISMUTH_BLOCK.get())
-    //   .pattern("BBB")
-    //   .pattern("BBB")
-    //   .pattern("BBB")
-    //   .define('B', ModItems.BISMUTH.get())
-    //   .unlockedBy("has_bismuth", has(ModItems.BISMUTH)).save(recipeOutput);
+     shaped(RecipeCategory.BUILDING_BLOCKS, BlockInit.CLAYISH_DUST_BLOCK.get())
+       .pattern("###")
+       .pattern("###")
+       .pattern("###")
+       .define('#', ItemInit.CLAYISH_DUST_BALL.get())
+       .save(output);
 
-    // ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.BISMUTH.get(), 9)
-    //   .requires(ModBlocks.BISMUTH_BLOCK)
-    //   .unlockedBy("has_bismuth_block", has(ModBlocks.BISMUTH_BLOCK)).save(recipeOutput);
+//     shapeless(RecipeCategory.MISC, ItemInit.CLAYISH_DUST_BALL.get(), 9)
+//       .requires(Items.CACTUS)
+//       .save(output);
 
-    // ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.BISMUTH.get(), 18)
-    //   .requires(ModBlocks.MAGIC_BLOCK)
-    //   .unlockedBy("has_magic_block", has(ModBlocks.MAGIC_BLOCK))
-    //   .save(this.output, "tutorialmod:bismuth_from_magic_block");
-
-    // oreSmelting(this.output, BISMUTH_SMELTABLES, RecipeCategory.MISC, ModItems.BISMUTH.get(), 0.25f, 200, "bismuth");
-    // oreBlasting(this.output, BISMUTH_SMELTABLES, RecipeCategory.MISC, ModItems.BISMUTH.get(), 0.25f, 100, "bismuth");
+     oreSmelting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_INGOT, 0.25f, 200, "iron_scrap");
+     oreBlasting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_INGOT, 0.25f, 100, "iron_scrap");
   }
 
   protected void oreSmelting(RecipeOutput recipeOutput, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, float pExperience, int pCookingTIme, String pGroup) {
-      oreCooking(recipeOutput, RecipeSerializer.SMELTING_RECIPE, SmeltingRecipe::new, pIngredients, pCategory, pResult, pExperience, pCookingTIme, pGroup, "_from_smelting");
+    oreCooking(recipeOutput, RecipeSerializer.SMELTING_RECIPE, SmeltingRecipe::new, pIngredients, pCategory, pResult, pExperience, pCookingTIme, pGroup, "_from_smelting");
   }
 
   protected void oreBlasting(RecipeOutput recipeOutput, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, float pExperience, int pCookingTime, String pGroup) {
