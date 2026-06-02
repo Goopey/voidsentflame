@@ -14,6 +14,7 @@ import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.data.PackOutput;
@@ -49,14 +50,15 @@ public class ModRecipeProvider extends RecipeProvider {
       .unlockedBy(getHasName(ItemInit.CLAYISH_DUST_BALL), this.has(ItemInit.CLAYISH_DUST_BALL))
       .save(this.output);
 
-    oreSmelting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_INGOT, 0.25f, 200, "iron_scrap");
-    oreBlasting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_INGOT, 0.25f, 100, "iron_scrap");
+    oreSmelting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_NUGGET, 5,0.25f, 200, "iron_scrap");
+    oreBlasting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_NUGGET, 6,0.25f, 100, "iron_scrap");
   }
 
   //#######################################################
   //                  HELPER FUNCTIONS
   //#######################################################
 
+  // basic smelting
   protected void oreSmelting(RecipeOutput recipeOutput, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, float pExperience, int pCookingTIme, String pGroup) {
     oreCooking(recipeOutput, RecipeSerializer.SMELTING_RECIPE, SmeltingRecipe::new, pIngredients, pCategory, pResult, pExperience, pCookingTIme, pGroup, "_from_smelting");
   }
@@ -68,6 +70,24 @@ public class ModRecipeProvider extends RecipeProvider {
   protected <T extends AbstractCookingRecipe> void oreCooking(RecipeOutput recipeOutput, RecipeSerializer<T> pCookingSerializer, AbstractCookingRecipe.Factory<T> factory, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, float pExperience, int pCookingTime, String pGroup, String pRecipeName) {
     for(ItemLike itemlike : pIngredients) {
       SimpleCookingRecipeBuilder.generic(Ingredient.of(itemlike), pCategory, pResult, pExperience, pCookingTime, pCookingSerializer, factory).group(pGroup).unlockedBy(getHasName(itemlike), has(itemlike))
+        .save(recipeOutput, VoidsentFlameMod.MODID + ":" + getItemName(pResult) + pRecipeName + "_" + getItemName(itemlike));
+    }
+  }
+
+  // smelting with multiples of a result
+  protected void oreSmelting(RecipeOutput recipeOutput, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, int numResult, float pExperience, int pCookingTIme, String pGroup) {
+    oreCooking(recipeOutput, RecipeSerializer.SMELTING_RECIPE, SmeltingRecipe::new, pIngredients, pCategory, pResult, numResult, pExperience, pCookingTIme, pGroup, "_from_smelting");
+  }
+
+  protected void oreBlasting(RecipeOutput recipeOutput, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, int numResult, float pExperience, int pCookingTime, String pGroup) {
+    oreCooking(recipeOutput, RecipeSerializer.BLASTING_RECIPE, BlastingRecipe::new, pIngredients, pCategory, pResult, numResult, pExperience, pCookingTime, pGroup, "_from_blasting");
+  }
+
+  protected <T extends AbstractCookingRecipe> void oreCooking(RecipeOutput recipeOutput, RecipeSerializer<T> pCookingSerializer, AbstractCookingRecipe.Factory<T> factory, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, int numResult, float pExperience, int pCookingTime, String pGroup, String pRecipeName) {
+    for(ItemLike itemlike : pIngredients) {
+      ItemStack resultStack = pResult.asItem().getDefaultInstance();
+      resultStack.setCount(numResult);
+      SimpleCookingRecipeBuilder.generic(Ingredient.of(itemlike), pCategory, resultStack, pExperience, pCookingTime, pCookingSerializer, factory).group(pGroup).unlockedBy(getHasName(itemlike), has(itemlike))
         .save(recipeOutput, VoidsentFlameMod.MODID + ":" + getItemName(pResult) + pRecipeName + "_" + getItemName(itemlike));
     }
   }
