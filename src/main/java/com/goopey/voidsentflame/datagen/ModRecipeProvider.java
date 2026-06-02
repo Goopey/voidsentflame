@@ -20,6 +20,7 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.*;
 import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -27,6 +28,25 @@ import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
 
 public class ModRecipeProvider extends RecipeProvider {
+  /**
+   * Used to construct and run a new instance of the ModRecipeProvider
+   */
+  public static class Run extends RecipeProvider.Runner {
+    public Run(PackOutput output, CompletableFuture<HolderLookup.Provider> provider) {
+      super(output, provider);
+    }
+
+    @Override
+    protected RecipeProvider createRecipeProvider(@Nonnull HolderLookup.Provider provider, @Nonnull RecipeOutput recipeOutput) {
+      return new ModRecipeProvider(provider, recipeOutput);
+    }
+
+    @Override
+    public String getName() {
+      return "Voidsent Flame Recipes";
+    }
+  }
+
   protected ModRecipeProvider(Provider registries, RecipeOutput output) {
     super(registries, output);
   }
@@ -36,12 +56,12 @@ public class ModRecipeProvider extends RecipeProvider {
     // Copied over from Kaupenjoe's datagen tutorial
     // Kept here as a blueprint of possible recipes to implement
 
-     List<ItemLike> SCRAP_SMELTABLES = List.of(BlockInit.IRON_SCRAP_BLOCK);
+    List<ItemLike> SCRAP_SMELTABLES = List.of(BlockInit.IRON_SCRAP_BLOCK);
 
-     shapeless(RecipeCategory.MISC, ItemInit.CLAYISH_DUST_BALL, 4)
-       .requires(BlockInit.CLAYISH_DUST_BLOCK)
-       .unlockedBy(getHasName(BlockInit.CLAYISH_DUST_BLOCK), this.has(BlockInit.CLAYISH_DUST_BLOCK))
-       .save(output);
+    shapeless(RecipeCategory.MISC, ItemInit.CLAYISH_DUST_BALL, 4)
+      .requires(BlockInit.CLAYISH_DUST_BLOCK)
+      .unlockedBy(getHasName(BlockInit.CLAYISH_DUST_BLOCK), this.has(BlockInit.CLAYISH_DUST_BLOCK))
+      .save(output);
 
     shaped(RecipeCategory.MISC, BlockInit.CLAYISH_DUST_BLOCK, 1)
       .define('#', ItemInit.CLAYISH_DUST_BALL)
@@ -52,6 +72,8 @@ public class ModRecipeProvider extends RecipeProvider {
 
     oreSmelting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_NUGGET, 5,0.25f, 200, "iron_scrap");
     oreBlasting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_NUGGET, 6,0.25f, 100, "iron_scrap");
+    oreSmelting(this.output, List.of(ItemInit.CLAYISH_DUST_BALL), RecipeCategory.DECORATIONS, Items.BRICK, 0.3f, 200, "dust_brick");
+    oreSmelting(this.output, List.of(BlockInit.CLAYISH_DUST_BLOCK), RecipeCategory.DECORATIONS, Blocks.MAGENTA_TERRACOTTA, 0.3f, 200, "dust_terracotta");
   }
 
   //#######################################################
@@ -89,25 +111,6 @@ public class ModRecipeProvider extends RecipeProvider {
       resultStack.setCount(numResult);
       SimpleCookingRecipeBuilder.generic(Ingredient.of(itemlike), pCategory, resultStack, pExperience, pCookingTime, pCookingSerializer, factory).group(pGroup).unlockedBy(getHasName(itemlike), has(itemlike))
         .save(recipeOutput, VoidsentFlameMod.MODID + ":" + getItemName(pResult) + pRecipeName + "_" + getItemName(itemlike));
-    }
-  }
-
-  /**
-   * Used to construct and run a new instance of the ModRecipeProvider
-   */
-  public static class Run extends RecipeProvider.Runner {
-    public Run(PackOutput output, CompletableFuture<HolderLookup.Provider> provider) {
-      super(output, provider);
-    }
-
-    @Override
-    protected RecipeProvider createRecipeProvider(@Nonnull HolderLookup.Provider provider, @Nonnull RecipeOutput recipeOutput) {
-      return new ModRecipeProvider(provider, recipeOutput);
-    }
-
-    @Override
-    public String getName() {
-      return "Voidsent Flame Recipes";
     }
   }
 }
