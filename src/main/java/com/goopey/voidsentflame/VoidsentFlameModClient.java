@@ -4,6 +4,7 @@ import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 
 import com.goopey.voidsentflame.client.render.RubiconSkyRenderer;
 import com.goopey.voidsentflame.server.VoidSeaEvent;
+import net.minecraft.client.renderer.fog.FogRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -13,6 +14,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.event.lifecycle.ClientStoppingEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
@@ -45,11 +47,18 @@ public class VoidsentFlameModClient {
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
 //      event.registerBlockEntityRenderer(BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), VoidSeaLayerBlockEntityRenderer::new);
     }
+
+    @SubscribeEvent
+    public static void onRenderFog(ViewportEvent.RenderFog event) {
+//      FogRenderer e;
+    }
  
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent.AfterParticles event) {
       // Rubicon dimension effects
-      VoidSeaRenderer.getInstance().render(event);
+      // TODO : reenable VoidSeaRender.
+      // TODO : improve performance
+//      VoidSeaRenderer.getInstance().render(event);
     }
 
     @SubscribeEvent
