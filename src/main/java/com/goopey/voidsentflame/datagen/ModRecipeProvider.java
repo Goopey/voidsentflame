@@ -37,20 +37,25 @@ public class ModRecipeProvider extends RecipeProvider {
 
      List<ItemLike> SCRAP_SMELTABLES = List.of(BlockInit.IRON_SCRAP_BLOCK);
 
-     shaped(RecipeCategory.BUILDING_BLOCKS, BlockInit.CLAYISH_DUST_BLOCK.get())
-       .pattern("###")
-       .pattern("###")
-       .pattern("###")
-       .define('#', ItemInit.CLAYISH_DUST_BALL.get())
+     shapeless(RecipeCategory.MISC, ItemInit.CLAYISH_DUST_BALL, 4)
+       .requires(BlockInit.CLAYISH_DUST_BLOCK)
+       .unlockedBy(getHasName(BlockInit.CLAYISH_DUST_BLOCK), this.has(BlockInit.CLAYISH_DUST_BLOCK))
        .save(output);
 
-//     shapeless(RecipeCategory.MISC, ItemInit.CLAYISH_DUST_BALL.get(), 9)
-//       .requires(Items.CACTUS)
-//       .save(output);
+    shaped(RecipeCategory.MISC, BlockInit.CLAYISH_DUST_BLOCK, 1)
+      .define('#', ItemInit.CLAYISH_DUST_BALL)
+      .pattern("##")
+      .pattern("##")
+      .unlockedBy(getHasName(ItemInit.CLAYISH_DUST_BALL), this.has(ItemInit.CLAYISH_DUST_BALL))
+      .save(this.output);
 
-     oreSmelting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_INGOT, 0.25f, 200, "iron_scrap");
-     oreBlasting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_INGOT, 0.25f, 100, "iron_scrap");
+    oreSmelting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_INGOT, 0.25f, 200, "iron_scrap");
+    oreBlasting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_INGOT, 0.25f, 100, "iron_scrap");
   }
+
+  //#######################################################
+  //                  HELPER FUNCTIONS
+  //#######################################################
 
   protected void oreSmelting(RecipeOutput recipeOutput, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, float pExperience, int pCookingTIme, String pGroup) {
     oreCooking(recipeOutput, RecipeSerializer.SMELTING_RECIPE, SmeltingRecipe::new, pIngredients, pCategory, pResult, pExperience, pCookingTIme, pGroup, "_from_smelting");
