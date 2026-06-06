@@ -3,10 +3,7 @@ package com.goopey.voidsentflame.core.init;
 import java.util.function.Function;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
-import com.goopey.voidsentflame.block.RubiconAirBlock;
-import com.goopey.voidsentflame.block.RubiconPortalBlock;
-import com.goopey.voidsentflame.block.VoidFluidBlock;
-import com.goopey.voidsentflame.block.VoidSeaLayerBlock;
+import com.goopey.voidsentflame.block.*;
 
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -38,6 +35,9 @@ public class BlockInit {
 
   public static final DeferredBlock<Block> VOID_SEA_LAYER_BLOCK =
     register("void_sea_layer_block", VoidSeaLayerBlock::new, BlockBehaviour.Properties.of());
+
+  public static final DeferredBlock<Block> VOIDSENT_FLAME_BLOCK =
+    register("voidsent_flame_block", VoidsentFlameBlock::new, BlockBehaviour.Properties.of());
 
   public static final DeferredBlock<Block> CLAYISH_DUST_BLOCK =
     register("clayish_dust_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.CLAY).strength(1.5f, 10f).sound(SoundType.SAND));
