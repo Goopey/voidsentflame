@@ -52,7 +52,6 @@ public class ModModelProvider extends ModelProvider {
     models.createNonTemplateModelBlock(BlockInit.VOID_FLUID_BLOCK.get());
     models.createTrivialCube(BlockInit.CLAYISH_DUST_BLOCK.get());
     models.createTrivialCube(BlockInit.IRON_SCRAP_BLOCK.get());
-    models.createTrivialCube(BlockInit.VOID_DUST_BLOCK.get());
   }
 
   private static void createItems(ItemModelGenerators models) {
@@ -74,6 +73,7 @@ public class ModModelProvider extends ModelProvider {
 
   private static void createXYRandomOrientationBlocks(BlockModelGenerators models) {
     createXYRandomOrientationBlock(models, BlockInit.VOID_STONE_BLOCK.get());
+    createXYRandomOrientationBlock(models, BlockInit.VOID_DUST_BLOCK.get());
   }
 
   // private void createFluidBlocks(BlockModelGenerators pBModel) {

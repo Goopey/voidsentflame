@@ -24,7 +24,7 @@ public class BlockInit {
     register("void_stone_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(5F, 30F).sound(SoundType.STONE).requiresCorrectToolForDrops());
 
   public static final DeferredBlock<Block> VOID_DUST_BLOCK =
-    register("void_dust_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.WOOL).strength(0.75F, 5F).sound(SoundType.CALCITE));
+    register("void_dust_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.WOOL).strength(0.75F, 5F).sound(SoundType.SAND));
 
   public static final DeferredBlock<RubiconPortalBlock> RUBICON_PORTAL_BLOCK = 
     register("rubicon_portal_block", RubiconPortalBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL).noLootTable());
