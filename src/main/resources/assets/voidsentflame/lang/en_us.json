@@ -1,14 +1,16 @@
 {
-  "block.voidsentflame.void_stone_block": "Void Stone",
-  "item.voidsentflame.void_stone_block": "Void Stone",
-  "block.voidsentflame.clayish_dust_block": "Clayish Dust Block",
-  "item.voidsentflame.clayish_dust_block": "Clayish Dust Block",
+  "block.voidsentflame.void_stone_block": "Stone Block",
+  "item.voidsentflame.void_stone_block": "Stone Block",
+  "block.voidsentflame.void_dust_block": "Dust Block",
+  "item.voidsentflame.void_dust_block": "Dust Block",
+  "block.voidsentflame.clayish_dust_block": "Clay Block",
+  "item.voidsentflame.clayish_dust_block": "Clay Block",
   "block.voidsentflame.iron_scrap_block": "Iron Scrap Block",
   "item.voidsentflame.iron_scrap_block": "Iron Scrap Block",
 
   "item.voidsentflame.runic_fruit_item": "Runic Fruit",
   "item.voidsentflame.rubicon_igniter_item": "Rubicon Igniter",
-  "item.voidsentflame.clayish_dust_ball": "Clayish Dust Ball",
+  "item.voidsentflame.clayish_dust_ball": "Clay Ball",
 
   "creativetab.voidsentflame.voidsentflame_items": "Voidsent Flame Items",
   "creativetab.voidsentflame.voidsentflame_blocks": "Voidsent Flame Blocks",

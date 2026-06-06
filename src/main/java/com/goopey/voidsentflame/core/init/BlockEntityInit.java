@@ -15,6 +15,6 @@ public class BlockEntityInit {
   public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<VoidSeaLayerBlockEntity>> VOID_SEA_LAYER_BLOCK_ENTITY =
     BLOCK_ENTITY.register("void_sea_layer_block_entity", () -> new BlockEntityType<>(VoidSeaLayerBlockEntity::new, false, BlockInit.VOID_SEA_LAYER_BLOCK.get()));
 
-  public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<VoidsentFlameBlockEntity>> VOIDSENT_FLAME_BLOCK_ENTITY =
-    BLOCK_ENTITY.register("voidsent_flame_block_entity", () -> new BlockEntityType<>(VoidsentFlameBlockEntity::new, false, BlockInit.VOIDSENT_FLAME_BLOCK.get()));
+//  public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<VoidsentFlameBlockEntity>> VOIDSENT_FLAME_BLOCK_ENTITY =
+//    BLOCK_ENTITY.register("voidsent_flame_block_entity", () -> new BlockEntityType<>(VoidsentFlameBlockEntity::new, false, BlockInit.VOIDSENT_FLAME_BLOCK.get()));
 }

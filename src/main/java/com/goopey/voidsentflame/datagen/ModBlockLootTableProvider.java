@@ -36,6 +36,7 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
   protected void generate() {
     // blocks which drop themselves
     dropSelf(BlockInit.VOID_STONE_BLOCK.get());
+    dropSelf(BlockInit.VOID_DUST_BLOCK.get());
     dropSelf(BlockInit.IRON_SCRAP_BLOCK.get());
 
     // extra drops

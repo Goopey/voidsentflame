@@ -23,6 +23,9 @@ public class BlockInit {
   public static final DeferredHolder<Block, Block> VOID_STONE_BLOCK = 
     register("void_stone_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(5F, 30F).sound(SoundType.STONE).requiresCorrectToolForDrops());
 
+  public static final DeferredBlock<Block> VOID_DUST_BLOCK =
+    register("void_dust_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.WOOL).strength(0.75F, 5F).sound(SoundType.CALCITE));
+
   public static final DeferredBlock<RubiconPortalBlock> RUBICON_PORTAL_BLOCK = 
     register("rubicon_portal_block", RubiconPortalBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL).noLootTable());
 
@@ -36,8 +39,8 @@ public class BlockInit {
   public static final DeferredBlock<Block> VOID_SEA_LAYER_BLOCK =
     register("void_sea_layer_block", VoidSeaLayerBlock::new, BlockBehaviour.Properties.of());
 
-  public static final DeferredBlock<Block> VOIDSENT_FLAME_BLOCK =
-    register("voidsent_flame_block", VoidsentFlameBlock::new, BlockBehaviour.Properties.of());
+//  public static final DeferredBlock<VoidsentFlameBlock> VOIDSENT_FLAME_BLOCK =
+//    register("voidsent_flame_block", VoidsentFlameBlock::new, BlockBehaviour.Properties.of());
 
   public static final DeferredBlock<Block> CLAYISH_DUST_BLOCK =
     register("clayish_dust_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.CLAY).strength(1.5f, 10f).sound(SoundType.SAND));
