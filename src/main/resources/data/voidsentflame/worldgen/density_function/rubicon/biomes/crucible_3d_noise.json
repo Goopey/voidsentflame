@@ -13,11 +13,11 @@
                   "type": "minecraft:add", "argument1": -0.1171875, "argument2": {
                     "type": "minecraft:add", "argument1": -0.078125, "argument2": {
                       "type": "minecraft:mul", "argument1": {
-                        "type": "minecraft:y_clamped_gradient", "from_value": 1, "from_y": 60, "to_value": 0, "to_y": 68
+                        "type": "minecraft:y_clamped_gradient", "from_value": 1, "from_y": 100, "to_value": 0, "to_y": 108
                       }, "argument2": {
                         "type": "minecraft:add", "argument1": 0.078125, "argument2": {
-                          "type": "minecraft:range_choice", "input": "minecraft:overworld/sloped_cheese", "max_exclusive": 1.5625, "min_inclusive": -1000000, "when_in_range": {
-                            "type": "minecraft:min", "argument1": "minecraft:overworld/sloped_cheese", "argument2": {
+                          "type": "minecraft:range_choice", "input": "voidsentflame:rubicon/biomes/crucible_sloped_cheese", "max_exclusive": 1.5625, "min_inclusive": -1000000, "when_in_range": {
+                            "type": "minecraft:min", "argument1": "voidsentflame:rubicon/biomes/crucible_sloped_cheese", "argument2": {
                               "type": "minecraft:mul", "argument1": 5, "argument2": "minecraft:overworld/caves/entrances"
                             }
                           }, "when_out_of_range": {
