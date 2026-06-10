@@ -27,7 +27,7 @@
       "aquifers_enabled": false,
       "ore_veins_enabled": false,
       "default_block": {
-        "Name": "voidsentflame:void_stone_block"
+        "Name": "voidsentflame:void_dust_block"
       },
       "default_fluid": {
         "Name": "voidsentflame:rubicon_air_block"
@@ -35,7 +35,7 @@
       "spawn_target": [],
       "noise": {
         "min_y": -64,
-        "height": 384,
+        "height": 448,
         "size_horizontal": 1,
         "size_vertical": 1
       },
@@ -164,21 +164,23 @@
                   "if_true": {
                     "type": "minecraft:vertical_gradient",
                     "false_at_and_above": {
-                      "absolute": 2
+                      "absolute": 60
                     },
-                    "random_name": "voidsentflame:void_stone_block",
+                    "random_name": "voidsentflame:deep_void_stone",
                     "true_at_and_below": {
-                      "absolute": 0
+                      "absolute": 58
                     }
                   },
                   "then_run": {
-                    "type": "minecraft:block",
-                    "result_state": {
-                      "Name": "voidsentflame:void_stone_block",
-                      "Properties": {
-                        "axis": "y"
+                    "type": "minecraft:sequence",
+                    "sequence": [
+                      {
+                        "type": "minecraft:block",
+                        "result_state": {
+                          "Name": "voidsentflame:void_stone_block"
+                        }
                       }
-                    }
+                    ]
                   }
                 },
                 {
