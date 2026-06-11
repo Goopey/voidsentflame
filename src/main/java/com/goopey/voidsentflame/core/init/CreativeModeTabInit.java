@@ -20,7 +20,8 @@ public class CreativeModeTabInit {
       .displayItems((itemDisplayParameters, output) -> {
         output.accept(ItemInit.RUNIC_FRUIT_ITEM);
         output.accept(ItemInit.RUBICON_IGNITER_ITEM);
-        output.accept(ItemInit.MINERAL_DUST.get());
+        output.accept(ItemInit.MINERAL_DUST);
+        output.accept(ItemInit.VOID_FLUID_BUCKET);
       }).build());
 
   public static final DeferredHolder<CreativeModeTab,CreativeModeTab> VOIDSENTFLAME_BLOCKS_TAB = CREATIVE_MODE_TAB.register("voidsentflame_blocks_tab",
@@ -29,6 +30,7 @@ public class CreativeModeTabInit {
       .title(Component.translatable("creativetab.voidsentflame.voidsentflame_blocks"))
       .displayItems((itemDisplayParameters, output) -> {
         output.accept(BlockInit.VOID_STONE_BLOCK.get());
+        output.accept(BlockInit.VOID_DUST_BLOCK);
         output.accept(BlockInit.SPARKLING_DUST_BLOCK.get());
         output.accept(BlockInit.IRON_SCRAP_BLOCK.get());
       }).build());
