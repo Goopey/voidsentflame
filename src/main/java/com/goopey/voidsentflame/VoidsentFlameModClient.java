@@ -1,10 +1,13 @@
 package com.goopey.voidsentflame;
 
+import com.goopey.voidsentflame.block.blockentity.render.VoidsentFlameBlockEntityRenderer;
 import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 
 import com.goopey.voidsentflame.client.render.RubiconSkyRenderer;
+import com.goopey.voidsentflame.core.init.BlockEntityInit;
 import com.goopey.voidsentflame.server.VoidSeaEvent;
 import net.minecraft.client.renderer.fog.FogRenderer;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -46,6 +49,7 @@ public class VoidsentFlameModClient {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
 //      event.registerBlockEntityRenderer(BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), VoidSeaLayerBlockEntityRenderer::new);
+//      event.registerBlockEntityRenderer(BlockEntityInit.VOIDSENT_FLAME_BLOCK_ENTITY.get(), VoidsentFlameBlockEntityRenderer::new);
     }
 
     @SubscribeEvent
@@ -58,7 +62,7 @@ public class VoidsentFlameModClient {
       // Rubicon dimension effects
       // TODO : reenable VoidSeaRender.
       // TODO : improve performance
-      VoidSeaRenderer.getInstance().render(event);
+//      VoidSeaRenderer.getInstance().render(event);
     }
 
     @SubscribeEvent

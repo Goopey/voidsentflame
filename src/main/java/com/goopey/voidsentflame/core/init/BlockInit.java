@@ -39,11 +39,11 @@ public class BlockInit {
   public static final DeferredBlock<Block> VOID_SEA_LAYER_BLOCK =
     register("void_sea_layer_block", VoidSeaLayerBlock::new, BlockBehaviour.Properties.of());
 
-//  public static final DeferredBlock<VoidsentFlameBlock> VOIDSENT_FLAME_BLOCK =
-//    register("voidsent_flame_block", VoidsentFlameBlock::new, BlockBehaviour.Properties.of());
+  public static final DeferredBlock<VoidsentFlameBlock> VOIDSENT_FLAME_BLOCK =
+    register("voidsent_flame_block", VoidsentFlameBlock::new, BlockBehaviour.Properties.of());
 
-  public static final DeferredBlock<Block> CLAYISH_DUST_BLOCK =
-    register("clayish_dust_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.CLAY).strength(1.5f, 10f).sound(SoundType.SAND));
+  public static final DeferredBlock<Block> SPARKLING_DUST_BLOCK =
+    register("sparkling_dust_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.CLAY).strength(1.5f, 10f).sound(SoundType.SAND));
 
   public static final DeferredBlock<Block> IRON_SCRAP_BLOCK =
     register("iron_scrap_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_BROWN).strength(7f, 40f).sound(SoundType.IRON).requiresCorrectToolForDrops());

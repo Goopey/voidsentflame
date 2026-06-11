@@ -25,7 +25,7 @@ public class ModBlockTagProvider extends BlockTagsProvider {
       ));
     tag(BlockTags.MINEABLE_WITH_SHOVEL)
       .addAll(List.of(
-        BlockInit.CLAYISH_DUST_BLOCK.get(),
+        BlockInit.SPARKLING_DUST_BLOCK.get(),
         BlockInit.VOID_DUST_BLOCK.get()
       ));
   }

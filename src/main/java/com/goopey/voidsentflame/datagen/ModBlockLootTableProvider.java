@@ -1,6 +1,5 @@
 package com.goopey.voidsentflame.datagen;
 
-import java.util.Map;
 import java.util.Set;
 
 import com.goopey.voidsentflame.core.init.BlockInit;
@@ -10,19 +9,17 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.loot.BlockLootSubProvider;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.flag.FeatureFlags;
-import net.minecraft.world.item.AirItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraft.world.level.block.AirBlock;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
-import net.minecraft.world.level.storage.loot.LootTable.Builder;
+import net.minecraft.world.level.storage.loot.entries.EntryGroup;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
+import net.minecraft.world.level.storage.loot.entries.NestedLootTable;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
@@ -38,9 +35,26 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
     dropSelf(BlockInit.VOID_STONE_BLOCK.get());
     dropSelf(BlockInit.VOID_DUST_BLOCK.get());
     dropSelf(BlockInit.IRON_SCRAP_BLOCK.get());
+    dropSelf(BlockInit.VOIDSENT_FLAME_BLOCK.get());
 
     // extra drops
-    add(BlockInit.CLAYISH_DUST_BLOCK.get(), createMultipleDrops(BlockInit.CLAYISH_DUST_BLOCK.get(), ItemInit.CLAYISH_DUST_BALL.get(), 4, 4));
+    add(BlockInit.SPARKLING_DUST_BLOCK.get(), dropOtherAndMultipleOthers(BlockInit.SPARKLING_DUST_BLOCK.get(), BlockInit.VOID_DUST_BLOCK.asItem(), ItemInit.CLAYISH_DUST_BALL.get(), 2, 6));
+  }
+
+  protected LootTable.Builder dropOtherAndMultipleOthers(Block block, Item itemSelf, Item itemOther, float minDrops, float maxDrops) {
+    HolderLookup.RegistryLookup<Enchantment> registryLookup = this.registries.lookupOrThrow(Registries.ENCHANTMENT);
+    return this.createSilkTouchDispatchTable(
+      block,
+      NestedLootTable.inlineLootTable(
+        LootTable.lootTable()
+          .withPool(LootPool.lootPool().add(LootItem.lootTableItem(itemSelf)))
+          .withPool(LootPool.lootPool().add(
+            LootItem.lootTableItem(itemOther)
+              .apply(SetItemCountFunction.setCount(UniformGenerator.between(minDrops, maxDrops)))
+              .apply(ApplyBonusCount.addOreBonusCount(registryLookup.getOrThrow(Enchantments.FORTUNE)))
+          ))
+          .build()
+      ));
   }
 
   protected LootTable.Builder createMultipleDrops(Block pBlock, Item pItem, float minDrops, float maxDrops) {

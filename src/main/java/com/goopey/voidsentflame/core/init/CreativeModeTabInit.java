@@ -29,7 +29,7 @@ public class CreativeModeTabInit {
       .title(Component.translatable("creativetab.voidsentflame.voidsentflame_blocks"))
       .displayItems((itemDisplayParameters, output) -> {
         output.accept(BlockInit.VOID_STONE_BLOCK.get());
-        output.accept(BlockInit.CLAYISH_DUST_BLOCK.get());
+        output.accept(BlockInit.SPARKLING_DUST_BLOCK.get());
         output.accept(BlockInit.IRON_SCRAP_BLOCK.get());
       }).build());
 }
