@@ -47,10 +47,9 @@ public class ModModelProvider extends ModelProvider {
     createXYRandomOrientationBlocks(models);
 
     models.createAirLikeBlock(BlockInit.VOID_SEA_LAYER_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
-//    models.createAirLikeBlock(BlockInit.VOIDSENT_FLAME_BLOCK.get(), BlockInit.VOIDSENT_FLAME_BLOCK.asItem());
+    models.createAirLikeBlock(BlockInit.VOIDSENT_FLAME_BLOCK.get(), BlockInit.VOIDSENT_FLAME_BLOCK.asItem());
     models.createAirLikeBlock(BlockInit.RUBICON_AIR_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
     models.createNonTemplateModelBlock(BlockInit.VOID_FLUID_BLOCK.get());
-    models.createTrivialCube(BlockInit.CLAYISH_DUST_BLOCK.get());
     models.createTrivialCube(BlockInit.IRON_SCRAP_BLOCK.get());
   }
 
@@ -74,6 +73,7 @@ public class ModModelProvider extends ModelProvider {
   private static void createXYRandomOrientationBlocks(BlockModelGenerators models) {
     createXYRandomOrientationBlock(models, BlockInit.VOID_STONE_BLOCK.get());
     createXYRandomOrientationBlock(models, BlockInit.VOID_DUST_BLOCK.get());
+    createXYRandomOrientationBlock(models, BlockInit.SPARKLING_DUST_BLOCK.get());
   }
 
   // private void createFluidBlocks(BlockModelGenerators pBModel) {

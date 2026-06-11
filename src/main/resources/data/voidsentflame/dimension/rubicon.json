@@ -206,7 +206,7 @@
                         "then_run": {
                           "type": "minecraft:block",
                           "result_state": {
-                            "Name": "voidsentflame:clayish_dust_block"
+                            "Name": "voidsentflame:sparkling_dust_block"
                           }
                         }
                       },

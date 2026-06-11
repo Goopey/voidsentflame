@@ -11,18 +11,14 @@ import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
-import net.minecraft.data.recipes.ShapedRecipeBuilder;
-import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.data.PackOutput;
-import net.minecraft.data.recipes.*;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.block.Blocks;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import javax.annotation.Nonnull;
@@ -59,21 +55,21 @@ public class ModRecipeProvider extends RecipeProvider {
     List<ItemLike> SCRAP_SMELTABLES = List.of(BlockInit.IRON_SCRAP_BLOCK);
 
     shapeless(RecipeCategory.MISC, ItemInit.CLAYISH_DUST_BALL, 4)
-      .requires(BlockInit.CLAYISH_DUST_BLOCK)
-      .unlockedBy(getHasName(BlockInit.CLAYISH_DUST_BLOCK), this.has(BlockInit.CLAYISH_DUST_BLOCK))
+      .requires(BlockInit.SPARKLING_DUST_BLOCK)
+      .unlockedBy(getHasName(BlockInit.SPARKLING_DUST_BLOCK), this.has(BlockInit.SPARKLING_DUST_BLOCK))
       .save(output);
 
-    shaped(RecipeCategory.MISC, BlockInit.CLAYISH_DUST_BLOCK, 1)
-      .define('#', ItemInit.CLAYISH_DUST_BALL)
-      .pattern("##")
-      .pattern("##")
-      .unlockedBy(getHasName(ItemInit.CLAYISH_DUST_BALL), this.has(ItemInit.CLAYISH_DUST_BALL))
-      .save(this.output);
+//    shaped(RecipeCategory.MISC, BlockInit.SPARKLING_DUST_BLOCK, 1)
+//      .define('#', ItemInit.CLAYISH_DUST_BALL)
+//      .pattern("##")
+//      .pattern("##")
+//      .unlockedBy(getHasName(ItemInit.CLAYISH_DUST_BALL), this.has(ItemInit.CLAYISH_DUST_BALL))
+//      .save(this.output);
 
     oreSmelting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_NUGGET, 5,0.25f, 200, "iron_scrap");
     oreBlasting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_NUGGET, 6,0.25f, 100, "iron_scrap");
     oreSmelting(this.output, List.of(ItemInit.CLAYISH_DUST_BALL), RecipeCategory.DECORATIONS, Items.BRICK, 0.3f, 200, "dust_brick");
-    oreSmelting(this.output, List.of(BlockInit.CLAYISH_DUST_BLOCK), RecipeCategory.DECORATIONS, Blocks.MAGENTA_TERRACOTTA, 0.3f, 200, "dust_terracotta");
+    oreSmelting(this.output, List.of(BlockInit.SPARKLING_DUST_BLOCK), RecipeCategory.DECORATIONS, Blocks.MAGENTA_TERRACOTTA, 0.3f, 200, "dust_terracotta");
   }
 
   //#######################################################
