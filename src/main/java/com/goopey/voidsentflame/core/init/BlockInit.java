@@ -26,6 +26,9 @@ public class BlockInit {
   public static final DeferredBlock<Block> VOID_DUST_BLOCK =
     register("void_dust_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.WOOL).strength(0.75F, 5F).sound(SoundType.SAND));
 
+  public static final DeferredBlock<Block> SPARKLING_DUST_BLOCK =
+    register("sparkling_dust_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.CLAY).strength(1.0f, 5f).sound(SoundType.SAND));
+
   public static final DeferredBlock<RubiconPortalBlock> RUBICON_PORTAL_BLOCK = 
     register("rubicon_portal_block", RubiconPortalBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL).noLootTable());
 
@@ -41,9 +44,6 @@ public class BlockInit {
 
   public static final DeferredBlock<VoidsentFlameBlock> VOIDSENT_FLAME_BLOCK =
     register("voidsent_flame_block", VoidsentFlameBlock::new, BlockBehaviour.Properties.of());
-
-  public static final DeferredBlock<Block> SPARKLING_DUST_BLOCK =
-    register("sparkling_dust_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.CLAY).strength(1.5f, 10f).sound(SoundType.SAND));
 
   public static final DeferredBlock<Block> IRON_SCRAP_BLOCK =
     register("iron_scrap_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_BROWN).strength(7f, 40f).sound(SoundType.IRON).requiresCorrectToolForDrops());
