@@ -18,8 +18,8 @@ public class ItemInit {
   public static final DeferredItem<RubiconIgniterItem> RUBICON_IGNITER_ITEM =
     ITEMS.registerItem("rubicon_igniter_item", RubiconIgniterItem::new, () -> new Item.Properties().stacksTo(1));
 
-  public static final DeferredItem<Item> CLAYISH_DUST_BALL =
-    ITEMS.registerItem("clayish_dust_ball", Item::new, Item.Properties::new);
+  public static final DeferredItem<Item> MINERAL_DUST =
+    ITEMS.registerItem("mineral_dust", Item::new, Item.Properties::new);
 
   // Adds in a bucket for VOID FLUID
   public static final DeferredItem<BucketItem> VOID_FLUID_BUCKET =

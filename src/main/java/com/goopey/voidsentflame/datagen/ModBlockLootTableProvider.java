@@ -16,9 +16,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
-import net.minecraft.world.level.storage.loot.entries.EntryGroup;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
-import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
 import net.minecraft.world.level.storage.loot.entries.NestedLootTable;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
@@ -38,7 +36,7 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
     dropSelf(BlockInit.VOIDSENT_FLAME_BLOCK.get());
 
     // extra drops
-    add(BlockInit.SPARKLING_DUST_BLOCK.get(), dropOtherAndMultipleOthers(BlockInit.SPARKLING_DUST_BLOCK.get(), BlockInit.VOID_DUST_BLOCK.asItem(), ItemInit.CLAYISH_DUST_BALL.get(), 2, 6));
+    add(BlockInit.SPARKLING_DUST_BLOCK.get(), dropOtherAndMultipleOthers(BlockInit.SPARKLING_DUST_BLOCK.get(), BlockInit.VOID_DUST_BLOCK.asItem(), ItemInit.MINERAL_DUST.get(), 2, 6));
   }
 
   protected LootTable.Builder dropOtherAndMultipleOthers(Block block, Item itemSelf, Item itemOther, float minDrops, float maxDrops) {

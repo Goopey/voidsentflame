@@ -20,7 +20,7 @@ public class CreativeModeTabInit {
       .displayItems((itemDisplayParameters, output) -> {
         output.accept(ItemInit.RUNIC_FRUIT_ITEM);
         output.accept(ItemInit.RUBICON_IGNITER_ITEM);
-        output.accept(ItemInit.CLAYISH_DUST_BALL.get());
+        output.accept(ItemInit.MINERAL_DUST.get());
       }).build());
 
   public static final DeferredHolder<CreativeModeTab,CreativeModeTab> VOIDSENTFLAME_BLOCKS_TAB = CREATIVE_MODE_TAB.register("voidsentflame_blocks_tab",

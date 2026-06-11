@@ -54,7 +54,7 @@ public class ModRecipeProvider extends RecipeProvider {
 
     List<ItemLike> SCRAP_SMELTABLES = List.of(BlockInit.IRON_SCRAP_BLOCK);
 
-    shapeless(RecipeCategory.MISC, ItemInit.CLAYISH_DUST_BALL, 4)
+    shapeless(RecipeCategory.MISC, ItemInit.MINERAL_DUST, 4)
       .requires(BlockInit.SPARKLING_DUST_BLOCK)
       .unlockedBy(getHasName(BlockInit.SPARKLING_DUST_BLOCK), this.has(BlockInit.SPARKLING_DUST_BLOCK))
       .save(output);
@@ -68,7 +68,7 @@ public class ModRecipeProvider extends RecipeProvider {
 
     oreSmelting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_NUGGET, 5,0.25f, 200, "iron_scrap");
     oreBlasting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_NUGGET, 6,0.25f, 100, "iron_scrap");
-    oreSmelting(this.output, List.of(ItemInit.CLAYISH_DUST_BALL), RecipeCategory.DECORATIONS, Items.BRICK, 0.3f, 200, "dust_brick");
+    oreSmelting(this.output, List.of(ItemInit.MINERAL_DUST), RecipeCategory.DECORATIONS, Items.BRICK, 0.3f, 200, "dust_brick");
     oreSmelting(this.output, List.of(BlockInit.SPARKLING_DUST_BLOCK), RecipeCategory.DECORATIONS, Blocks.MAGENTA_TERRACOTTA, 0.3f, 200, "dust_terracotta");
   }
 

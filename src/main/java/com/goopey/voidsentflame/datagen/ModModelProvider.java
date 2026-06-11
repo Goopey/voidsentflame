@@ -57,7 +57,7 @@ public class ModModelProvider extends ModelProvider {
     models.generateFlatItem(ItemInit.RUNIC_FRUIT_ITEM.get(), ModelTemplates.FLAT_ITEM);
     models.generateFlatItem(ItemInit.RUBICON_IGNITER_ITEM.get(), ModelTemplates.FLAT_ITEM);
     models.generateFlatItem(ItemInit.VOID_FLUID_BUCKET.get(), ModelTemplates.FLAT_ITEM);
-    models.generateFlatItem(ItemInit.CLAYISH_DUST_BALL.get(), ModelTemplates.FLAT_ITEM);
+    models.generateFlatItem(ItemInit.MINERAL_DUST.get(), ModelTemplates.FLAT_ITEM);
   }
 
   /**
