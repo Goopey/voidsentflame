@@ -39,9 +39,6 @@ public class BlockInit {
   public static final DeferredBlock<VoidFluidBlock> VOID_FLUID_BLOCK =
     register("void_fluid", VoidFluidBlock::new, BlockBehaviour.Properties.of());
 
-  public static final DeferredBlock<Block> VOID_SEA_LAYER_BLOCK =
-    register("void_sea_layer_block", VoidSeaLayerBlock::new, BlockBehaviour.Properties.of());
-
   public static final DeferredBlock<VoidsentFlameBlock> VOIDSENT_FLAME_BLOCK =
     register("voidsent_flame_block", VoidsentFlameBlock::new, BlockBehaviour.Properties.of());
 

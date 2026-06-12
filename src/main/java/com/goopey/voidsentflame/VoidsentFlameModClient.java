@@ -48,8 +48,7 @@ public class VoidsentFlameModClient {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-//      event.registerBlockEntityRenderer(BlockEntityInit.VOID_SEA_LAYER_BLOCK_ENTITY.get(), VoidSeaLayerBlockEntityRenderer::new);
-//      event.registerBlockEntityRenderer(BlockEntityInit.VOIDSENT_FLAME_BLOCK_ENTITY.get(), VoidsentFlameBlockEntityRenderer::new);
+      event.registerBlockEntityRenderer(BlockEntityInit.VOIDSENT_FLAME_BLOCK_ENTITY.get(), VoidsentFlameBlockEntityRenderer::new);
     }
 
     @SubscribeEvent
@@ -62,7 +61,7 @@ public class VoidsentFlameModClient {
       // Rubicon dimension effects
       // TODO : reenable VoidSeaRender.
       // TODO : improve performance
-      VoidSeaRenderer.getInstance().render(event);
+//      VoidSeaRenderer.getInstance().render(event);
     }
 
     @SubscribeEvent
