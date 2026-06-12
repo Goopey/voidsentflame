@@ -1,6 +1,7 @@
 package com.goopey.voidsentflame.block;
 
 import com.goopey.voidsentflame.block.blockentity.VoidsentFlameBlockEntity;
+import com.goopey.voidsentflame.client.menu.VoidsentFlameCraftingMenu;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
@@ -11,15 +12,14 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
-import net.minecraft.world.level.block.CraftingTableBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VoidsentFlameBlock extends BaseEntityBlock {
@@ -56,12 +56,6 @@ public class VoidsentFlameBlock extends BaseEntityBlock {
 
   /**
    * Copied over from crafting table code.
-   * @param blockState //TODO
-   * @param level //TODO
-   * @param pos //TODO
-   * @param player //TODO
-   * @param hitResult //TODO,
-   * @return //TODO
    */
   protected InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
     if (!level.isClientSide()) {
@@ -75,12 +69,11 @@ public class VoidsentFlameBlock extends BaseEntityBlock {
 
   /**
    * Copied over from crafting table code.
-   * @param state //TODO
-   * @param level //TODO
-   * @param pos //TODO
-   * @return //TODO
    */
-  protected MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
-    return new SimpleMenuProvider((containerId, inventory, player) -> new CraftingMenu(containerId, inventory, ContainerLevelAccess.create(level, pos)), CONTAINER_TITLE);
+  protected MenuProvider getMenuProvider(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos) {
+    return new SimpleMenuProvider(
+      (containerId, inventory, player) ->
+        new VoidsentFlameCraftingMenu(containerId, inventory, ContainerLevelAccess.create(level, pos)),
+      CONTAINER_TITLE);
   }
 }
