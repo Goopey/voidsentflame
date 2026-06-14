@@ -51,21 +51,14 @@ public class ModRecipeProvider extends RecipeProvider {
   protected void buildRecipes() {
     // Copied over from Kaupenjoe's datagen tutorial
     // Kept here as a blueprint of possible recipes to implement
-
     List<ItemLike> SCRAP_SMELTABLES = List.of(BlockInit.IRON_SCRAP_BLOCK);
 
-    shapeless(RecipeCategory.MISC, ItemInit.MINERAL_DUST, 4)
-      .requires(BlockInit.SPARKLING_DUST_BLOCK)
-      .unlockedBy(getHasName(BlockInit.SPARKLING_DUST_BLOCK), this.has(BlockInit.SPARKLING_DUST_BLOCK))
-      .save(output);
+//    shapeless(RecipeCategory.MISC, ItemInit.MINERAL_DUST, 4)
+//      .requires(BlockInit.SPARKLING_DUST_BLOCK)
+//      .unlockedBy(getHasName(BlockInit.SPARKLING_DUST_BLOCK), this.has(BlockInit.SPARKLING_DUST_BLOCK))
+//      .save(output);
 
-//    shaped(RecipeCategory.MISC, BlockInit.SPARKLING_DUST_BLOCK, 1)
-//      .define('#', ItemInit.CLAYISH_DUST_BALL)
-//      .pattern("##")
-//      .pattern("##")
-//      .unlockedBy(getHasName(ItemInit.CLAYISH_DUST_BALL), this.has(ItemInit.CLAYISH_DUST_BALL))
-//      .save(this.output);
-
+    campfireCooking(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_NUGGET, 4, 0, 300, "iron_scrap");
     oreSmelting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_NUGGET, 5,0.25f, 200, "iron_scrap");
     oreBlasting(this.output, SCRAP_SMELTABLES, RecipeCategory.MISC, Items.IRON_NUGGET, 6,0.25f, 100, "iron_scrap");
     oreSmelting(this.output, List.of(ItemInit.MINERAL_DUST), RecipeCategory.DECORATIONS, Items.BRICK, 0.3f, 200, "dust_brick");
@@ -75,6 +68,11 @@ public class ModRecipeProvider extends RecipeProvider {
   //#######################################################
   //                  HELPER FUNCTIONS
   //#######################################################
+
+  //campfire cooking
+  protected void campfireCooking(RecipeOutput recipeOutput, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, float pExperience, int pCookingTIme, String pGroup) {
+    oreCooking(recipeOutput, RecipeSerializer.CAMPFIRE_COOKING_RECIPE, CampfireCookingRecipe::new, pIngredients, pCategory, pResult, pExperience, pCookingTIme, pGroup, "_from_campfire");
+  }
 
   // basic smelting
   protected void oreSmelting(RecipeOutput recipeOutput, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, float pExperience, int pCookingTIme, String pGroup) {
@@ -93,6 +91,10 @@ public class ModRecipeProvider extends RecipeProvider {
   }
 
   // smelting with multiples of a result
+  protected void campfireCooking(RecipeOutput recipeOutput, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, int numResult, float pExperience, int pCookingTIme, String pGroup) {
+    oreCooking(recipeOutput, RecipeSerializer.CAMPFIRE_COOKING_RECIPE, CampfireCookingRecipe::new, pIngredients, pCategory, pResult, numResult, pExperience, pCookingTIme, pGroup, "_from_campfire");
+  }
+
   protected void oreSmelting(RecipeOutput recipeOutput, List<ItemLike> pIngredients, RecipeCategory pCategory, ItemLike pResult, int numResult, float pExperience, int pCookingTIme, String pGroup) {
     oreCooking(recipeOutput, RecipeSerializer.SMELTING_RECIPE, SmeltingRecipe::new, pIngredients, pCategory, pResult, numResult, pExperience, pCookingTIme, pGroup, "_from_smelting");
   }
