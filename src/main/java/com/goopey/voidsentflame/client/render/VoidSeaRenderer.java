@@ -94,6 +94,10 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
   private GpuTextureView blackTextureView;
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
 
+  // Render Distance tracking
+  private final double DEFAULT_RENDER_DISTANCE = 12.;
+  private double lastRenderDistance = DEFAULT_RENDER_DISTANCE;
+
   //#################################################
   //                 INSTANCE
   //#################################################
@@ -183,6 +187,12 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
     if (!RenderSystem.isOnRenderThread()) { return; }
     if (level == null) { return; }
     if (level.dimension() != RubiconDimension.RUBICON) { return; }
+
+    double levelRendererDistance = Math.max(1, levelRenderer.getLastViewDistance());
+    if (levelRendererDistance != lastRenderDistance) {
+      lastRenderDistance = levelRendererDistance;
+      buildSea();
+    }
     // account for which frame of the animation the texture is
     int frame = (int) (level.getGameTime() % 20) / 4;
 
@@ -590,7 +600,15 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
     VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
     GpuBuffer gpuBuffer;
 
-    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * AMOUNT_OF_VERTICES)) {
+    double levelRendererDistance = Math.max(1, Minecraft.getInstance().levelRenderer.getLastViewDistance());
+    double sizeMult = levelRendererDistance / DEFAULT_RENDER_DISTANCE;
+    int size = (int) Math.ceil(
+      1.1 * Math.pow(
+        (DefaultVertexFormat.BLOCK.getVertexSize() * 6.0 * sizeMult * VoidSeaConstants.OFFSET) / QUAD_SIZE, 2
+      )
+    );
+
+    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(size)) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
 
       putMesh(bufferBuilder);
@@ -764,13 +782,15 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
 
   /**
    * Helper method to generate a large, subdivided grid of triangles.
-   *
    * @param builder the BufferBuilder to which vertices will be added.
    */
   private void putMesh(BufferBuilder builder) {
-    for (int x = -VoidSeaConstants.OFFSET; x < VoidSeaConstants.OFFSET; x+= VoidSeaRenderer.QUAD_SIZE) {
-      for (int y = -VoidSeaConstants.OFFSET; y < VoidSeaConstants.OFFSET; y+= VoidSeaRenderer.QUAD_SIZE) {
-        if (Math.sqrt(x * x + y * y) < VoidSeaConstants.OFFSET * VoidSeaRenderer.PADDING) {
+    double levelRendererDistance = Math.max(1, Minecraft.getInstance().levelRenderer.getLastViewDistance());
+    int size = (int) (VoidSeaConstants.OFFSET * (levelRendererDistance / DEFAULT_RENDER_DISTANCE));
+
+    for (int x = -size; x < size; x+= VoidSeaRenderer.QUAD_SIZE) {
+      for (int y = -size; y < size; y+= VoidSeaRenderer.QUAD_SIZE) {
+        if (Math.sqrt(x * x + y * y) < size * VoidSeaRenderer.PADDING) {
           putMeshVertex(builder, x - 0.5f, y - 0.5f);
         }
       }
