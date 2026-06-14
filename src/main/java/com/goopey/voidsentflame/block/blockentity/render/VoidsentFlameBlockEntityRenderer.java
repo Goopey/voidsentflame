@@ -138,13 +138,13 @@ public class VoidsentFlameBlockEntityRenderer implements BlockEntityRenderer<Voi
     float a0 = 0.9F;
     float a1 = 0.0F;
 
-    consumer.addVertex(pose, (float)a.x, (float)a.y, (float)a.z).setColor(r0, g0, b0, a0);
-    consumer.addVertex(pose, (float)c.x, (float)c.y, (float)c.z).setColor(r1, g1, b1, a1);
-    consumer.addVertex(pose, (float)b.x, (float)b.y, (float)b.z).setColor(r0, g0, b0, a0);
+    consumer.addVertex(pose, (float)a.x, (float)a.y, (float)a.z).setColor(r0, g0, b0, a0).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+    consumer.addVertex(pose, (float)c.x, (float)c.y, (float)c.z).setColor(r1, g1, b1, a1).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+    consumer.addVertex(pose, (float)b.x, (float)b.y, (float)b.z).setColor(r0, g0, b0, a0).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
 
-    consumer.addVertex(pose, (float)b.x, (float)b.y, (float)b.z).setColor(r0, g0, b0, a0);
-    consumer.addVertex(pose, (float)c.x, (float)c.y, (float)c.z).setColor(r1, g1, b1, a1);
-    consumer.addVertex(pose, (float)d.x, (float)d.y, (float)d.z).setColor(r1, g1, b1, a1);
+    consumer.addVertex(pose, (float)b.x, (float)b.y, (float)b.z).setColor(r0, g0, b0, a0).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+    consumer.addVertex(pose, (float)c.x, (float)c.y, (float)c.z).setColor(r1, g1, b1, a1).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+    consumer.addVertex(pose, (float)d.x, (float)d.y, (float)d.z).setColor(r1, g1, b1, a1).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
   }
 
   private static Vec3 spiralPoint(float t, float age) {

@@ -6,6 +6,7 @@ import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.block.*;
 
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -13,6 +14,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -41,7 +43,7 @@ public class BlockInit {
 
   // NOTE : Modified light behaviour inside of the block class
   public static final DeferredBlock<VoidsentFlameBlock> VOIDSENT_FLAME_BLOCK =
-    register("voidsent_flame_block", VoidsentFlameBlock::new, BlockBehaviour.Properties.of());
+    register("voidsent_flame_block", VoidsentFlameBlock::new, BlockBehaviour.Properties.of().strength(-1, 3600000).lightLevel(state -> 15).noCollision().noOcclusion().noLootTable().mapColor(DyeColor.PURPLE).noTerrainParticles().sound(SoundType.LEAF_LITTER).pushReaction(PushReaction.IGNORE));
 
   public static final DeferredBlock<Block> IRON_SCRAP_BLOCK =
     register("iron_scrap_block", Block::new, BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_BROWN).strength(7f, 40f).sound(SoundType.IRON).requiresCorrectToolForDrops());

@@ -48,7 +48,7 @@ public class VoidsentFlameModClient {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-//      event.registerBlockEntityRenderer(BlockEntityInit.VOIDSENT_FLAME_BLOCK_ENTITY.get(), VoidsentFlameBlockEntityRenderer::new);
+      event.registerBlockEntityRenderer(BlockEntityInit.VOIDSENT_FLAME_BLOCK_ENTITY.get(), VoidsentFlameBlockEntityRenderer::new);
     }
 
     @SubscribeEvent

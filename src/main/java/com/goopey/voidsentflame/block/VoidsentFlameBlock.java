@@ -50,11 +50,7 @@ public class VoidsentFlameBlock extends BaseEntityBlock {
   public final int flameLevel;
 
   public VoidsentFlameBlock(int fireDamage, int level, Properties properties) {
-    super(properties.lightLevel(
-      state -> {
-        return 12 + ((VoidsentFlameBlock) state.getBlock()).flameLevel;
-      }
-    ));
+    super(properties.lightLevel(state -> 15));
     this.fireDamage = fireDamage;
     this.flameLevel = level;
   }

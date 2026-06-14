@@ -33,7 +33,6 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
     dropSelf(BlockInit.VOID_STONE_BLOCK.get());
     dropSelf(BlockInit.VOID_DUST_BLOCK.get());
     dropSelf(BlockInit.IRON_SCRAP_BLOCK.get());
-    dropSelf(BlockInit.VOIDSENT_FLAME_BLOCK.get());
 
     // extra drops
     add(BlockInit.SPARKLING_DUST_BLOCK.get(), dropOtherAndMultipleOthers(BlockInit.SPARKLING_DUST_BLOCK.get(), BlockInit.VOID_DUST_BLOCK.asItem(), ItemInit.MINERAL_DUST.get(), 2, 6));
