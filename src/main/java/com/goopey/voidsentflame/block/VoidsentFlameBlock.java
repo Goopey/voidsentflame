@@ -4,6 +4,7 @@ import com.goopey.voidsentflame.block.blockentity.VoidsentFlameBlockEntity;
 import com.goopey.voidsentflame.client.menu.VoidsentFlameCraftingMenu;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 import com.mojang.serialization.MapCodec;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.stats.Stats;
@@ -14,6 +15,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CampfireBlock;
+import net.minecraft.world.level.block.TorchBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -22,12 +26,18 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.ToIntFunction;
+
 public class VoidsentFlameBlock extends BaseEntityBlock {
   public static final MapCodec<VoidsentFlameBlock> CODEC = simpleCodec(VoidsentFlameBlock::new);
   private static final Component CONTAINER_TITLE = Component.translatable("container.crafting");
 
   public VoidsentFlameBlock(Properties properties) {
-    super(properties);
+    super(properties.lightLevel(
+      state -> {
+        return 12;
+      }
+    ));
   }
 
   //#############################################
@@ -35,7 +45,7 @@ public class VoidsentFlameBlock extends BaseEntityBlock {
   //#############################################
 
   @Override
-  protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
+  public MapCodec<VoidsentFlameBlock> codec() { return CODEC; }
 
   @Override
   public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {

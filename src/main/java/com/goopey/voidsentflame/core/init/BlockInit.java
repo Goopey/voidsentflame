@@ -39,6 +39,7 @@ public class BlockInit {
   public static final DeferredBlock<VoidFluidBlock> VOID_FLUID_BLOCK =
     register("void_fluid", VoidFluidBlock::new, BlockBehaviour.Properties.of());
 
+  // NOTE : Modified light behaviour inside of the block class
   public static final DeferredBlock<VoidsentFlameBlock> VOIDSENT_FLAME_BLOCK =
     register("voidsent_flame_block", VoidsentFlameBlock::new, BlockBehaviour.Properties.of());
 

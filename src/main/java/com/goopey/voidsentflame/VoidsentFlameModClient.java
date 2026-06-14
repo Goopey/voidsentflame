@@ -61,7 +61,7 @@ public class VoidsentFlameModClient {
       // Rubicon dimension effects
       // TODO : reenable VoidSeaRender.
       // TODO : improve performance
-//      VoidSeaRenderer.getInstance().render(event);
+      VoidSeaRenderer.getInstance().render(event);
     }
 
     @SubscribeEvent
