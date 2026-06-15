@@ -36,7 +36,7 @@ import java.util.Optional;
 
 public class VoidsentFlameBlockEntity extends BlockEntity {
   private int flameLevel = 0;
-  private static final int NUM_SLOTS = 4;
+  public static final int NUM_SLOTS = 8;
   private final NonNullList<ItemStack> items;
   private final int[] cookingProgress;
   private final int[] cookingTime;
@@ -259,7 +259,7 @@ public class VoidsentFlameBlockEntity extends BlockEntity {
         double d2 = pos.getZ() + 0.5F;
 
         for(int k = 0; k < 4; ++k) {
-          level.addParticle(ParticleTypes.GLOW, d0, d1, d2, 0.0, 5.0E-4, 0.0);
+          level.addParticle(ParticleTypes.FLAME, d0, d1, d2, 0.0, 5.0E-4, 0.0);
         }
       }
     }

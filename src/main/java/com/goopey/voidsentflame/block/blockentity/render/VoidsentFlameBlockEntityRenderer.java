@@ -5,22 +5,39 @@ import com.goopey.voidsentflame.util.VFRenderConsts;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.CampfireRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ItemOwner;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import static com.goopey.voidsentflame.util.VertexMeshHelper.putBufferVertex;
 
 public class VoidsentFlameBlockEntityRenderer implements BlockEntityRenderer<VoidsentFlameBlockEntity, VoidsentFlameBlockEntityRenderer.VoidsentFlameBlockEntityRenderState> {
+  private static final float SIZE = 0.375F;
+  private final ItemModelResolver itemModelResolver;
+
   public VoidsentFlameBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
+    this.itemModelResolver = context.itemModelResolver();
   }
 
   //#####################################################
@@ -35,74 +52,102 @@ public class VoidsentFlameBlockEntityRenderer implements BlockEntityRenderer<Voi
   public void extractRenderState(VoidsentFlameBlockEntity blockEntity, VoidsentFlameBlockEntityRenderState renderState, float partialTick, Vec3 cameraPosition, @Nullable ModelFeatureRenderer.CrumblingOverlay breakProgress) {
     BlockEntityRenderer.super.extractRenderState(blockEntity, renderState, partialTick, cameraPosition, breakProgress);
     renderState.age = blockEntity.getLevel().getGameTime() + partialTick;
+    int i = (int) blockEntity.getBlockPos().asLong();
+    renderState.items = new ArrayList();
+
+    for(int j = 0; j < blockEntity.getItems().size(); ++j) {
+      ItemStackRenderState itemstackrenderstate = new ItemStackRenderState();
+      this.itemModelResolver.updateForTopItem(
+        itemstackrenderstate, blockEntity.getItems().get(j),
+        ItemDisplayContext.FIXED, blockEntity.getLevel(),
+        null, i + j
+      );
+      renderState.items.add(itemstackrenderstate);
+    }
   }
 
   @Override
   public void submit(VoidsentFlameBlockEntityRenderState state, PoseStack poseStack, SubmitNodeCollector nodeCollector, CameraRenderState cameraState) {
-    poseStack.pushPose();
+    // render item
+    List<ItemStackRenderState> list = state.items;
 
+    for (int i = 0; i < list.size(); ++i) {
+      ItemStackRenderState itemstackrenderstate = list.get(i);
+      if (!itemstackrenderstate.isEmpty()) {
+        poseStack.pushPose();
+        poseStack.translate(0.5F, 0.44921875F, 0.5F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(i * 45.f));
+        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+        poseStack.translate(-0.3125F, -0.3125F, 0.0F);
+        poseStack.scale(0.375F, 0.375F, 0.375F);
+        itemstackrenderstate.submit(poseStack, nodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+        poseStack.popPose();
+      }
+    }
+
+    // render fire
+    poseStack.pushPose();
     nodeCollector.submitCustomGeometry(
       poseStack,
       RenderType.solid(),
       (pose, consumer) -> {
         int segments = 40;
 
-        for (int i = 0; i < segments; i++) {
-          float t0 = i / (float)segments;
-          float t1 = (i + 1) / (float)segments;
-
-          Vec3 p0 = spiralPoint(t0, state.age);
-          Vec3 p1 = spiralPoint(t1, state.age);
-
-          addRibbonSegment(
-            consumer, pose,
-            p0, p1, 0.08F,
-            getFireColor(t0), getFireColor(t1)
-          );
-        }
-//        for (int i = 0; i < 40; i++) {
-//          float t = i / 40.0F;
-//          float angle = renderState.age * 0.1F + t * 10.0F;
-//          float radius = 0.25F;
+//        for (int i = 0; i < segments; i++) {
+//          float t0 = i / (float)segments;
+//          float t1 = (i + 1) / (float)segments;
 //
-//          float x = Mth.cos(angle) * radius;
-//          float z = Mth.sin(angle) * radius;
-//          float y = t * 1.5F;
-//          float size = 0.05F;
+//          Vec3 p0 = spiralPoint(t0, state.age);
+//          Vec3 p1 = spiralPoint(t1, state.age);
 //
-//          float r;
-//          float g;
-//          float b;
-//
-//          if (t < 0.33F) {
-//            // Purple
-//            r = 0.7F;
-//            g = 0.2F;
-//            b = 1.0F;
-//          } else if (t < 0.66F) {
-//            // Orange
-//            r = 1.0F;
-//            g = 0.5F;
-//            b = 0.0F;
-//          } else {
-//            // Gold
-//            r = 1.0F;
-//            g = 0.85F;
-//            b = 0.2F;
-//          }
-//
-//          buffer.addVertex(pose, x - size, y, z)
-//            .setColor(r, g, b, 0.8F);
-//          buffer.addVertex(pose, x + size, y, z)
-//            .setColor(r, g, b, 0.8F);
-//          buffer.addVertex(pose, x + size, y + size * 2, z)
-//            .setColor(r, g, b, 0.0F);
-//          buffer.addVertex(pose, x - size, y + size * 2, z)
-//            .setColor(r, g, b, 0.0F);
+//          addRibbonSegment(
+//            consumer, pose,
+//            p0, p1, 0.08F,
+//            getFireColor(t0), getFireColor(t1)
+//          );
 //        }
+        for (int i = 0; i < 40; i++) {
+          float t = i / 40.0F;
+          float angle = state.age * 0.1F + t * 10.0F;
+          float radius = 0.25F;
+
+          float x = Mth.cos(angle) * radius;
+          float z = Mth.sin(angle) * radius;
+          float y = t * 1.5F;
+          float size = 0.05F;
+
+          float r;
+          float g;
+          float b;
+
+          if (t < 0.33F) {
+            // Purple
+            r = 0.7F;
+            g = 0.2F;
+            b = 1.0F;
+          } else if (t < 0.66F) {
+            // Orange
+            r = 1.0F;
+            g = 0.5F;
+            b = 0.0F;
+          } else {
+            // Gold
+            r = 1.0F;
+            g = 0.85F;
+            b = 0.2F;
+          }
+
+          consumer.addVertex(pose, x - size, y, z)
+            .setColor(r, g, b, 0.8F).setUv(1, 1).setUv2(1, 1).setNormal(0, 1, 0);
+          consumer.addVertex(pose, x + size, y, z)
+            .setColor(r, g, b, 0.8F).setUv(1, 1).setUv2(1, 1).setNormal(0, 1, 0);
+          consumer.addVertex(pose, x + size, y + size * 2, z)
+            .setColor(r, g, b, 0.0F).setUv(1, 1).setUv2(1, 1).setNormal(0, 1, 0);
+          consumer.addVertex(pose, x - size, y + size * 2, z)
+            .setColor(r, g, b, 0.0F).setUv(1, 1).setUv2(1, 1).setNormal(0, 1, 0);
+        }
       }
     );
-
     poseStack.popPose();
   }
 
@@ -193,5 +238,6 @@ public class VoidsentFlameBlockEntityRenderer implements BlockEntityRenderer<Voi
   //#################################################
   public static class VoidsentFlameBlockEntityRenderState extends BlockEntityRenderState {
     public float age;
+    public List<ItemStackRenderState> items = Collections.emptyList();
   }
 }
