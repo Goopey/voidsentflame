@@ -92,59 +92,33 @@ public class VoidsentFlameBlockEntityRenderer implements BlockEntityRenderer<Voi
       RenderType.solid(),
       (pose, consumer) -> {
         int segments = 40;
+        int segments2 = 20;
 
-//        for (int i = 0; i < segments; i++) {
-//          float t0 = i / (float)segments;
-//          float t1 = (i + 1) / (float)segments;
-//
-//          Vec3 p0 = spiralPoint(t0, state.age);
-//          Vec3 p1 = spiralPoint(t1, state.age);
-//
-//          addRibbonSegment(
-//            consumer, pose,
-//            p0, p1, 0.08F,
-//            getFireColor(t0), getFireColor(t1)
-//          );
-//        }
-        for (int i = 0; i < 40; i++) {
-          float t = i / 40.0F;
-          float angle = state.age * 0.1F + t * 10.0F;
-          float radius = 0.25F;
+        for (int i = 0; i < segments; i++) {
+          float t0 = i / (float) segments;
+          float t1 = (i + 1) / (float) segments;
 
-          float x = Mth.cos(angle) * radius;
-          float z = Mth.sin(angle) * radius;
-          float y = t * 1.5F;
-          float size = 0.05F;
+          Vec3 p0 = spiralPoint(t0, state.age, (2.0 * (segments - i)) / segments);
+          Vec3 p1 = spiralPoint(t1, state.age, (2.0 * (segments - i)) / segments);
 
-          float r;
-          float g;
-          float b;
+          addRibbonSegment(
+            consumer, pose,
+            p0, p1, 0.08F,
+            getFireColor(t0), getFireColor(t1)
+          );
+        }
+        for (int i = 0; i < segments2; i++) {
+          float t0 = i / (float) segments2;
+          float t1 = (i + 1) / (float) segments2;
 
-          if (t < 0.33F) {
-            // Purple
-            r = 0.7F;
-            g = 0.2F;
-            b = 1.0F;
-          } else if (t < 0.66F) {
-            // Orange
-            r = 1.0F;
-            g = 0.5F;
-            b = 0.0F;
-          } else {
-            // Gold
-            r = 1.0F;
-            g = 0.85F;
-            b = 0.2F;
-          }
+          Vec3 p0 = spiralPoint(t0, state.age, (double) (segments2 - i) / segments2);
+          Vec3 p1 = spiralPoint(t1, state.age, (double) (segments2 - i) / segments2);
 
-          consumer.addVertex(pose, x - size, y, z)
-            .setColor(r, g, b, 0.8F).setUv(1, 1).setUv2(1, 1).setNormal(0, 1, 0);
-          consumer.addVertex(pose, x + size, y, z)
-            .setColor(r, g, b, 0.8F).setUv(1, 1).setUv2(1, 1).setNormal(0, 1, 0);
-          consumer.addVertex(pose, x + size, y + size * 2, z)
-            .setColor(r, g, b, 0.0F).setUv(1, 1).setUv2(1, 1).setNormal(0, 1, 0);
-          consumer.addVertex(pose, x - size, y + size * 2, z)
-            .setColor(r, g, b, 0.0F).setUv(1, 1).setUv2(1, 1).setNormal(0, 1, 0);
+          addRibbonSegment(
+            consumer, pose,
+            p0, p1, 0.08F,
+            getFireColor(t0), getFireColor(t1)
+          );
         }
       }
     );
@@ -156,19 +130,14 @@ public class VoidsentFlameBlockEntityRenderer implements BlockEntityRenderer<Voi
   //#################################################
 
   private static void addRibbonSegment(VertexConsumer consumer, PoseStack.Pose pose, Vec3 p0, Vec3 p1, float width, int color0, int color1) {
-    // Direction of this segment
     Vec3 tangent = p1.subtract(p0).normalize();
-
-    // Generate ribbon width direction
     Vec3 side = tangent.cross(new Vec3(0, 1, 0));
 
-    // Handle near-vertical segments
     if (side.lengthSqr() < 0.0001D) {
       side = new Vec3(1, 0, 0);
     }
 
     side = side.normalize().scale(width * 0.5F);
-
     Vec3 a = p0.add(side);
     Vec3 b = p0.subtract(side);
     Vec3 c = p1.add(side);
@@ -183,22 +152,31 @@ public class VoidsentFlameBlockEntityRenderer implements BlockEntityRenderer<Voi
     float a0 = 0.9F;
     float a1 = 0.0F;
 
-    consumer.addVertex(pose, (float)a.x, (float)a.y, (float)a.z).setColor(r0, g0, b0, a0).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
-    consumer.addVertex(pose, (float)c.x, (float)c.y, (float)c.z).setColor(r1, g1, b1, a1).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
-    consumer.addVertex(pose, (float)b.x, (float)b.y, (float)b.z).setColor(r0, g0, b0, a0).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+//    consumer.addVertex(pose, (float) a.x, (float) a.y, (float) a.z).setColor(r0, g0, b0, a0)
+//      .setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+//    consumer.addVertex(pose, (float) b.x, (float) b.y, (float) b.z).setColor(r0, g0, b0, a0)
+//      .setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+//    consumer.addVertex(pose, (float) c.x, (float) c.y, (float) c.z).setColor(r1, g1, b1, a1)
+//      .setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+//    consumer.addVertex(pose, (float) d.x, (float) d.y, (float) d.z).setColor(r1, g1, b1, a1)
+//      .setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
 
-    consumer.addVertex(pose, (float)b.x, (float)b.y, (float)b.z).setColor(r0, g0, b0, a0).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
-    consumer.addVertex(pose, (float)c.x, (float)c.y, (float)c.z).setColor(r1, g1, b1, a1).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
-    consumer.addVertex(pose, (float)d.x, (float)d.y, (float)d.z).setColor(r1, g1, b1, a1).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+    consumer.addVertex(pose, (float) a.x, (float) a.y, (float) a.z).setColor(r0, g0, b0, a0).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+    consumer.addVertex(pose, (float) c.x, (float) c.y, (float) c.z).setColor(r1, g1, b1, a1).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+    consumer.addVertex(pose, (float) b.x, (float) b.y, (float) b.z).setColor(r0, g0, b0, a0).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+
+    consumer.addVertex(pose, (float) b.x, (float) b.y, (float) b.z).setColor(r0, g0, b0, a0).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+    consumer.addVertex(pose, (float) c.x, (float) c.y, (float) c.z).setColor(r1, g1, b1, a1).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+    consumer.addVertex(pose, (float) d.x, (float) d.y, (float) d.z).setColor(r1, g1, b1, a1).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
   }
 
-  private static Vec3 spiralPoint(float t, float age) {
-    double radius = 0.25D;
-    double angle = age * 0.12D + t * Math.PI * 8.0D;
+  private static Vec3 spiralPoint(float t, float age, double radMult) {
+    double radius = 0.5 * Math.sqrt(radMult);
+    double angle = age * 0.12 + t * Math.PI * 8.0;
 
-    double x = 0.5D + Math.cos(angle) * radius;
-    double y = t * 1.5D;
-    double z = 0.5D + Math.sin(angle) * radius;
+    double x = 0.5 + Math.cos(angle) * radius;
+    double y = t * 1.5;
+    double z = 0.5 + Math.sin(angle) * radius;
 
     return new Vec3(x, y, z);
   }
@@ -216,13 +194,10 @@ public class VoidsentFlameBlockEntityRenderer implements BlockEntityRenderer<Voi
     float y0 = y;
     float y1 = y + size * 2.0F;
 
-    consumer.addVertex(pose, x0, y0, z).setColor(r, g, b, alphaBottom);
-    consumer.addVertex(pose, x1, y0, z).setColor(r, g, b, alphaBottom);
-    consumer.addVertex(pose, x0, y1, z).setColor(r, g, b, alphaTop);
-
-    consumer.addVertex(pose, x0, y1, z).setColor(r, g, b, alphaTop);
-    consumer.addVertex(pose, x1, y0, z).setColor(r, g, b, alphaBottom);
-    consumer.addVertex(pose, x1, y1, z).setColor(r, g, b, alphaTop);
+    consumer.addVertex(pose, x0, y0, z).setColor(r, g, b, alphaBottom).setUv(0, 0).setUv2(0, 0).setNormal(0, 1, 0);
+    consumer.addVertex(pose, x0, y1, z).setColor(r, g, b, alphaBottom).setUv(0, 1).setUv2(0, 1).setNormal(0, 1, 0);
+    consumer.addVertex(pose, x1, y1, z).setColor(r, g, b, alphaTop).setUv(1, 1).setUv2(1, 1).setNormal(0, 1, 0);
+    consumer.addVertex(pose, x1, y0, z).setColor(r, g, b, alphaBottom).setUv(1, 0).setUv2(1, 0).setNormal(0, 1, 0);
   }
 
   private static int getFireColor(float t) {
