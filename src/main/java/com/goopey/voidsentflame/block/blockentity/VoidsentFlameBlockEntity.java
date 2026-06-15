@@ -217,7 +217,8 @@ public class VoidsentFlameBlockEntity extends BlockEntity {
       ItemStack itemstack = vfCampfire.items.get(i);
       if (!itemstack.isEmpty()) {
         flag = true;
-        vfCampfire.cookingProgress[i]++;
+        // cooks faster than a regular fire
+        vfCampfire.cookingProgress[i] += 2;
         if (vfCampfire.cookingProgress[i] >= vfCampfire.cookingTime[i]) {
           SingleRecipeInput singlerecipeinput = new SingleRecipeInput(itemstack);
           ItemStack itemstack1 = check.getRecipeFor(singlerecipeinput, level).map((campfireRecipeInstance) -> (campfireRecipeInstance.value()).assemble(singlerecipeinput, level.registryAccess())).orElse(itemstack);
