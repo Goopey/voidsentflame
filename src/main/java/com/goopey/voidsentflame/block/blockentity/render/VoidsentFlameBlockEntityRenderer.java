@@ -84,45 +84,6 @@ public class VoidsentFlameBlockEntityRenderer implements BlockEntityRenderer<Voi
         poseStack.popPose();
       }
     }
-
-    // render fire
-    poseStack.pushPose();
-    nodeCollector.submitCustomGeometry(
-      poseStack,
-      RenderType.solid(),
-      (pose, consumer) -> {
-        int segments = 40;
-        int segments2 = 20;
-
-        for (int i = 0; i < segments; i++) {
-          float t0 = i / (float) segments;
-          float t1 = (i + 1) / (float) segments;
-
-          Vec3 p0 = spiralPoint(t0, state.age, (2.0 * (segments - i)) / segments);
-          Vec3 p1 = spiralPoint(t1, state.age, (2.0 * (segments - i)) / segments);
-
-          addRibbonSegment(
-            consumer, pose,
-            p0, p1, 0.08F,
-            getFireColor(t0), getFireColor(t1)
-          );
-        }
-        for (int i = 0; i < segments2; i++) {
-          float t0 = i / (float) segments2;
-          float t1 = (i + 1) / (float) segments2;
-
-          Vec3 p0 = spiralPoint(t0, state.age, (double) (segments2 - i) / segments2);
-          Vec3 p1 = spiralPoint(t1, state.age, (double) (segments2 - i) / segments2);
-
-          addRibbonSegment(
-            consumer, pose,
-            p0, p1, 0.08F,
-            getFireColor(t0), getFireColor(t1)
-          );
-        }
-      }
-    );
-    poseStack.popPose();
   }
 
   //#################################################

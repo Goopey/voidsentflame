@@ -1,0 +1,7 @@
+{
+  "variants" : {
+    "" : {
+      "model" : "voidsentflame:block/voidsent_flame_block"
+    }
+  }
+}

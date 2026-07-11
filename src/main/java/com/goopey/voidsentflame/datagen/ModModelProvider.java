@@ -17,6 +17,7 @@ import net.minecraft.client.data.models.model.ModelLocationUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.data.models.model.TexturedModel;
+import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.Variant;
 import net.minecraft.client.renderer.block.model.VariantMutator;
 import net.minecraft.core.Direction.Axis;
@@ -43,12 +44,12 @@ public class ModModelProvider extends ModelProvider {
   }
 
   private static void createBlocks(BlockModelGenerators models) {
+    createDumpModels(models);
     createPortalBlocks(models);
     createXYRandomOrientationBlocks(models);
+    createFluidBlocks(models);
 
-    models.createAirLikeBlock(BlockInit.VOIDSENT_FLAME_BLOCK.get(), BlockInit.VOIDSENT_FLAME_BLOCK.asItem());
     models.createAirLikeBlock(BlockInit.RUBICON_AIR_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
-    models.createNonTemplateModelBlock(BlockInit.VOID_FLUID_BLOCK.get());
     models.createTrivialCube(BlockInit.IRON_SCRAP_BLOCK.get());
   }
 
@@ -75,9 +76,16 @@ public class ModModelProvider extends ModelProvider {
     createXYRandomOrientationBlock(models, BlockInit.SPARKLING_DUST_BLOCK.get());
   }
 
-  // private void createFluidBlocks(BlockModelGenerators pBModel) {
-  //   createFluidBlock(pBModel, BlockInit.VOID_FLUID_BLOCK.get());
-  // }
+  /**
+   * Makes non-templates models and co for blocks with custom states that crash the datagen if they aren't included.
+   */
+  private static void createDumpModels(BlockModelGenerators models) {
+    models.createNonTemplateModelBlock(BlockInit.VOIDSENT_FLAME_BLOCK.get());
+  }
+
+  private static void createFluidBlocks(BlockModelGenerators models) {
+    models.createNonTemplateModelBlock(BlockInit.VOID_FLUID_BLOCK.get());
+  }
 
   /**
    * ######################################################
