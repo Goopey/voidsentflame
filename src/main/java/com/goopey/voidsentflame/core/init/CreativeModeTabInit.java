@@ -33,5 +33,6 @@ public class CreativeModeTabInit {
         output.accept(BlockInit.VOID_DUST_BLOCK);
         output.accept(BlockInit.SPARKLING_DUST_BLOCK.get());
         output.accept(BlockInit.IRON_SCRAP_BLOCK.get());
+        output.accept(BlockInit.VOIDSENT_FLAME_BLOCK.get());
       }).build());
 }
