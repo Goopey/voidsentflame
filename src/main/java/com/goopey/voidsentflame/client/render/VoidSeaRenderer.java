@@ -218,41 +218,38 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
     matrix4fStack.pushMatrix();
     matrix4fStack.scale(renderDistanceScale, 1, renderDistanceScale);
 
-    // TODO : remove this
-    // avoid crashes if the sprites were cleared 
-//    if (!this.GPU_SPRITE_ANIM_VIEW[frame].isClosed()) {
-      this.blendTargetHandle = frameGraphBuilder.importExternal("VoidSeaBlendTexHandle", this.blendTarget);
-      this.seaTargetHandle = frameGraphBuilder.importExternal("VoidSeaSeaTexHandle", this.seaTarget);
-      this.distortionTargetHandle = frameGraphBuilder.importExternal("VoidSeaDistortHandle", this.distortionTarget);
-      this.distortionGradientTargetHandle = frameGraphBuilder.importExternal("VoidSeaDistortGradientHandle", this.distortionGradientTarget);
+    this.blendTargetHandle = frameGraphBuilder.importExternal("VoidSeaBlendTexHandle", this.blendTarget);
+    this.seaTargetHandle = frameGraphBuilder.importExternal("VoidSeaSeaTexHandle", this.seaTarget);
+    this.distortionTargetHandle = frameGraphBuilder.importExternal("VoidSeaDistortHandle", this.distortionTarget);
+    this.distortionGradientTargetHandle = frameGraphBuilder.importExternal("VoidSeaDistortGradientHandle", this.distortionGradientTarget);
 
-      FramePass pass1 = frameGraphBuilder.addPass("resizeClearCopyPass1");
-      this.seaTargetHandle = pass1.readsAndWrites(this.seaTargetHandle);
-      this.blendTargetHandle = pass1.readsAndWrites(this.blendTargetHandle);
-      this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
-      this.distortionTargetHandle = pass1.readsAndWrites(this.distortionTargetHandle);
-      this.distortionGradientTargetHandle = pass1.readsAndWrites(this.distortionGradientTargetHandle);
-      pass1.executes(
-        () -> clearAndResizeTargets(this.mainTargetHandle, List.of(
-          this.blendTargetHandle, this.seaTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle
-        ))
-      );
+    FramePass pass1 = frameGraphBuilder.addPass("resizeClearCopyPass1");
+    this.seaTargetHandle = pass1.readsAndWrites(this.seaTargetHandle);
+    this.blendTargetHandle = pass1.readsAndWrites(this.blendTargetHandle);
+    this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
+    this.distortionTargetHandle = pass1.readsAndWrites(this.distortionTargetHandle);
+    this.distortionGradientTargetHandle = pass1.readsAndWrites(this.distortionGradientTargetHandle);
+    pass1.executes(
+      () -> clearAndResizeTargets(this.mainTargetHandle, List.of(
+        this.blendTargetHandle, this.seaTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle
+      ))
+    );
 
-      FramePass pass2 = frameGraphBuilder.addPass("VoidSeaMeshPass2");
-      pass2.requires(pass1);
-      this.seaTargetHandle = pass2.readsAndWrites(this.seaTargetHandle);
-      pass2.executes(
-        () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.seaTargetHandle)
-      );
+    FramePass pass2 = frameGraphBuilder.addPass("VoidSeaMeshPass2");
+    pass2.requires(pass1);
+    this.seaTargetHandle = pass2.readsAndWrites(this.seaTargetHandle);
+    pass2.executes(
+      () -> this.renderSea(cameraPos, matrix4fStack, this.GPU_SPRITE_ANIM_VIEW[frame], this.seaTargetHandle)
+    );
 
-      FramePass pass3 = frameGraphBuilder.addPass("VoidSeaMeshDistortPass3");
-      pass3.requires(pass1);
-      this.distortionTargetHandle = pass3.readsAndWrites(this.distortionTargetHandle);
-      pass3.executes(
-        () -> this.renderDistortion(cameraPos, matrix4fStack, this.blackTextureView, this.distortionTargetHandle)
-      );
+    FramePass pass3 = frameGraphBuilder.addPass("VoidSeaMeshDistortPass3");
+    pass3.requires(pass1);
+    this.distortionTargetHandle = pass3.readsAndWrites(this.distortionTargetHandle);
+    pass3.executes(
+      () -> this.renderDistortion(cameraPos, matrix4fStack, this.blackTextureView, this.distortionTargetHandle)
+    );
 
-      //TODO : Fix gradient
+    //TODO : Fix gradient
 //      FramePass pass4 = frameGraphBuilder.addPass("VoidSeaMeshDistortGradientPass4");
 //      pass4.requires(pass1);
 //      this.distortionGradientTargetHandle = pass4.readsAndWrites(this.distortionGradientTargetHandle);
@@ -260,31 +257,27 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
 //        () -> this.renderDistortionGradient(cameraPos, matrix4fStack, this.distortionGradientTargetHandle)
 //      );
 
-      FramePass pass5 = frameGraphBuilder.addPass("VoidSeaBlendPass5");
-      pass5.requires(pass2);
-      pass5.requires(pass3);
+    FramePass pass5 = frameGraphBuilder.addPass("VoidSeaBlendPass5");
+    pass5.requires(pass2);
+    pass5.requires(pass3);
 //      pass5.requires(pass4);
-      this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
-      this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
-      this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
-      pass5.executes(
-        () -> this.renderBlitAndBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
-      );
+    this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
+    this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
+    this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
+    pass5.executes(
+      () -> this.renderBlitAndBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
+    );
 
-      FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
-      pass6.requires(pass5);
-      this.mainTargetHandle = pass6.readsAndWrites(this.mainTargetHandle);
-      this.blendTargetHandle = pass6.readsAndWrites(this.blendTargetHandle);
-      this.seaTargetHandle = pass6.readsAndWrites(this.seaTargetHandle);
-      this.distortionTargetHandle = pass6.readsAndWrites(this.distortionTargetHandle);
+    FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
+    pass6.requires(pass5);
+    this.mainTargetHandle = pass6.readsAndWrites(this.mainTargetHandle);
+    this.blendTargetHandle = pass6.readsAndWrites(this.blendTargetHandle);
+    this.seaTargetHandle = pass6.readsAndWrites(this.seaTargetHandle);
+    this.distortionTargetHandle = pass6.readsAndWrites(this.distortionTargetHandle);
 //      this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
-      pass6.executes(
-        () -> this.renderHeatWave(cameraPos, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
-      );
-      //TODO : remove this
-//    } else {
-//      this.getSprites();
-//    }
+    pass6.executes(
+      () -> this.renderHeatWave(cameraPos, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
+    );
 
     frameGraphBuilder.execute(this.resourcePool);
     matrix4fStack.popMatrix();
