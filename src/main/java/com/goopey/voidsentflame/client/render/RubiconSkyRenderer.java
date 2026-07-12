@@ -2,11 +2,21 @@ package com.goopey.voidsentflame.client.render;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.client.render.sky.CrucibleSkyRenderer;
+import com.goopey.voidsentflame.world.dimension.RubiconDimension;
+import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4fStack;
 
 public class RubiconSkyRenderer implements ResourceManagerReloadListener, AutoCloseable {
   public static final String NAME = "rubicon_sky";
@@ -45,5 +55,21 @@ public class RubiconSkyRenderer implements ResourceManagerReloadListener, AutoCl
    */
   public void render(RenderLevelStageEvent.AfterSky event) {
     // Check if in proper biomes
+    Minecraft mc = Minecraft.getInstance();
+    Level level = mc.level;
+    if (!RenderSystem.isOnRenderThread()) { return; }
+    if (level == null) { return; }
+    if (level.dimension() != RubiconDimension.RUBICON) { return; }
+
+    // get poseStack to start rendering
+    PoseStack poseStack = event.getPoseStack();
+    poseStack.pushPose();
+    Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
+    matrix4fStack.pushMatrix();
+
+
+
+    matrix4fStack.popMatrix();
+    poseStack.popPose();
   }
 }
