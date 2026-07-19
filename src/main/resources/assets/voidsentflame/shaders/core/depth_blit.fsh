@@ -19,7 +19,7 @@ void main() {
     float dist = length(vec3(1.0, (2.0 * texCoord - 1.0) * vec2(854.0/480.0, 1.0) * tan(radians(90 / 2.0))) * d);
 
     if (mod(dist, 1.0) <= 0.05) {
-        fragColor = vec4(0.0,0.0,0.0,1.0);
+        fragColor = vec4(1.0, 1.0, 1.0, 1.0);
     } else {
         fragColor = vec4(texture(SamplerIn, texCoord).rgb, 1.0);
     }

@@ -19,6 +19,7 @@ public class VFRenderPipelines {
   public static RenderPipeline.Snippet POS_SNIPPET;
 
   public static RenderPipeline BLIT_PIPELINE;
+  public static RenderPipeline DEPTH_BLIT_PIPELINE;
 
   // VOID SEA
   public static RenderPipeline VOID_SEA_MESH_PIPELINE;
@@ -29,7 +30,7 @@ public class VFRenderPipelines {
   public static RenderPipeline VOID_SEA_DISTORTION_PIPELINE;
 
   // RUBICON SKY
-  public static RenderPipeline DEPTH_BLIT_PIPELINE;
+
 
   static {
     GLOBALS_TERRAIN_SNIPPET = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)

@@ -67,35 +67,6 @@ public class VoidsentFlameModClient {
 
     @SubscribeEvent
     public static void frameGraphSetupEvent(FrameGraphSetupEvent event) {
-      GpuTextureView tex0 = event.getTargetBundle().main.get().getDepthTextureView();
-      if (tex0 == null) {
-        VoidsentFlameMod.LOGGER.info("FrameGraphSetup test returned early 1.");
-        return;
-      }
-      if (!RenderSystem.isOnRenderThread()) {
-        VoidsentFlameMod.LOGGER.info("FrameGraphSetup test returned early 2.");
-        return;
-      }
-
-      RubiconSkyRenderer.INSTANCE.importTex = tex0;
-
-//      Tuple<Integer, GpuBuffer> bufferTuple = VertexMeshHelper.buildScreen(VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY);
-//      int screenIndex = bufferTuple.getA();
-//      GpuBuffer screenBuffer = bufferTuple.getB();
-//
-//      GpuTextureView colorTextureViewT = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
-//      GpuTextureView depthTextureViewT = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
-//      CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-//
-//      try (RenderPass renderPass = encoder.createRenderPass(
-//        () -> "DrawDepth", colorTextureViewT, OptionalInt.empty(), depthTextureViewT, OptionalDouble.empty())
-//      ) {
-//        renderPass.setPipeline(VFRenderPipelines.BLIT_PIPELINE);
-//        renderPass.bindSampler("SamplerIn", tex0);
-//        renderPass.setVertexBuffer(0, screenBuffer);
-//        renderPass.setIndexBuffer(screenBuffer, VertexFormat.IndexType.SHORT);
-//        renderPass.draw(0, screenIndex);
-//      }
     }
  
     @SubscribeEvent
