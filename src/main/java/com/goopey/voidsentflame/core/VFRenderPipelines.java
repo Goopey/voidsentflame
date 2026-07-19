@@ -31,6 +31,8 @@ public class VFRenderPipelines {
 
   // RUBICON SKY
 
+  // FOG RENDERER
+
 
   static {
     GLOBALS_TERRAIN_SNIPPET = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)
@@ -51,41 +53,38 @@ public class VFRenderPipelines {
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_frag"))
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
-        .withCull(false)
+        .withCull(true)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .build());
     VOID_SEA_MESH_DISTORTION_GRADIENT_PIPELINE = RenderPipelines.register(
       RenderPipeline.builder(GLOBALS_TERRAIN_POS_SNIPPET)
-        // sets a pipeline name, not an actual file
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_mesh_distortion_gradient"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_distortion_gradient_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_distortion_gradient_frag"))
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, true)
-        .withCull(false)
+        .withCull(true)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .withBlend(BlendFunction.TRANSLUCENT)
         .build());
     VOID_SEA_MESH_DISTORT_PIPELINE_T = RenderPipelines.register(
       RenderPipeline.builder(GLOBALS_TERRAIN_POS_SNIPPET)
-        // sets a pipeline name, not an actual file
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distortion_mesh"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_mesh_frag"))
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
-        .withCull(false)
+        .withCull(true)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .build());
     VOID_SEA_MESH_DISTORT_PIPELINE_B = RenderPipelines.register(
       RenderPipeline.builder(GLOBALS_TERRAIN_POS_SNIPPET)
-        // sets a pipeline name, not an actual file
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distortion_mesh"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_mesh_frag"))
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
-        .withCull(false)
+        .withCull(true)
         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
         .build());
     VOID_SEA_BLEND_PIPELINE = RenderPipelines.register(
@@ -118,7 +117,7 @@ public class VFRenderPipelines {
         .withColorWrite(true, false)
         .withDepthWrite(false)
         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-        .withCull(false)
+        .withCull(true)
         .withoutBlend()
         .build()
     );
@@ -133,9 +132,7 @@ public class VFRenderPipelines {
         .withColorWrite(true, true)
         .withDepthWrite(false)
         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-        .withCull(false)
-        .withoutStencilTest()
-        .withoutBlend()
+        .withCull(false).withoutStencilTest().withoutBlend()
         .build()
     );
     DEPTH_BLIT_PIPELINE = RenderPipelines.register(
