@@ -4,9 +4,23 @@ import com.goopey.voidsentflame.block.blockentity.render.VoidsentFlameBlockEntit
 import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 
 import com.goopey.voidsentflame.client.render.RubiconSkyRenderer;
+import com.goopey.voidsentflame.core.VFRenderPipelines;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 import com.goopey.voidsentflame.server.VoidSeaEvent;
+import com.goopey.voidsentflame.util.VFRenderConsts;
+import com.goopey.voidsentflame.util.VertexMeshHelper;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.resource.ResourceHandle;
+import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.fog.FogRenderer;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.entity.vehicle.Minecart;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -14,14 +28,14 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.client.event.lifecycle.ClientStoppingEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
+
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = VoidsentFlameMod.MODID, dist = Dist.CLIENT)
@@ -52,8 +66,36 @@ public class VoidsentFlameModClient {
     }
 
     @SubscribeEvent
-    public static void onRenderFog(ViewportEvent.RenderFog event) {
-//      FogRenderer e;
+    public static void frameGraphSetupEvent(FrameGraphSetupEvent event) {
+      GpuTextureView tex0 = event.getTargetBundle().main.get().getDepthTextureView();
+      if (tex0 == null) {
+        VoidsentFlameMod.LOGGER.info("FrameGraphSetup test returned early 1.");
+        return;
+      }
+      if (!RenderSystem.isOnRenderThread()) {
+        VoidsentFlameMod.LOGGER.info("FrameGraphSetup test returned early 2.");
+        return;
+      }
+
+      RubiconSkyRenderer.INSTANCE.importTex = tex0;
+
+//      Tuple<Integer, GpuBuffer> bufferTuple = VertexMeshHelper.buildScreen(VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY);
+//      int screenIndex = bufferTuple.getA();
+//      GpuBuffer screenBuffer = bufferTuple.getB();
+//
+//      GpuTextureView colorTextureViewT = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
+//      GpuTextureView depthTextureViewT = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
+//      CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+//
+//      try (RenderPass renderPass = encoder.createRenderPass(
+//        () -> "DrawDepth", colorTextureViewT, OptionalInt.empty(), depthTextureViewT, OptionalDouble.empty())
+//      ) {
+//        renderPass.setPipeline(VFRenderPipelines.BLIT_PIPELINE);
+//        renderPass.bindSampler("SamplerIn", tex0);
+//        renderPass.setVertexBuffer(0, screenBuffer);
+//        renderPass.setIndexBuffer(screenBuffer, VertexFormat.IndexType.SHORT);
+//        renderPass.draw(0, screenIndex);
+//      }
     }
  
     @SubscribeEvent
@@ -65,7 +107,7 @@ public class VoidsentFlameModClient {
     }
 
     @SubscribeEvent
-    public static void onRenderSky(RenderLevelStageEvent.AfterSky event) {
+    public static void onRenderSky(RenderLevelStageEvent.AfterOpaqueBlocks event) {
       RubiconSkyRenderer.INSTANCE.render(event);
     }
 

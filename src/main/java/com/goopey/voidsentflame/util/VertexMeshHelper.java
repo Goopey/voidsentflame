@@ -1,6 +1,9 @@
 package com.goopey.voidsentflame.util;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
+import net.minecraft.util.Tuple;
 import org.joml.Vector3f;
 
 public class VertexMeshHelper {
@@ -140,5 +143,38 @@ public class VertexMeshHelper {
       .setLight(packedLight)
       .setOverlay(packedOverlay)
       .setNormal(0, 1f, 0);
+  }
+
+  //###############################################
+  //                GENERAL BUFFER
+  //###############################################
+
+  public static Tuple<Integer, GpuBuffer> buildScreen(int packedLight, int packedOverlay) {
+    VertexFormat format = DefaultVertexFormat.POSITION_TEX;
+    VertexFormat.Mode mode = VertexFormat.Mode.QUADS;
+    Tuple<Integer, GpuBuffer> retVal = new Tuple<>(0, (GpuBuffer) null);
+
+    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(6 * format.getVertexSize())) {
+      BufferBuilder builder = new BufferBuilder(byteBufferBuilder, mode, format);
+
+      putBufferVertex(builder, packedLight, packedOverlay, -1f, -1f, 0f, 0f, 0f);
+      putBufferVertex(builder, packedLight, packedOverlay, -1f, 1f, 0f, 0f, 1f);
+      putBufferVertex(builder, packedLight, packedOverlay, 1f, 1f, 0f, 1f, 1f);
+
+      putBufferVertex(builder, packedLight, packedOverlay, 1f, 1f, 0f, 1f, 1f);
+      putBufferVertex(builder, packedLight, packedOverlay, 1f, -1f, 0f, 1f, 0f);
+      putBufferVertex(builder, packedLight, packedOverlay, -1f, -1f, 0f, 0f, 0f);
+
+      try (MeshData meshdata = builder.buildOrThrow()) {
+        retVal.setA(meshdata.drawState().indexCount());
+        retVal.setB(RenderSystem.getDevice().createBuffer(
+          () -> "Distort quad",
+          GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX,
+          meshdata.vertexBuffer()
+        ));
+      }
+    }
+
+    return retVal;
   }
 }
