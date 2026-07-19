@@ -2,7 +2,9 @@ package com.goopey.voidsentflame.client.render;
 
 import java.lang.Math;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.List;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 
 import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
@@ -21,7 +23,6 @@ import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.NotNull;
-import org.joml.*;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.core.VFRenderPipelines;
@@ -44,6 +45,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import static com.goopey.voidsentflame.world.dimension.RubiconDimension.VoidSeaConstants;
 
@@ -179,7 +184,7 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
    * passing textures.
    * @param event the event bus event. Needed to
    */
-  public void render(RenderLevelStageEvent.AfterParticles event) {
+  public void render(RenderLevelStageEvent.AfterWeather event) {
     // Check if in Rubicon
     Minecraft mc = Minecraft.getInstance();
     Level level = mc.level;

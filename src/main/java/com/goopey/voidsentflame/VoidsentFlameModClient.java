@@ -42,55 +42,100 @@ import java.util.OptionalInt;
 // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
 @EventBusSubscriber(modid = VoidsentFlameMod.MODID, value = Dist.CLIENT)
 public class VoidsentFlameModClient {
-    public VoidsentFlameModClient(ModContainer container) {
-        // Allows NeoForge to create a config screen for this mod's configs.
-        // The config screen is accessed by going to the Mods screen > clicking on your mod > clicking on config.
-        // Do not forget to add translations for your config options to the en_us.json file.
-        container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
-    }
+  public VoidsentFlameModClient(ModContainer container) {
+    // Allows NeoForge to create a config screen for this mod's configs.
+    // The config screen is accessed by going to the Mods screen > clicking on your mod > clicking on config.
+    // Do not forget to add translations for your config options to the en_us.json file.
+    container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+  }
 
-    @SubscribeEvent
-    static void onClientSetup(FMLClientSetupEvent event) {
-      // Some client setup code
-      VoidsentFlameMod.LOGGER.info("HELLO FROM VOIDSENTFLAME");
-    }
+  @SubscribeEvent
+  static void onClientSetup(FMLClientSetupEvent event) {
+    // Some client setup code
+    VoidsentFlameMod.LOGGER.info("HELLO FROM VOIDSENTFLAME");
+  }
 
-    @SubscribeEvent
-    public static void onEntityTick(EntityTickEvent.Post event) {
-      VoidSeaEvent.voidSeaTick(event);
-    }
+  //#################################################
+  //                REGISTER EVENTS
+  //#################################################
 
-    @SubscribeEvent
-    public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-      event.registerBlockEntityRenderer(BlockEntityInit.VOIDSENT_FLAME_BLOCK_ENTITY.get(), VoidsentFlameBlockEntityRenderer::new);
-    }
+  @SubscribeEvent
+  public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+    event.registerBlockEntityRenderer(BlockEntityInit.VOIDSENT_FLAME_BLOCK_ENTITY.get(), VoidsentFlameBlockEntityRenderer::new);
+  }
 
-    @SubscribeEvent
-    public static void frameGraphSetupEvent(FrameGraphSetupEvent event) {
-    }
- 
-    @SubscribeEvent
-    public static void onRenderLevel(RenderLevelStageEvent.AfterParticles event) {
-      // Rubicon dimension effects
-      // TODO : reenable VoidSeaRender.
-      // TODO : improve performance
-      VoidSeaRenderer.getInstance().render(event);
-    }
+  //#################################################
+  //                  TICK EVENTS
+  //#################################################
 
-    @SubscribeEvent
-    public static void onRenderSky(RenderLevelStageEvent.AfterOpaqueBlocks event) {
-      RubiconSkyRenderer.INSTANCE.render(event);
-    }
+  @SubscribeEvent
+  public static void onEntityTick(EntityTickEvent.Post event) {
+    VoidSeaEvent.voidSeaTick(event);
+  }
 
-    @SubscribeEvent
-    public static void onRegisterReloadListeners(AddClientReloadListenersEvent event) {
-      event.addListener(VoidSeaRenderer.LOCATION, VoidSeaRenderer.getInstance());
-      event.addListener(RubiconSkyRenderer.LOCATION, RubiconSkyRenderer.INSTANCE);
-    }
+  //#################################################
+  //              RENDERING EVENTS
+  //#################################################
 
-    @SubscribeEvent
-    public static void onClientStopping(ClientStoppingEvent event) {
-      VoidSeaRenderer.getInstance().close();
-      RubiconSkyRenderer.INSTANCE.close();
-    }
+  // Start of rendering pipeline.
+  @SubscribeEvent
+  public static void frameGraphSetupEvent(FrameGraphSetupEvent event) {
+  }
+
+  // First render event.
+  @SubscribeEvent
+  public static void onRenderAfterSky(RenderLevelStageEvent.AfterSky event) {
+    // Rubicon Dimension effects
+    // RubiconSkyRenderer.INSTANCE.render(event);
+  }
+
+  @SubscribeEvent
+  public static void onRenderAfterOpaqueBlocks(RenderLevelStageEvent.AfterOpaqueBlocks event) {
+  }
+
+  @SubscribeEvent
+  public static void onRenderAfterEntities(RenderLevelStageEvent.AfterEntities event) {
+  }
+
+  @SubscribeEvent
+  public static void onRenderAfterTranslucentBlocks(RenderLevelStageEvent.AfterTranslucentBlocks event) {
+  }
+
+  @SubscribeEvent
+  public static void onRenderAfterTripwires(RenderLevelStageEvent.AfterTripwireBlocks event) {
+  }
+
+  @SubscribeEvent
+  public static void onRenderAfterParticles(RenderLevelStageEvent.AfterParticles event) {
+  }
+
+  @SubscribeEvent
+  public static void onRenderAfterWeather(RenderLevelStageEvent.AfterWeather event) {
+    // Rubicon dimension effects
+    // TODO : improve performance
+    VoidSeaRenderer.getInstance().render(event);
+  }
+
+  // Last rendering event.
+  @SubscribeEvent
+  public static void onRenderAfterLevel(RenderLevelStageEvent.AfterLevel event) {
+  }
+
+  //###########################################
+  //            RELOAD LISTENERS
+  //###########################################
+
+  // Manages loading/reloading sprites anytime a world is loaded, render distance changes, player reloads packs...
+  @SubscribeEvent
+  public static void onRegisterReloadListeners(AddClientReloadListenersEvent event) {
+    event.addListener(VoidSeaRenderer.LOCATION, VoidSeaRenderer.getInstance());
+    event.addListener(RubiconSkyRenderer.LOCATION, RubiconSkyRenderer.INSTANCE);
+  }
+
+  // Manages closing renderer whenever the player closes their game to avoid crashes during closing
+  @SubscribeEvent
+  public static void onClientStopping(ClientStoppingEvent event) {
+    VoidSeaRenderer.getInstance().close();
+    RubiconSkyRenderer.INSTANCE.close();
+  }
 }

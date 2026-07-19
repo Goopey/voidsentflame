@@ -58,7 +58,7 @@ public class RubiconSkyRenderer implements ResourceManagerReloadListener, AutoCl
    * Main method. Called when attempting to render the sky in any biome in the Rubicon dimension.
    * @param event the event bus event. Needed to obtain poseStack, matrixStack and other critical objects.
    */
-  public void render(RenderLevelStageEvent.AfterOpaqueBlocks event) {
+  public void render(RenderLevelStageEvent.AfterSky event) {
     // Check if in proper biomes
     Minecraft mc = Minecraft.getInstance();
     Level level = mc.level;
