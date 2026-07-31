@@ -19,7 +19,7 @@ public class VFRenderPipelines {
   public static RenderPipeline.Snippet POS_SNIPPET;
 
   public static RenderPipeline BLIT_PIPELINE;
-  public static RenderPipeline DEPTH_BLIT_PIPELINE;
+  public static RenderPipeline DEPTH_BLIT;
 
   // VOID SEA
   public static RenderPipeline VOID_SEA_MESH_PIPELINE;
@@ -32,7 +32,7 @@ public class VFRenderPipelines {
   // RUBICON SKY
 
   // FOG RENDERER
-
+  public static RenderPipeline VOID_FOG_DEPTH_PIPELINE;
 
   static {
     GLOBALS_TERRAIN_SNIPPET = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)
@@ -44,6 +44,34 @@ public class VFRenderPipelines {
     POS_SNIPPET = RenderPipeline.builder()
       .withUniform(VFGpuBuffersNames.WORLD_POS.name, UniformType.UNIFORM_BUFFER)
       .buildSnippet();
+
+    BLIT_PIPELINE = RenderPipelines.register(
+      RenderPipeline.builder(RenderPipelines.GLOBALS_SNIPPET)
+        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/blit"))
+        .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/blit"))
+        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+        .withSampler("SamplerIn")
+        .withColorWrite(true, true)
+        .withDepthWrite(false)
+        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+        .withCull(false).withoutStencilTest().withoutBlend()
+        .build()
+    );
+    DEPTH_BLIT = RenderPipelines.register(
+      RenderPipeline.builder(RenderPipelines.GLOBALS_SNIPPET)
+        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/depth_blit"))
+        .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/depth_blit"))
+        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+        .withColorWrite(true, true)
+        .withDepthWrite(false)
+        .withSampler("SamplerIn")
+        .withSampler("SamplerDepth")
+        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+        .withCull(false).withoutBlend().withoutStencilTest()
+        .build()
+    );
 
     VOID_SEA_MESH_PIPELINE = RenderPipelines.register(
       RenderPipeline.builder(GLOBALS_TERRAIN_POS_SNIPPET)
@@ -122,24 +150,11 @@ public class VFRenderPipelines {
         .build()
     );
 
-    BLIT_PIPELINE = RenderPipelines.register(
-      RenderPipeline.builder()
-        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/blit"))
+    VOID_FOG_DEPTH_PIPELINE = RenderPipelines.register(
+      RenderPipeline.builder(RenderPipelines.GLOBALS_SNIPPET)
+        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_fog_depth"))
         .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
-        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/blit"))
-        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
-        .withSampler("SamplerIn")
-        .withColorWrite(true, true)
-        .withDepthWrite(false)
-        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-        .withCull(false).withoutStencilTest().withoutBlend()
-        .build()
-    );
-    DEPTH_BLIT_PIPELINE = RenderPipelines.register(
-      RenderPipeline.builder()
-        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/depth_blit"))
-        .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
-        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/depth_blit"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_fog_depth"))
         .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
         .withColorWrite(true, true)
         .withDepthWrite(false)

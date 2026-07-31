@@ -1,27 +1,12 @@
 package com.goopey.voidsentflame;
 
 import com.goopey.voidsentflame.block.blockentity.render.VoidsentFlameBlockEntityRenderer;
+import com.goopey.voidsentflame.client.render.RubiconFogRenderer;
 import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 
 import com.goopey.voidsentflame.client.render.RubiconSkyRenderer;
-import com.goopey.voidsentflame.core.VFRenderPipelines;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 import com.goopey.voidsentflame.server.VoidSeaEvent;
-import com.goopey.voidsentflame.util.VFRenderConsts;
-import com.goopey.voidsentflame.util.VertexMeshHelper;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.resource.ResourceHandle;
-import com.mojang.blaze3d.systems.CommandEncoder;
-import com.mojang.blaze3d.systems.RenderPass;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTextureView;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.fog.FogRenderer;
-import net.minecraft.util.Tuple;
-import net.minecraft.world.entity.vehicle.Minecart;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -33,9 +18,6 @@ import net.neoforged.neoforge.client.event.lifecycle.ClientStoppingEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
-
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = VoidsentFlameMod.MODID, dist = Dist.CLIENT)
@@ -86,7 +68,7 @@ public class VoidsentFlameModClient {
   @SubscribeEvent
   public static void onRenderAfterSky(RenderLevelStageEvent.AfterSky event) {
     // Rubicon Dimension effects
-    // RubiconSkyRenderer.INSTANCE.render(event);
+     RubiconSkyRenderer.INSTANCE.render(event);
   }
 
   @SubscribeEvent
@@ -99,6 +81,8 @@ public class VoidsentFlameModClient {
 
   @SubscribeEvent
   public static void onRenderAfterTranslucentBlocks(RenderLevelStageEvent.AfterTranslucentBlocks event) {
+    // Rubicon Dimension Effects
+    RubiconFogRenderer.INSTANCE.render(event);
   }
 
   @SubscribeEvent
@@ -113,7 +97,7 @@ public class VoidsentFlameModClient {
   public static void onRenderAfterWeather(RenderLevelStageEvent.AfterWeather event) {
     // Rubicon dimension effects
     // TODO : improve performance
-    VoidSeaRenderer.getInstance().render(event);
+    VoidSeaRenderer.INSTANCE.render(event);
   }
 
   // Last rendering event.
@@ -128,14 +112,16 @@ public class VoidsentFlameModClient {
   // Manages loading/reloading sprites anytime a world is loaded, render distance changes, player reloads packs...
   @SubscribeEvent
   public static void onRegisterReloadListeners(AddClientReloadListenersEvent event) {
-    event.addListener(VoidSeaRenderer.LOCATION, VoidSeaRenderer.getInstance());
+    event.addListener(VoidSeaRenderer.LOCATION, VoidSeaRenderer.INSTANCE);
     event.addListener(RubiconSkyRenderer.LOCATION, RubiconSkyRenderer.INSTANCE);
+    event.addListener(RubiconFogRenderer.LOCATION, RubiconFogRenderer.INSTANCE);
   }
 
   // Manages closing renderer whenever the player closes their game to avoid crashes during closing
   @SubscribeEvent
   public static void onClientStopping(ClientStoppingEvent event) {
-    VoidSeaRenderer.getInstance().close();
+    VoidSeaRenderer.INSTANCE.close();
     RubiconSkyRenderer.INSTANCE.close();
+    RubiconFogRenderer.INSTANCE.close();
   }
 }

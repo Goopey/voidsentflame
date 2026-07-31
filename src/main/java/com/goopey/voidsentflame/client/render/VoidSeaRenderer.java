@@ -54,7 +54,7 @@ import static com.goopey.voidsentflame.world.dimension.RubiconDimension.VoidSeaC
 
 public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoCloseable {
   // Singleton Instance
-  private static final VoidSeaRenderer INSTANCE = new VoidSeaRenderer();
+  public static final VoidSeaRenderer INSTANCE = new VoidSeaRenderer();
 
   // ResourceManagerReloadListener event listener
   public static final String NAME = "void_sea";
@@ -71,7 +71,7 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
   // Shader Stuff
   // MAGIC NUMBER, DO NOT CHANGE
   // (int) (((2 * OFFSET * PADDING/ QUAD_SIZE) * (2 * OFFSET * PADDING/ QUAD_SIZE)) * 6);
-  private static final int AMOUNT_OF_VERTICES = 155574;
+  // private static final int AMOUNT_OF_VERTICES = 155574;
   private GpuBuffer seaMeshBuffer;
   private int seaMeshIndex;
   private GpuBuffer bottomDistortionBuffer;
@@ -137,10 +137,6 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
       true
     );
     this.seaTarget.copyDepthFrom(this.mainTarget);
-  }
-
-  public static VoidSeaRenderer getInstance() {
-    return INSTANCE;
   }
 
   /**
