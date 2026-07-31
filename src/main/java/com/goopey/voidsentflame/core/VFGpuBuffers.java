@@ -28,6 +28,8 @@ public class VFGpuBuffers {
   // Custom UBOs
   public static Supplier<MappableRingBuffer> VFWorldPosUbo;
   public static Supplier<MappableRingBuffer> VFLookAngleUbo;
+  public static Supplier<MappableRingBuffer> VFFovUbo;
+  public static Supplier<MappableRingBuffer> VFRenderDistanceUbo;
 
   //#####################################################################
   //#####################################################################
@@ -165,6 +167,18 @@ public class VFGpuBuffers {
         new Std140SizeCalculator()
           .putVec2()
           .get());
+    VFFovUbo = () -> new MappableRingBuffer(
+      () -> VFGpuBuffersNames.FOV.name,
+      GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE,
+      new Std140SizeCalculator()
+        .putFloat()
+        .get());
+    VFRenderDistanceUbo = () -> new MappableRingBuffer(
+      () -> VFGpuBuffersNames.RENDER_DISTANCE.name,
+      GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE,
+      new Std140SizeCalculator()
+        .putFloat()
+        .get());
   }
 
   /**
@@ -197,6 +211,36 @@ public class VFGpuBuffers {
     }
   }
 
+  /**
+   * Manages using a VFFovUbo UBO. Does the rotation and assigning of values.
+   *
+   * @param ubo the VFFovUbo MappableRingBuffer
+   * @param fov the fov of the player to pass to the buffer
+   * @param encoder the Validated Encoder to add values to the encoder
+   */
+  public static void UseFov(MappableRingBuffer ubo, float fov, CommandEncoder encoder) {
+    ubo.rotate();
+    try (GpuBuffer.MappedView bufferView = encoder.mapBuffer(ubo.currentBuffer(), false, true)) {
+      Std140Builder std140Builder = Std140Builder.intoBuffer(bufferView.data());
+      std140Builder.putFloat(fov);
+    }
+  }
+
+  /**
+   * Manages using a VFRenderDistanceUbo UBO. Does the rotation and assigning of values.
+   *
+   * @param ubo the VFRenderDistanceUbo MappableRingBuffer
+   * @param renderDistance the render distance of the world to pass to the buffer
+   * @param encoder the Validated Encoder to add values to the encoder
+   */
+  public static void UseRenderDistance(MappableRingBuffer ubo, float renderDistance, CommandEncoder encoder) {
+    ubo.rotate();
+    try (GpuBuffer.MappedView bufferView = encoder.mapBuffer(ubo.currentBuffer(), false, true)) {
+      Std140Builder std140Builder = Std140Builder.intoBuffer(bufferView.data());
+      std140Builder.putFloat(renderDistance);
+    }
+  }
+
   //#####################################################################
   //#####################################################################
   //                            ENUM NAMES
@@ -212,8 +256,7 @@ public class VFGpuBuffers {
     PROJECTION("Projection"),
     MATRIX("Matrix");
 
-    public String name;
-    
+    public final String name;
     private GpuBuffersNames(String name) {
       this.name = name;
     }
@@ -222,10 +265,11 @@ public class VFGpuBuffers {
   // Custom UBO names
   public enum VFGpuBuffersNames {
     WORLD_POS("ChunkOffset"),
-    LOOK_ANGLE("LookAngle");
+    LOOK_ANGLE("LookAngle"),
+    FOV("Fov"),
+    RENDER_DISTANCE("RenderDistance");
 
-    public String name;
-
+    public final String name;
     private VFGpuBuffersNames(String name) {
       this.name = name;
     }
