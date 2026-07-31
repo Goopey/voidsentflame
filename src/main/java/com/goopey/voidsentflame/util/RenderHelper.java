@@ -22,7 +22,7 @@ public class RenderHelper {
    * @param mainTargetHandle the main screen's handle. Needed to copy depthBuffers into other RenderTargets.
    * @param targetHandles a list of ResourceHandles to clear, resize and copy new basic data into
    */
-  public static void clearAndResizeTargetsWhite(ResourceHandle<RenderTarget> mainTargetHandle, List<ResourceHandle<? extends RenderTarget>> targetHandles) {
+  public static void clearAndResizeTargetsWhite(ResourceHandle<? extends RenderTarget> mainTargetHandle, List<ResourceHandle<? extends RenderTarget>> targetHandles) {
     RenderTarget mainTarget = mainTargetHandle.get();
     int width = mainTarget.width;
     int height = mainTarget.height;
@@ -53,7 +53,7 @@ public class RenderHelper {
    * @param inTargetHandle the target that is being read. The A/In target.
    * @param outTargetHandle the target that is being written to. The B/Out target.
    */
-  public static void blitAToB(ResourceHandle<RenderTarget> inTargetHandle, ResourceHandle<RenderTarget> outTargetHandle) {
+  public static void blitAToB(ResourceHandle<? extends RenderTarget> inTargetHandle, ResourceHandle<? extends RenderTarget> outTargetHandle) {
     RenderTarget inTarget = inTargetHandle.get();
     RenderTarget outTarget = outTargetHandle.get();
     GpuTextureView colorTextureViewI = inTarget.getColorTextureView();
