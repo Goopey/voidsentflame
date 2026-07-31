@@ -1,8 +1,8 @@
 package com.goopey.voidsentflame.util;
 
 import com.goopey.voidsentflame.VoidsentFlameMod;
+import com.goopey.voidsentflame.client.render.FullscreenQuadRenderer;
 import com.goopey.voidsentflame.core.VFRenderPipelines;
-import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -50,12 +50,10 @@ public class RenderHelper {
 
   /**
    * A simple render pass which merely copies data from one target into another.
-   * @param screenBuffer the buffer containing the data for the screen to blit textures to.
-   * @param screenIndex the index of the screenBuffer.
    * @param inTargetHandle the target that is being read. The A/In target.
    * @param outTargetHandle the target that is being written to. The B/Out target.
    */
-  public static void blitAToB(GpuBuffer screenBuffer, int screenIndex, ResourceHandle<RenderTarget> inTargetHandle, ResourceHandle<RenderTarget> outTargetHandle) {
+  public static void blitAToB(ResourceHandle<RenderTarget> inTargetHandle, ResourceHandle<RenderTarget> outTargetHandle) {
     RenderTarget inTarget = inTargetHandle.get();
     RenderTarget outTarget = outTargetHandle.get();
     GpuTextureView colorTextureViewI = inTarget.getColorTextureView();
@@ -80,9 +78,9 @@ public class RenderHelper {
 
       renderPass.bindSampler("SamplerIn", colorTextureViewI);
 
-      renderPass.setVertexBuffer(0, screenBuffer);
-      renderPass.setIndexBuffer(screenBuffer, VertexFormat.IndexType.SHORT);
-      renderPass.draw(0, screenIndex);
+      renderPass.setVertexBuffer(0, FullscreenQuadRenderer.INSTANCE.getQuad());
+      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), VertexFormat.IndexType.SHORT);
+      renderPass.draw(0, FullscreenQuadRenderer.INSTANCE.getIndex());
     }
   }
 }
