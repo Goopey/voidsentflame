@@ -8,6 +8,7 @@ import java.util.OptionalInt;
 
 import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
+import com.goopey.voidsentflame.util.RenderHelper;
 import com.goopey.voidsentflame.util.VertexMeshHelper;
 import com.goopey.voidsentflame.world.dimension.RubiconDimension;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
@@ -231,7 +232,7 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
     this.distortionTargetHandle = pass1.readsAndWrites(this.distortionTargetHandle);
     this.distortionGradientTargetHandle = pass1.readsAndWrites(this.distortionGradientTargetHandle);
     pass1.executes(
-      () -> clearAndResizeTargets(this.mainTargetHandle, List.of(
+      () -> RenderHelper.clearAndResizeTargetsWhite(this.mainTargetHandle, List.of(
         this.blendTargetHandle, this.seaTargetHandle, this.distortionTargetHandle, this.distortionGradientTargetHandle
       ))
     );
@@ -547,40 +548,6 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
       renderPass.draw(0, this.screenIndex);
     }
   }
-
-  /**
-   * Method used to clear the content of the list of targets passed and copy the depth buffer of the main target into
-   * the other targets.
-   * @param mainTargetHandle the main screen's handle. Needed to copy depthBuffers into other RenderTargets.
-   * @param targetHandles a list of ResourceHandles to clear, resize and copy new basic data into
-   */
-  private void clearAndResizeTargets(ResourceHandle<RenderTarget> mainTargetHandle, List<ResourceHandle<? extends RenderTarget>> targetHandles) {
-    RenderTarget mainTarget = mainTargetHandle.get();
-    int width = mainTarget.width;
-    int height = mainTarget.height;
-
-    for (ResourceHandle<? extends RenderTarget> targetHandle : targetHandles) {
-      RenderTarget target = targetHandle.get();
-
-      // resize
-      if (target.width != width || target.height != height) {
-        target.resize(width, height);
-      }
-
-      // clear textures
-      if (target.getColorTexture() != null) {
-        RenderSystem.getDevice().createCommandEncoder().clearColorTexture(target.getColorTexture(),
-          // do not change this color. Distort Effect depends on replacing whitespace.
-          ARGB.color(255, 255, 255, 255)
-        );
-      }
-      if (target.getDepthTexture() != null) {
-        RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(target.getDepthTexture(), 1.0);
-        target.copyDepthFrom(mainTarget);
-      }
-    }
-  }
-
 
   //############################################
   //                BUILD SEA

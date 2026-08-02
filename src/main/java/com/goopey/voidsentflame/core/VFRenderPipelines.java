@@ -20,6 +20,7 @@ public class VFRenderPipelines {
 
   public static RenderPipeline BLIT_PIPELINE;
   public static RenderPipeline DEPTH_BLIT;
+  public static RenderPipeline INVERSE_DEPTH_BLIT;
 
   // VOID SEA
   public static RenderPipeline VOID_SEA_MESH_PIPELINE;
@@ -66,7 +67,19 @@ public class VFRenderPipelines {
         .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
         .withColorWrite(true, true)
         .withDepthWrite(false)
-        .withSampler("SamplerIn")
+        .withSampler("SamplerDepth")
+        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+        .withCull(false).withoutBlend().withoutStencilTest()
+        .build()
+    );
+    INVERSE_DEPTH_BLIT = RenderPipelines.register(
+      RenderPipeline.builder(RenderPipelines.GLOBALS_SNIPPET)
+        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/inverse_depth_blit"))
+        .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/inverse_depth_blit"))
+        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+        .withColorWrite(true, true)
+        .withDepthWrite(false)
         .withSampler("SamplerDepth")
         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
         .withCull(false).withoutBlend().withoutStencilTest()
