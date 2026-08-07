@@ -3,8 +3,12 @@ package com.goopey.voidsentflame.client.render;
 import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.goopey.voidsentflame.core.VFRenderPipelines;
+import com.goopey.voidsentflame.util.BufferBuilderHelper;
 import com.goopey.voidsentflame.util.RenderHelper;
+import com.goopey.voidsentflame.util.VFRenderConsts;
+import com.goopey.voidsentflame.util.VertexMeshHelper;
 import com.goopey.voidsentflame.world.dimension.RubiconDimension;
+import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -22,6 +26,7 @@ import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.util.Tuple;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +40,7 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
   public static final String NAME = "rubicon_fog";
   public static final ResourceLocation LOCATION = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "shaders/" + NAME + ".reload");
   public static final RubiconFogRenderer INSTANCE = new RubiconFogRenderer();
+  private static final int BOX_SIZE = 512;
 
   private final Minecraft mc = Minecraft.getInstance();
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
@@ -47,6 +53,8 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
   private ResourceHandle<TextureTarget> depthTargetHandle;
   private final TextureTarget skyBoxTarget;
   private ResourceHandle<TextureTarget> skyBoxTargetHandle;
+  private GpuBuffer skyBoxMesh;
+  private int skyBoxIndex;
 
   private RubiconFogRenderer() {
     this.mainTarget = Minecraft.getInstance().getMainRenderTarget();
@@ -73,6 +81,7 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
   public void close() {
     this.fov.close();
     this.renderDistance.close();
+    this.skyBoxMesh.close();
   }
 
   /**
@@ -83,6 +92,11 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
   public void onResourceManagerReload(@NotNull ResourceManager resourceManager) {
     this.fov = VFGpuBuffers.VFFovUbo.get();
     this.renderDistance = VFGpuBuffers.VFRenderDistanceUbo.get();
+    Tuple<Integer, GpuBuffer> skyBox = BufferBuilderHelper.buildBox(
+      VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, BOX_SIZE
+    );
+    this.skyBoxMesh = skyBox.getB();
+    this.skyBoxIndex = skyBox.getA();
   }
 
   //######################################################

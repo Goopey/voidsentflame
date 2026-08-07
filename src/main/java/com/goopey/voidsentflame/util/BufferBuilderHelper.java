@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.*;
 import net.minecraft.util.Tuple;
 
 import static com.goopey.voidsentflame.util.VertexMeshHelper.putBufferVertex;
+import static com.goopey.voidsentflame.util.VertexMeshHelper.putCubeMeshVertex;
 
 public class BufferBuilderHelper {
   //###############################################
@@ -38,6 +39,36 @@ public class BufferBuilderHelper {
         retVal.setA(meshdata.drawState().indexCount());
         retVal.setB(RenderSystem.getDevice().createBuffer(
           () -> "Screen Quad",
+          GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX,
+          meshdata.vertexBuffer()
+        ));
+      }
+    }
+
+    return retVal;
+  }
+
+  /**
+   * Builds a box mesh using the packedLight and packedOverlay. Returns a tuple containing the GpuBuffer and index int.
+   * @param packedLight the world's packedLight value that the screenBuffer will default to
+   * @param packedOverlay the world's packedOverlay value that the screenBuffer will default to
+   * @param size the size of the box
+   * @return a Tuple containing the Integer and GpuBuffer.
+   */
+  public static Tuple<Integer, GpuBuffer> buildBox(int packedLight, int packedOverlay, int size) {
+    VertexFormat format = DefaultVertexFormat.POSITION_TEX;
+    VertexFormat.Mode mode = VertexFormat.Mode.QUADS;
+    Tuple<Integer, GpuBuffer> retVal = new Tuple<>(0, (GpuBuffer) null);
+
+    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(144 * format.getVertexSize())) {
+      BufferBuilder builder = new BufferBuilder(byteBufferBuilder, mode, format);
+
+      putCubeMeshVertex(builder, size, packedLight, packedOverlay);
+
+      try (MeshData meshdata = builder.buildOrThrow()) {
+        retVal.setA(meshdata.drawState().indexCount());
+        retVal.setB(RenderSystem.getDevice().createBuffer(
+          () -> "Box Quads",
           GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX,
           meshdata.vertexBuffer()
         ));
