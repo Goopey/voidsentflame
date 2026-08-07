@@ -2,6 +2,7 @@ package com.goopey.voidsentflame;
 
 import com.goopey.voidsentflame.block.blockentity.render.VoidsentFlameBlockEntityRenderer;
 import com.goopey.voidsentflame.client.render.RubiconFogRenderer;
+import com.goopey.voidsentflame.client.render.VFExtractSkyRendererState;
 import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 
 import com.goopey.voidsentflame.client.render.RubiconSkyRenderer;
@@ -58,6 +59,12 @@ public class VoidsentFlameModClient {
   //#################################################
   //              RENDERING EVENTS
   //#################################################
+
+  // Extracting States
+  @SubscribeEvent
+  public static void extractRenderStateEvent(ExtractLevelRenderStateEvent event) {
+    VFExtractSkyRendererState.VFExtractSkyRenderStateEvent(event);
+  }
 
   // Start of rendering pipeline.
   @SubscribeEvent
