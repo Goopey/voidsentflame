@@ -20,7 +20,7 @@ public class BufferBuilderHelper {
    * @return a Tuple containing the index and buffer of the screen
    */
   public static Tuple<Integer, GpuBuffer> buildScreen(int packedLight, int packedOverlay, float size) {
-    VertexFormat format = DefaultVertexFormat.POSITION_TEX;
+    VertexFormat format = DefaultVertexFormat.BLOCK;
     VertexFormat.Mode mode = VertexFormat.Mode.QUADS;
     Tuple<Integer, GpuBuffer> retVal = new Tuple<>(0, (GpuBuffer) null);
 
@@ -56,11 +56,11 @@ public class BufferBuilderHelper {
    * @return a Tuple containing the Integer and GpuBuffer.
    */
   public static Tuple<Integer, GpuBuffer> buildBox(int packedLight, int packedOverlay, int size) {
-    VertexFormat format = DefaultVertexFormat.POSITION_TEX;
-    VertexFormat.Mode mode = VertexFormat.Mode.QUADS;
+    VertexFormat format = DefaultVertexFormat.BLOCK;
+    VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
     Tuple<Integer, GpuBuffer> retVal = new Tuple<>(0, (GpuBuffer) null);
 
-    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(144 * format.getVertexSize())) {
+    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(6 * 6 * format.getVertexSize())) {
       BufferBuilder builder = new BufferBuilder(byteBufferBuilder, mode, format);
 
       putCubeMeshVertex(builder, size, packedLight, packedOverlay);

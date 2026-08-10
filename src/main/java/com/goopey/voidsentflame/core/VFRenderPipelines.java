@@ -34,6 +34,7 @@ public class VFRenderPipelines {
 
   // FOG RENDERER
   public static RenderPipeline VOID_FOG_DEPTH_PIPELINE;
+  public static RenderPipeline VOID_FOG_SKYBOX_PIPELINE;
 
   static {
     GLOBALS_TERRAIN_SNIPPET = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)
@@ -174,6 +175,18 @@ public class VFRenderPipelines {
         .withSampler("SamplerIn")
         .withSampler("SamplerDepth")
         .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+        .withCull(false).withoutBlend().withoutStencilTest()
+        .build()
+    );
+    VOID_FOG_SKYBOX_PIPELINE = RenderPipelines.register(
+      RenderPipeline.builder(RenderPipelines.MATRICES_PROJECTION_SNIPPET)
+        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_fog_skybox"))
+        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_fog_skybox_vert"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_fog_skybox_frag"))
+        .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
+        .withColorWrite(true, false)
+        .withDepthWrite(false)
+        .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .withCull(false).withoutBlend().withoutStencilTest()
         .build()
     );
