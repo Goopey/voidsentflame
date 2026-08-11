@@ -75,7 +75,7 @@ public class VoidsentFlameModClient {
   @SubscribeEvent
   public static void onRenderAfterSky(RenderLevelStageEvent.AfterSky event) {
     // Rubicon Dimension effects
-     RubiconSkyRenderer.INSTANCE.render(event);
+    RubiconSkyRenderer.INSTANCE.render(event);
   }
 
   @SubscribeEvent

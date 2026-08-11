@@ -9,6 +9,7 @@ import com.goopey.voidsentflame.util.VFRenderConsts;
 import com.goopey.voidsentflame.util.VertexMeshHelper;
 import com.goopey.voidsentflame.world.dimension.RubiconDimension;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -30,17 +31,20 @@ import net.minecraft.util.Tuple;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.util.List;
+import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCloseable {
   public static final String NAME = "rubicon_fog";
   public static final ResourceLocation LOCATION = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "shaders/" + NAME + ".reload");
   public static final RubiconFogRenderer INSTANCE = new RubiconFogRenderer();
-  private static final int BOX_SIZE = 512;
+  private static final int BOX_SIZE = 256;
 
   private final Minecraft mc = Minecraft.getInstance();
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
@@ -95,8 +99,8 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
     Tuple<Integer, GpuBuffer> skyBox = BufferBuilderHelper.buildBox(
       VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, BOX_SIZE
     );
-    this.skyBoxMesh = skyBox.getB();
     this.skyBoxIndex = skyBox.getA();
+    this.skyBoxMesh = skyBox.getB();
   }
 
   //######################################################
@@ -124,7 +128,6 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
     FrameGraphBuilder frameGraphBuilder = new FrameGraphBuilder();
     this.mainTargetHandle = frameGraphBuilder.importExternal("minecraft:main", this.mainTarget);
     this.depthTargetHandle = frameGraphBuilder.importExternal(VoidsentFlameMod.MODID + ":VoidFogDepthTexHandle", this.depthTarget);
-    this.skyBoxTargetHandle = frameGraphBuilder.importExternal(VoidsentFlameMod.MODID + ":SkyBoxTargetHandle", this.skyBoxTarget);
 
     FramePass pass1 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogClearAndResize");
     this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
@@ -135,18 +138,19 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
       ))
     );
 
-//    FramePass pass2 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogSkyBoxBlackout");
-//    this.mainTargetHandle = pass2.readsAndWrites(this.mainTargetHandle);
-
-    FramePass pass3 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogGetMainDepth");
-    pass3.requires(pass1);
-    this.mainTargetHandle = pass3.readsAndWrites(this.mainTargetHandle);
-    this.depthTargetHandle = pass3.readsAndWrites(this.depthTargetHandle);
-//    pass3.executes(
-//      () -> RenderHelper.blitInverseDepth(this.renderDistance, this.fov, 4, this.mainTargetHandle, this.depthTargetHandle)
-//    );
-    pass3.executes(
+    FramePass pass2 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogGetMainDepth");
+    pass2.requires(pass1);
+    this.mainTargetHandle = pass2.readsAndWrites(this.mainTargetHandle);
+    this.depthTargetHandle = pass2.readsAndWrites(this.depthTargetHandle);
+    pass2.executes(
       () -> this.addDepthPass(this.mainTargetHandle, this.depthTargetHandle)
+    );
+
+    FramePass pass3 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogSkyBoxBlackout");
+    pass3.requires(pass2);
+    this.depthTargetHandle = pass3.readsAndWrites(this.depthTargetHandle);
+    pass3.executes(
+      () -> this.addSkyBoxPass(this.depthTargetHandle, matrix4fStack)
     );
 
     FramePass pass4 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogCopyDepthToMain");
@@ -195,6 +199,38 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
       renderPass.setVertexBuffer(0, FullscreenQuadRenderer.INSTANCE.getQuad());
       renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), VertexFormat.IndexType.SHORT);
       renderPass.draw(0, FullscreenQuadRenderer.INSTANCE.getIndex());
+    }
+  }
+
+  /**
+   * TODO : comment
+   * @param targetHandle
+   * @param matrix4fStack
+   */
+  public void addSkyBoxPass(ResourceHandle<? extends RenderTarget> targetHandle, Matrix4fStack matrix4fStack) {
+    CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+    RenderTarget target = targetHandle.get();
+    GpuTextureView colorTextureView = target.getColorTextureView();
+    GpuTextureView depthTextureView = target.getDepthTextureView();
+
+    GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(
+      matrix4fStack,
+      new Vector4f(1f, 1f, 1f, 1f),
+      new Vector3f(0f, 0f, 0f),
+      new Matrix4f(),
+      0.0F
+    );
+
+    try (RenderPass renderPass = encoder.createRenderPass(
+      () -> VoidsentFlameMod.MODID + ":VoidFogSkyBox", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())
+    ) {
+      renderPass.setPipeline(VFRenderPipelines.VOID_FOG_SKYBOX_PIPELINE);
+      RenderSystem.bindDefaultUniforms(renderPass);
+      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+
+      renderPass.setVertexBuffer(0, this.skyBoxMesh);
+      renderPass.setIndexBuffer(this.skyBoxMesh, VertexFormat.IndexType.SHORT);
+      renderPass.draw(0, this.skyBoxIndex);
     }
   }
 }
