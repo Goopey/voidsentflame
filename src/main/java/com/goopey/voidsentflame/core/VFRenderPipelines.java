@@ -35,6 +35,7 @@ public class VFRenderPipelines {
   // FOG RENDERER
   public static RenderPipeline VOID_FOG_DEPTH_PIPELINE;
   public static RenderPipeline VOID_FOG_SKYBOX_PIPELINE;
+  public static RenderPipeline VOID_FOG_PIPELINE;
 
   static {
     GLOBALS_TERRAIN_SNIPPET = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)
@@ -52,7 +53,7 @@ public class VFRenderPipelines {
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/blit"))
         .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/blit"))
-        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.QUADS)
         .withSampler("SamplerIn")
         .withColorWrite(true, true)
         .withDepthWrite(false)
@@ -65,7 +66,8 @@ public class VFRenderPipelines {
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/depth_blit"))
         .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/depth_blit"))
-        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.QUADS)
+        .withUniform(VFGpuBuffersNames.FOV.name, UniformType.UNIFORM_BUFFER)
         .withColorWrite(true, true)
         .withDepthWrite(false)
         .withSampler("SamplerDepth")
@@ -78,7 +80,8 @@ public class VFRenderPipelines {
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/inverse_depth_blit"))
         .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/inverse_depth_blit"))
-        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+        .withUniform(VFGpuBuffersNames.FOV.name, UniformType.UNIFORM_BUFFER)
+        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.QUADS)
         .withColorWrite(true, true)
         .withDepthWrite(false)
         .withSampler("SamplerDepth")
@@ -134,7 +137,7 @@ public class VFRenderPipelines {
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_blend"))
         .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_blend_frag"))
-        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.QUADS)
         .withSampler("SamplerSea")
         .withSampler("SamplerWorld")
         .withColorWrite(true, false)
@@ -150,7 +153,7 @@ public class VFRenderPipelines {
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distort"))
         .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_frag"))
-        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.QUADS)
         .withSampler("SamplerSea")
         .withSampler("SamplerWorld")
         .withSampler("SamplerBlend")
@@ -170,6 +173,7 @@ public class VFRenderPipelines {
         .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_fog_depth"))
         .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+        .withUniform(VFGpuBuffersNames.FOV.name, UniformType.UNIFORM_BUFFER)
         .withColorWrite(true, true)
         .withDepthWrite(false)
         .withSampler("SamplerIn")
@@ -187,6 +191,20 @@ public class VFRenderPipelines {
         .withColorWrite(true, false)
         .withDepthWrite(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
+        .withCull(false).withoutBlend().withoutStencilTest()
+        .build()
+    );
+    VOID_FOG_PIPELINE = RenderPipelines.register(
+      RenderPipeline.builder(RenderPipelines.GLOBALS_SNIPPET)
+        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_fog"))
+        .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
+        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_fog"))
+        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.QUADS)
+        .withColorWrite(true, true)
+        .withDepthWrite(false)
+        .withSampler("SamplerWorld")
+        .withSampler("SamplerDepth")
+        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
         .withCull(false).withoutBlend().withoutStencilTest()
         .build()
     );

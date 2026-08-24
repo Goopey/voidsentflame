@@ -6,7 +6,6 @@ import com.goopey.voidsentflame.core.VFRenderPipelines;
 import com.goopey.voidsentflame.util.BufferBuilderHelper;
 import com.goopey.voidsentflame.util.RenderHelper;
 import com.goopey.voidsentflame.util.VFRenderConsts;
-import com.goopey.voidsentflame.util.VertexMeshHelper;
 import com.goopey.voidsentflame.world.dimension.RubiconDimension;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -158,8 +157,16 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
     this.mainTargetHandle = pass4.readsAndWrites(this.mainTargetHandle);
     this.depthTargetHandle = pass4.readsAndWrites(this.depthTargetHandle);
     pass4.executes(
-      () -> RenderHelper.blitAToB(this.depthTargetHandle, this.mainTargetHandle)
+      () -> this.addFogPass(this.mainTargetHandle, this.depthTargetHandle)
     );
+
+//    FramePass testPass = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogTestPass");
+//    testPass.requires(pass3);
+//    this.mainTargetHandle = testPass.readsAndWrites(this.mainTargetHandle);
+//    this.depthTargetHandle = testPass.readsAndWrites(this.depthTargetHandle);
+//    testPass.executes(
+//      () -> RenderHelper.blitAToB(this.depthTargetHandle, this.mainTargetHandle)
+//    );
 
     frameGraphBuilder.execute(this.resourcePool);
     matrix4fStack.popMatrix();
@@ -197,7 +204,7 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
       renderPass.setUniform("Fov", this.fov.currentBuffer());
 
       renderPass.setVertexBuffer(0, FullscreenQuadRenderer.INSTANCE.getQuad());
-      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), VertexFormat.IndexType.SHORT);
+      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), FullscreenQuadRenderer.VERTEX_FORMAT);
       renderPass.draw(0, FullscreenQuadRenderer.INSTANCE.getIndex());
     }
   }
@@ -231,6 +238,33 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
       renderPass.setVertexBuffer(0, this.skyBoxMesh);
       renderPass.setIndexBuffer(this.skyBoxMesh, VertexFormat.IndexType.SHORT);
       renderPass.draw(0, this.skyBoxIndex);
+    }
+  }
+
+  /**
+   * TODO : comment
+   * @param targetHandle
+   * @param depthHandle
+   */
+  public void addFogPass(ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> depthHandle) {
+    CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+    RenderTarget target = targetHandle.get();
+    TextureTarget depthTarget = depthHandle.get();
+    GpuTextureView colorTextureView = target.getColorTextureView();
+    GpuTextureView depthTextureViewD = depthTarget.getColorTextureView();
+
+    try (RenderPass renderPass = encoder.createRenderPass(
+      () -> VoidsentFlameMod.MODID + ":VoidFog", colorTextureView, OptionalInt.empty())
+    ) {
+      renderPass.setPipeline(VFRenderPipelines.VOID_FOG_PIPELINE);
+      RenderSystem.bindDefaultUniforms(renderPass);
+
+      renderPass.bindSampler("SamplerWorld", colorTextureView);
+      renderPass.bindSampler("SamplerDepth", depthTextureViewD);
+
+      renderPass.setVertexBuffer(0, FullscreenQuadRenderer.INSTANCE.getQuad());
+      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), FullscreenQuadRenderer.VERTEX_FORMAT);
+      renderPass.draw(0, FullscreenQuadRenderer.INSTANCE.getIndex());
     }
   }
 }
