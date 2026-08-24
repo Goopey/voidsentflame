@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.util.ARGB;
 
 import java.util.List;
+import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 public class RenderHelper {
@@ -82,7 +83,7 @@ public class RenderHelper {
       renderPass.bindSampler("SamplerIn", colorTextureViewI);
 
       renderPass.setVertexBuffer(0, FullscreenQuadRenderer.INSTANCE.getQuad());
-      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), VertexFormat.IndexType.SHORT);
+      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), FullscreenQuadRenderer.VERTEX_FORMAT);
       renderPass.draw(0, FullscreenQuadRenderer.INSTANCE.getIndex());
     }
   }
@@ -136,12 +137,14 @@ public class RenderHelper {
     VFGpuBuffers.UseFov(
       fov, Minecraft.getInstance().options.fov().get(), encoder
     );
+    // as opposed to render distance in the traditional minecraft sense (how far the player renders chunks),
+    // render distance here refers more to how far the depth map should be sampled and return a value from
     VFGpuBuffers.UseRenderDistance(
       renderDistance, distance, encoder
     );
 
     try (RenderPass renderPass = encoder.createRenderPass(
-      () -> "BlitDepth", colorTextureViewO, OptionalInt.empty())
+      () -> VoidsentFlameMod.MODID + "BlitDepth", colorTextureViewO, OptionalInt.empty())
     ) {
       renderPass.setPipeline(VFRenderPipelines.DEPTH_BLIT);
       RenderSystem.bindDefaultUniforms(renderPass);
@@ -151,7 +154,7 @@ public class RenderHelper {
       renderPass.bindSampler("SamplerDepth", depthTextureViewI);
 
       renderPass.setVertexBuffer(0, FullscreenQuadRenderer.INSTANCE.getQuad());
-      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), VertexFormat.IndexType.SHORT);
+      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), FullscreenQuadRenderer.VERTEX_FORMAT);
       renderPass.draw(0, FullscreenQuadRenderer.INSTANCE.getIndex());
     }
   }
@@ -201,12 +204,14 @@ public class RenderHelper {
     VFGpuBuffers.UseFov(
       fov, Minecraft.getInstance().options.fov().get(), encoder
     );
+    // as opposed to render distance in the traditional minecraft sense (how far the player renders chunks),
+    // render distance here refers more to how far the depth map should be sampled and return a value from
     VFGpuBuffers.UseRenderDistance(
       renderDistance, distance, encoder
     );
 
     try (RenderPass renderPass = encoder.createRenderPass(
-      () -> "BlitInverseDepth", colorTextureViewO, OptionalInt.empty())
+      () -> VoidsentFlameMod.MODID + "BlitInverseDepth", colorTextureViewO, OptionalInt.empty())
     ) {
       renderPass.setPipeline(VFRenderPipelines.INVERSE_DEPTH_BLIT);
       RenderSystem.bindDefaultUniforms(renderPass);
@@ -216,7 +221,7 @@ public class RenderHelper {
       renderPass.bindSampler("SamplerDepth", depthTextureViewI);
 
       renderPass.setVertexBuffer(0, FullscreenQuadRenderer.INSTANCE.getQuad());
-      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), VertexFormat.IndexType.SHORT);
+      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), FullscreenQuadRenderer.VERTEX_FORMAT);
       renderPass.draw(0, FullscreenQuadRenderer.INSTANCE.getIndex());
     }
   }

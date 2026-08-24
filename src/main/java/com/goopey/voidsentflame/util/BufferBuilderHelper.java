@@ -27,13 +27,10 @@ public class BufferBuilderHelper {
     try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(6 * format.getVertexSize())) {
       BufferBuilder builder = new BufferBuilder(byteBufferBuilder, mode, format);
 
-      putBufferVertex(builder, packedLight, packedOverlay, -size, -size, 0f, 0f, 0f);
-      putBufferVertex(builder, packedLight, packedOverlay, -size, size, 0f, 0f, 1f);
+      putBufferVertex(builder, packedLight, packedOverlay, 0f, 0f, 0f, 0f, 0f);
+      putBufferVertex(builder, packedLight, packedOverlay, 0f, size, 0f, 0f, 1f);
       putBufferVertex(builder, packedLight, packedOverlay, size, size, 0f, 1f, 1f);
-
-      putBufferVertex(builder, packedLight, packedOverlay, size, size, 0f, 1f, 1f);
-      putBufferVertex(builder, packedLight, packedOverlay, size, -size, 0f, 1f, 0f);
-      putBufferVertex(builder, packedLight, packedOverlay, -size, -size, 0f, 0f, 0f);
+      putBufferVertex(builder, packedLight, packedOverlay, size, 0f, 0f, 1f, 0f);
 
       try (MeshData meshdata = builder.buildOrThrow()) {
         retVal.setA(meshdata.drawState().indexCount());
