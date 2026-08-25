@@ -54,8 +54,8 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
   private ResourceHandle<RenderTarget> mainTargetHandle;
   private final TextureTarget depthTarget;
   private ResourceHandle<TextureTarget> depthTargetHandle;
-  private final TextureTarget skyBoxTarget;
-  private ResourceHandle<TextureTarget> skyBoxTargetHandle;
+  private final TextureTarget swapTarget;
+  private ResourceHandle<TextureTarget> swapTargetHandle;
   private GpuBuffer skyBoxMesh;
   private int skyBoxIndex;
 
@@ -68,13 +68,13 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
       true
     );
     this.depthTarget.copyDepthFrom(this.mainTarget);
-    this.skyBoxTarget = new TextureTarget(
-      "VoidFogDepthTexture",
+    this.swapTarget = new TextureTarget(
+      "SwapTarget",
       this.mainTarget.width,
       this.mainTarget.height,
       true
     );
-    this.skyBoxTarget.copyDepthFrom(this.mainTarget);
+    this.swapTarget.copyDepthFrom(this.mainTarget);
   }
 
   /**
@@ -127,13 +127,15 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
     FrameGraphBuilder frameGraphBuilder = new FrameGraphBuilder();
     this.mainTargetHandle = frameGraphBuilder.importExternal("minecraft:main", this.mainTarget);
     this.depthTargetHandle = frameGraphBuilder.importExternal(VoidsentFlameMod.MODID + ":VoidFogDepthTexHandle", this.depthTarget);
+    this.swapTargetHandle = frameGraphBuilder.importExternal(VoidsentFlameMod.MODID + ":VoidFogSwapMainHandle", this.swapTarget);
 
     FramePass pass1 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogClearAndResize");
     this.mainTargetHandle = pass1.readsAndWrites(this.mainTargetHandle);
     this.depthTargetHandle = pass1.readsAndWrites(this.depthTargetHandle);
+    this.swapTargetHandle = pass1.readsAndWrites(this.swapTargetHandle);
     pass1.executes(
       () -> RenderHelper.clearAndResizeTargetsWhite(this.mainTargetHandle, List.of(
-        this.depthTargetHandle
+        this.depthTargetHandle, this.swapTargetHandle
       ))
     );
 
@@ -152,21 +154,24 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
       () -> this.addSkyBoxPass(this.depthTargetHandle, matrix4fStack)
     );
 
-    FramePass pass4 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogCopyDepthToMain");
-    pass4.requires(pass3);
+    // this step is necessary to avoid writing conflicts in the final step to create fog.
+    FramePass pass4 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogSwapMainTarget");
+    pass4.requires(pass1);
     this.mainTargetHandle = pass4.readsAndWrites(this.mainTargetHandle);
-    this.depthTargetHandle = pass4.readsAndWrites(this.depthTargetHandle);
+    this.swapTargetHandle = pass4.readsAndWrites(this.swapTargetHandle);
     pass4.executes(
-      () -> this.addFogPass(this.mainTargetHandle, this.depthTargetHandle)
+      () -> RenderHelper.blitAToB(this.mainTargetHandle, this.swapTargetHandle)
     );
 
-//    FramePass testPass = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogTestPass");
-//    testPass.requires(pass3);
-//    this.mainTargetHandle = testPass.readsAndWrites(this.mainTargetHandle);
-//    this.depthTargetHandle = testPass.readsAndWrites(this.depthTargetHandle);
-//    testPass.executes(
-//      () -> RenderHelper.blitAToB(this.depthTargetHandle, this.mainTargetHandle)
-//    );
+    FramePass pass5 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogCopyDepthToMain");
+    pass5.requires(pass3);
+    pass5.requires(pass4);
+    this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
+    this.swapTargetHandle = pass5.readsAndWrites(this.swapTargetHandle);
+    this.depthTargetHandle = pass5.readsAndWrites(this.depthTargetHandle);
+    pass5.executes(
+      () -> this.addFogPass(this.mainTargetHandle, this.swapTargetHandle, this.depthTargetHandle)
+    );
 
     frameGraphBuilder.execute(this.resourcePool);
     matrix4fStack.popMatrix();
@@ -189,6 +194,10 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
     RenderTarget outTarget = targetOutHandle.get();
     GpuTextureView colorTextureViewO = outTarget.getColorTextureView();
 
+    if (colorTextureViewO == null) {
+      return;
+    }
+
     // setup special uniforms
     VFGpuBuffers.UseFov(
       this.fov, this.mc.options.fov().get(), encoder
@@ -210,9 +219,11 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
   }
 
   /**
-   * TODO : comment
-   * @param targetHandle
-   * @param matrix4fStack
+   * The depth texture creates a weird circle in the sky at certain lengths. This skybox is meant to cut that
+   * circle out and isolate the terrain's depth texture.
+   * @param targetHandle the target data is being read from and written to. In this case, the supposed
+   *                     colorized/linearized depth buffer.
+   * @param matrix4fStack the matrix stack. Needed for matrix transformations.
    */
   public void addSkyBoxPass(ResourceHandle<? extends RenderTarget> targetHandle, Matrix4fStack matrix4fStack) {
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
@@ -228,6 +239,10 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
       0.0F
     );
 
+    if (colorTextureView == null) {
+      return;
+    }
+
     try (RenderPass renderPass = encoder.createRenderPass(
       () -> VoidsentFlameMod.MODID + ":VoidFogSkyBox", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())
     ) {
@@ -242,16 +257,24 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
   }
 
   /**
-   * TODO : comment
-   * @param targetHandle
-   * @param depthHandle
+   * One of the final passes. Combines the depth texture and the game's color to recreate fog.
+   * @param targetHandle the main target. Data will be written to this target.
+   * @param colorHandle the target color is being read from. Needs to be distinguished from the writing target
+   *                    because it causes conflicts and can potentially write color twice.
+   * @param depthHandle the target the linearized/colorized depth texture is taken from.
    */
-  public void addFogPass(ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> depthHandle) {
+  public void addFogPass(ResourceHandle<RenderTarget> targetHandle, ResourceHandle<TextureTarget> colorHandle, ResourceHandle<TextureTarget> depthHandle) {
     CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
     RenderTarget target = targetHandle.get();
+    TextureTarget colorTarget = colorHandle.get();
     TextureTarget depthTarget = depthHandle.get();
     GpuTextureView colorTextureView = target.getColorTextureView();
+    GpuTextureView colorTextureViewC = colorTarget.getColorTextureView();
     GpuTextureView depthTextureViewD = depthTarget.getColorTextureView();
+
+    if (colorTextureView == null) {
+      return;
+    }
 
     try (RenderPass renderPass = encoder.createRenderPass(
       () -> VoidsentFlameMod.MODID + ":VoidFog", colorTextureView, OptionalInt.empty())
@@ -259,7 +282,7 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
       renderPass.setPipeline(VFRenderPipelines.VOID_FOG_PIPELINE);
       RenderSystem.bindDefaultUniforms(renderPass);
 
-      renderPass.bindSampler("SamplerWorld", colorTextureView);
+      renderPass.bindSampler("SamplerWorld", colorTextureViewC);
       renderPass.bindSampler("SamplerDepth", depthTextureViewD);
 
       renderPass.setVertexBuffer(0, FullscreenQuadRenderer.INSTANCE.getQuad());

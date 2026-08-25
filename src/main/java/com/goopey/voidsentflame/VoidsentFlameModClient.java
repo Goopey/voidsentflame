@@ -89,6 +89,7 @@ public class VoidsentFlameModClient {
   @SubscribeEvent
   public static void onRenderAfterTranslucentBlocks(RenderLevelStageEvent.AfterTranslucentBlocks event) {
     // Rubicon Dimension Effects
+    // TODO : implement custom fog renderer
     RubiconFogRenderer.INSTANCE.render(event);
   }
 
