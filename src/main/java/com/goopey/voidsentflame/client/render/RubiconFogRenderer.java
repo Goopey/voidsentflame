@@ -144,7 +144,7 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
     this.mainTargetHandle = pass2.readsAndWrites(this.mainTargetHandle);
     this.depthTargetHandle = pass2.readsAndWrites(this.depthTargetHandle);
     pass2.executes(
-      () -> RenderHelper.blitInverseDepth(this.renderDistance, this.fov, 128.f, this.mainTargetHandle, this.depthTargetHandle)
+      () -> RenderHelper.blitDepth(this.renderDistance, this.fov, 128.f, this.mainTargetHandle, this.depthTargetHandle)
     );
 
     FramePass pass3 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogSkyBoxBlackout");
@@ -181,42 +181,6 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
   //##############################################
   //            RENDER HELPER METHODS
   //##############################################
-
-  /**
-   * Manages reading the depth information from the game and converting it into a texture that'll be used later.
-   * @param targetInHandle The main game's render target. We're reading data from the terrain here.
-   * @param targetOutHandle The out target to be used in another process.
-   */
-  public void addDepthPass(ResourceHandle<? extends RenderTarget> targetInHandle, ResourceHandle<? extends RenderTarget> targetOutHandle) {
-    CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-    RenderTarget target = targetInHandle.get();
-    GpuTextureView depthTextureViewT = target.getDepthTextureView();
-    RenderTarget outTarget = targetOutHandle.get();
-    GpuTextureView colorTextureViewO = outTarget.getColorTextureView();
-
-    if (colorTextureViewO == null) {
-      return;
-    }
-
-    // setup special uniforms
-    VFGpuBuffers.UseFov(
-      this.fov, this.mc.options.fov().get(), encoder
-    );
-
-    try (RenderPass renderPass = encoder.createRenderPass(
-      () -> VoidsentFlameMod.MODID + ":VoidDepthFog", colorTextureViewO, OptionalInt.empty())
-    ) {
-      renderPass.setPipeline(VFRenderPipelines.VOID_FOG_DEPTH_PIPELINE);
-      RenderSystem.bindDefaultUniforms(renderPass);
-
-      renderPass.bindSampler("SamplerDepth", depthTextureViewT);
-      renderPass.setUniform("Fov", this.fov.currentBuffer());
-
-      renderPass.setVertexBuffer(0, FullscreenQuadRenderer.INSTANCE.getQuad());
-      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), FullscreenQuadRenderer.VERTEX_FORMAT);
-      renderPass.draw(0, FullscreenQuadRenderer.INSTANCE.getIndex());
-    }
-  }
 
   /**
    * The depth texture creates a weird circle in the sky at certain lengths. This skybox is meant to cut that

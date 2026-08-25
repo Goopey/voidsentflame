@@ -33,7 +33,6 @@ public class VFRenderPipelines {
   // RUBICON SKY
 
   // FOG RENDERER
-  public static RenderPipeline VOID_FOG_DEPTH_PIPELINE;
   public static RenderPipeline VOID_FOG_SKYBOX_PIPELINE;
   public static RenderPipeline VOID_FOG_PIPELINE;
 
@@ -169,21 +168,6 @@ public class VFRenderPipelines {
         .build()
     );
 
-    VOID_FOG_DEPTH_PIPELINE = RenderPipelines.register(
-      RenderPipeline.builder(RenderPipelines.GLOBALS_SNIPPET)
-        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_fog_depth"))
-        .withVertexShader(ResourceLocation.withDefaultNamespace("core/screenquad"))
-        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_fog_depth"))
-        .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
-        .withUniform(VFGpuBuffersNames.FOV.name, UniformType.UNIFORM_BUFFER)
-        .withColorWrite(true, true)
-        .withDepthWrite(false)
-        .withSampler("SamplerIn")
-        .withSampler("SamplerDepth")
-        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-        .withCull(false).withoutBlend().withoutStencilTest()
-        .build()
-    );
     VOID_FOG_SKYBOX_PIPELINE = RenderPipelines.register(
       RenderPipeline.builder(RenderPipelines.MATRICES_PROJECTION_SNIPPET)
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_fog_skybox"))
