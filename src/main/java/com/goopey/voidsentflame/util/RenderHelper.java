@@ -101,7 +101,7 @@ public class RenderHelper {
    * @param outTargetHandle the target whose color gets the depth written to.
    */
   public static void blitDepth(MappableRingBuffer renderDistance, MappableRingBuffer fov, ResourceHandle<? extends RenderTarget> inTargetHandle, ResourceHandle<? extends RenderTarget> outTargetHandle) {
-    blitDepth(renderDistance, fov, 128.f, inTargetHandle, outTargetHandle);
+    blitDepth(renderDistance, fov, Minecraft.getInstance().options.renderDistance().get() * 16.f, inTargetHandle, outTargetHandle);
   }
 
   /**
@@ -166,7 +166,7 @@ public class RenderHelper {
    * @param outTargetHandle the target whose color gets the depth written to.
    */
   public static void blitInverseDepth(MappableRingBuffer renderDistance, MappableRingBuffer fov, ResourceHandle<? extends RenderTarget> inTargetHandle, ResourceHandle<? extends RenderTarget> outTargetHandle) {
-    blitInverseDepth(renderDistance, fov, 128.f, inTargetHandle, outTargetHandle);
+    blitInverseDepth(renderDistance, fov, Minecraft.getInstance().options.renderDistance().get() * 16.f, inTargetHandle, outTargetHandle);
   }
 
   /**
