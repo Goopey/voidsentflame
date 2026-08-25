@@ -2,7 +2,7 @@
 
 #moj_import <minecraft:globals.glsl>
 #moj_import <voidsentflame:fov.glsl>
-#moj_import <voidsentflame:renderdistance.glsl>
+#moj_import <voidsentflame:rdistance.glsl>
 
 uniform sampler2D SamplerDepth;
 
@@ -17,7 +17,7 @@ float LinearizeDepth(float depth, float far) {
 }
 
 void main() {
-    float d = LinearizeDepth(texture(SamplerDepth, texCoord).r, RENDER_DISTANCE);
-    float dist = length(vec3(1.0, (2.0 * texCoord - 1.0) * vec2(ScreenSize.x/ScreenSize.y, 1.0) * tan(radians(FOV / 2.0))) * d) / (RENDER_DISTANCE * 0.5);
+    float d = LinearizeDepth(texture(SamplerDepth, texCoord).r, RDist);
+    float dist = length(vec3(1.0, (2.0 * texCoord - 1.0) * vec2(ScreenSize.x/ScreenSize.y, 1.0) * tan(radians(FOV / 2.0))) * d) / (RDist);
     fragColor = vec4(vec3(dist), 1.0);
 }

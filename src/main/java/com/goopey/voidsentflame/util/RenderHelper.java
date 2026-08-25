@@ -4,6 +4,7 @@ import com.goopey.voidsentflame.VoidsentFlameMod;
 import com.goopey.voidsentflame.client.render.FullscreenQuadRenderer;
 import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.goopey.voidsentflame.core.VFRenderPipelines;
+import com.goopey.voidsentflame.core.VFGpuBuffers.VFGpuBuffersNames;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -94,7 +95,6 @@ public class RenderHelper {
 
   /**
    * Copies and linearizes the depth from one target into another. Starts off black near the player and ends white far away.
-   * FIXME : blit is incorrectly grabbing data from renderDistance
    * @param renderDistance the MappableRingBuffer needed to transfer the desirable distance (default 128) to the shader.
    * @param fov the MappableRingBuffer needed to transfer data about the player's FOV to the shader.
    * @param inTargetHandle the target whose depth is read.
@@ -106,7 +106,6 @@ public class RenderHelper {
 
   /**
    * Copies and linearizes the depth from one target into another. Starts off black near the player and ends white far away.
-   * FIXME : blit is incorrectly grabbing data from renderDistance
    * @param renderDistance the MappableRingBuffer needed to transfer the desirable distance (default 128) to the shader.
    * @param fov the MappableRingBuffer needed to transfer data about the player's FOV to the shader.
    * @param distance the distance to be passed to the shader.
@@ -148,8 +147,8 @@ public class RenderHelper {
     ) {
       renderPass.setPipeline(VFRenderPipelines.DEPTH_BLIT);
       RenderSystem.bindDefaultUniforms(renderPass);
-      renderPass.setUniform("Fov", fov.currentBuffer());
-      renderPass.setUniform("RenderDistance", renderDistance.currentBuffer());
+      renderPass.setUniform(VFGpuBuffersNames.FOV.name, fov.currentBuffer());
+      renderPass.setUniform(VFGpuBuffersNames.R_DISTANCE.name, renderDistance.currentBuffer());
 
       renderPass.bindSampler("SamplerDepth", depthTextureViewI);
 
@@ -161,7 +160,6 @@ public class RenderHelper {
 
   /**
    * Copies and linearizes the depth from one target into another. Starts off white near the player and ends black far away.
-   * FIXME : blit is incorrectly grabbing data from renderDistance
    * @param renderDistance the MappableRingBuffer needed to transfer the desirable distance (default 128) to the shader.
    * @param fov the MappableRingBuffer needed to transfer data about the player's FOV to the shader.
    * @param inTargetHandle the target whose depth is read.
@@ -173,7 +171,6 @@ public class RenderHelper {
 
   /**
    * Copies and linearizes the depth from one target into another. Starts off white near the player and ends black far away.
-   * FIXME : blit is incorrectly grabbing data from renderDistance
    * @param renderDistance the MappableRingBuffer needed to transfer the desirable distance (default 128) to the shader.
    * @param fov the MappableRingBuffer needed to transfer data about the player's FOV to the shader.
    * @param distance the distance to be passed to the shader.
@@ -215,8 +212,8 @@ public class RenderHelper {
     ) {
       renderPass.setPipeline(VFRenderPipelines.INVERSE_DEPTH_BLIT);
       RenderSystem.bindDefaultUniforms(renderPass);
-      renderPass.setUniform("Fov", fov.currentBuffer());
-      renderPass.setUniform("RenderDistance", renderDistance.currentBuffer());
+      renderPass.setUniform(VFGpuBuffersNames.FOV.name, fov.currentBuffer());
+      renderPass.setUniform(VFGpuBuffersNames.R_DISTANCE.name, renderDistance.currentBuffer());
 
       renderPass.bindSampler("SamplerDepth", depthTextureViewI);
 

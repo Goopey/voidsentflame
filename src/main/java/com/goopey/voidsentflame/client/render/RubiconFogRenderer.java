@@ -144,7 +144,7 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
     this.mainTargetHandle = pass2.readsAndWrites(this.mainTargetHandle);
     this.depthTargetHandle = pass2.readsAndWrites(this.depthTargetHandle);
     pass2.executes(
-      () -> this.addDepthPass(this.mainTargetHandle, this.depthTargetHandle)
+      () -> RenderHelper.blitInverseDepth(this.renderDistance, this.fov, 128.f, this.mainTargetHandle, this.depthTargetHandle)
     );
 
     FramePass pass3 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogSkyBoxBlackout");

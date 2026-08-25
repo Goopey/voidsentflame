@@ -3,7 +3,6 @@ package com.goopey.voidsentflame.core;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.databind.BeanProperty;
 import org.joml.Matrix4fc;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -174,7 +173,7 @@ public class VFGpuBuffers {
         .putFloat()
         .get());
     VFRenderDistanceUbo = () -> new MappableRingBuffer(
-      () -> VFGpuBuffersNames.RENDER_DISTANCE.name,
+      () -> VFGpuBuffersNames.R_DISTANCE.name,
       GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE,
       new Std140SizeCalculator()
         .putFloat()
@@ -257,20 +256,21 @@ public class VFGpuBuffers {
     MATRIX("Matrix");
 
     public final String name;
-    private GpuBuffersNames(String name) {
+    GpuBuffersNames(String name) {
       this.name = name;
     }
   }
 
   // Custom UBO names
   public enum VFGpuBuffersNames {
+    //R_DISTANCE is supposed to be RenderDistance, but due to conflict it had to be renamed
     WORLD_POS("ChunkOffset"),
     LOOK_ANGLE("LookAngle"),
     FOV("Fov"),
-    RENDER_DISTANCE("RenderDistance");
+    R_DISTANCE("RDistance");
 
     public final String name;
-    private VFGpuBuffersNames(String name) {
+    VFGpuBuffersNames(String name) {
       this.name = name;
     }
   }
