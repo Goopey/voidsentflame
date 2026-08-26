@@ -5,7 +5,6 @@ import com.goopey.voidsentflame.core.VFGpuBuffers;
 import com.goopey.voidsentflame.core.VFRenderPipelines;
 import com.goopey.voidsentflame.util.BufferBuilderHelper;
 import com.goopey.voidsentflame.util.RenderHelper;
-import com.goopey.voidsentflame.util.VFRenderConsts;
 import com.goopey.voidsentflame.world.dimension.RubiconDimension;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;

@@ -8,6 +8,7 @@ import com.goopey.voidsentflame.client.render.VoidSeaRenderer;
 import com.goopey.voidsentflame.client.render.RubiconSkyRenderer;
 import com.goopey.voidsentflame.core.init.BlockEntityInit;
 import com.goopey.voidsentflame.server.VoidSeaEvent;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;

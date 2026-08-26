@@ -1,6 +1,6 @@
 package com.goopey.voidsentflame.client.render.sky;
 
-import com.goopey.voidsentflame.util.VFRenderConsts;
+import com.goopey.voidsentflame.client.render.VFRenderConsts;
 import com.goopey.voidsentflame.util.VertexMeshHelper;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.systems.RenderSystem;

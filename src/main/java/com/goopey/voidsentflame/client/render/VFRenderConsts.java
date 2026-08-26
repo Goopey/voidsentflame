@@ -1,4 +1,4 @@
-package com.goopey.voidsentflame.util;
+package com.goopey.voidsentflame.client.render;
 
 public class VFRenderConsts {
   public static final int RUBICON_PACKED_LIGHT = 15728880;

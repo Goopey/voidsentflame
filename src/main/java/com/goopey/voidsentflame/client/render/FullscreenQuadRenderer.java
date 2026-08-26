@@ -1,7 +1,6 @@
 package com.goopey.voidsentflame.client.render;
 
 import com.goopey.voidsentflame.util.BufferBuilderHelper;
-import com.goopey.voidsentflame.util.VFRenderConsts;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.server.packs.resources.ResourceManager;
