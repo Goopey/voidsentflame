@@ -604,7 +604,7 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
 
       VertexMeshHelper.putOpenCubeMeshVertex(
         bufferBuilder, VoidSeaConstants.OFFSET, (int) (VoidSeaConstants.HEAT_HEIGHT + 30), -VoidSeaConstants.OFFSET,
-        VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY
+        VFRenderConsts.RubiconConsts.PACKED_LIGHT, VFRenderConsts.RubiconConsts.PACKED_OVERLAY
       );
 
       // Handle storing the meshdata into the buffer and then closing the MeshData and byteBufferBuilder
@@ -825,8 +825,8 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
   private void putBufferVertex(BufferBuilder builder, float x, float y, float z, float u, float v) {
     VertexMeshHelper.putBufferVertex(
       builder,
-      VFRenderConsts.RUBICON_PACKED_LIGHT,
-      VFRenderConsts.RUBICON_PACKED_OVERLAY,
+      VFRenderConsts.RubiconConsts.PACKED_LIGHT,
+      VFRenderConsts.RubiconConsts.PACKED_OVERLAY,
       x, y, z, u, v
     );
   }

@@ -16,7 +16,7 @@ public class FullscreenQuadRenderer implements ResourceManagerReloadListener, Au
   private GpuBuffer screenBuffer;
 
   private FullscreenQuadRenderer() {
-    Tuple<Integer, GpuBuffer> screen = BufferBuilderHelper.buildScreen(VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, 1f);
+    Tuple<Integer, GpuBuffer> screen = BufferBuilderHelper.buildScreen(VFRenderConsts.EmptyConsts.PACKED_LIGHT, VFRenderConsts.EmptyConsts.PACKED_OVERLAY, 1f);
     this.screenIndex = screen.getA();
     this.screenBuffer = screen.getB();
   }
@@ -43,7 +43,7 @@ public class FullscreenQuadRenderer implements ResourceManagerReloadListener, Au
    */
   @Override
   public void onResourceManagerReload(@NotNull ResourceManager resourceManager) {
-    Tuple<Integer, GpuBuffer> screen = BufferBuilderHelper.buildScreen(VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, 1f);
+    Tuple<Integer, GpuBuffer> screen = BufferBuilderHelper.buildScreen(VFRenderConsts.EmptyConsts.PACKED_LIGHT, VFRenderConsts.EmptyConsts.PACKED_OVERLAY, 1f);
     this.screenIndex = screen.getA();
     this.screenBuffer = screen.getB();
   }

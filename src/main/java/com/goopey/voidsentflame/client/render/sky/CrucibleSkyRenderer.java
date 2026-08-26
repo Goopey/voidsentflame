@@ -66,7 +66,7 @@ public class CrucibleSkyRenderer implements ResourceManagerReloadListener, AutoC
     try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * 6 * 6)) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
 
-      VertexMeshHelper.putCubeMeshVertex(bufferBuilder, 10, VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY);
+      VertexMeshHelper.putCubeMeshVertex(bufferBuilder, 10, VFRenderConsts.RubiconConsts.PACKED_LIGHT, VFRenderConsts.RubiconConsts.PACKED_OVERLAY);
 
       // Handle storing the mesh data into the buffer and then closing the MeshData and byteBufferBuilder
       try (MeshData meshData = bufferBuilder.buildOrThrow()) {

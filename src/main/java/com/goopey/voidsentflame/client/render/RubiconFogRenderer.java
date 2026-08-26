@@ -95,7 +95,7 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
     this.fov = VFGpuBuffers.VFFovUbo.get();
     this.renderDistance = VFGpuBuffers.VFRenderDistanceUbo.get();
     Tuple<Integer, GpuBuffer> skyBox = BufferBuilderHelper.buildBox(
-      VFRenderConsts.RUBICON_PACKED_LIGHT, VFRenderConsts.RUBICON_PACKED_OVERLAY, BOX_SIZE
+      VFRenderConsts.EmptyConsts.PACKED_LIGHT, VFRenderConsts.EmptyConsts.PACKED_OVERLAY, BOX_SIZE
     );
     this.skyBoxIndex = skyBox.getA();
     this.skyBoxMesh = skyBox.getB();
