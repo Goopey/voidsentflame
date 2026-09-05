@@ -21,6 +21,7 @@ import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -44,7 +45,6 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
   public static final RubiconFogRenderer INSTANCE = new RubiconFogRenderer();
   private static final int BOX_SIZE = 256;
 
-  private final Minecraft mc = Minecraft.getInstance();
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
 
   private MappableRingBuffer fov;
@@ -74,6 +74,7 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
       true
     );
     this.swapTarget.copyDepthFrom(this.mainTarget);
+    GameRenderer e;
   }
 
   /**

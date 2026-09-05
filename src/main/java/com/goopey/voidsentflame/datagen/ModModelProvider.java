@@ -51,6 +51,8 @@ public class ModModelProvider extends ModelProvider {
 
     models.createAirLikeBlock(BlockInit.RUBICON_AIR_BLOCK.get(), BlockInit.RUBICON_AIR_BLOCK.asItem());
     models.createTrivialCube(BlockInit.IRON_SCRAP_BLOCK.get());
+    models.createTrivialCube(BlockInit.VOID_DUST_BLOCK.get());
+    models.createTrivialCube(BlockInit.SPARKLING_DUST_BLOCK.get());
   }
 
   private static void createItems(ItemModelGenerators models) {
@@ -72,8 +74,8 @@ public class ModModelProvider extends ModelProvider {
 
   private static void createXYRandomOrientationBlocks(BlockModelGenerators models) {
     createXYRandomOrientationBlock(models, BlockInit.VOID_STONE_BLOCK.get());
-    createXYRandomOrientationBlock(models, BlockInit.VOID_DUST_BLOCK.get());
-    createXYRandomOrientationBlock(models, BlockInit.SPARKLING_DUST_BLOCK.get());
+//    createXYRandomOrientationBlock(models, BlockInit.VOID_DUST_BLOCK.get());
+//    createXYRandomOrientationBlock(models, BlockInit.SPARKLING_DUST_BLOCK.get());
   }
 
   /**
