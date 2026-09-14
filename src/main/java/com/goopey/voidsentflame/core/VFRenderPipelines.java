@@ -24,8 +24,7 @@ public class VFRenderPipelines {
 
   // VOID SEA
   public static RenderPipeline VOID_SEA_MESH_PIPELINE;
-  public static RenderPipeline VOID_SEA_MESH_DISTORT_PIPELINE_T;
-  public static RenderPipeline VOID_SEA_MESH_DISTORT_PIPELINE_B;
+  public static RenderPipeline VOID_SEA_MESH_DISTORT_BOX_PIPELINE;
   public static RenderPipeline VOID_SEA_MESH_DISTORTION_GRADIENT_PIPELINE;
   public static RenderPipeline VOID_SEA_BLEND_PIPELINE;
   public static RenderPipeline VOID_SEA_DISTORTION_PIPELINE;
@@ -113,25 +112,15 @@ public class VFRenderPipelines {
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .withBlend(BlendFunction.TRANSLUCENT)
         .build());
-    VOID_SEA_MESH_DISTORT_PIPELINE_T = RenderPipelines.register(
+    VOID_SEA_MESH_DISTORT_BOX_PIPELINE = RenderPipelines.register(
       RenderPipeline.builder(GLOBALS_TERRAIN_POS_SNIPPET)
         .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distortion_mesh"))
         .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_vert"))
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_mesh_frag"))
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
-        .withCull(true)
+        .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
-        .build());
-    VOID_SEA_MESH_DISTORT_PIPELINE_B = RenderPipelines.register(
-      RenderPipeline.builder(GLOBALS_TERRAIN_POS_SNIPPET)
-        .withLocation(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "pipeline/void_sea_distortion_mesh"))
-        .withVertexShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_vert"))
-        .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_distort_mesh_frag"))
-        .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
-        .withColorWrite(true, false)
-        .withCull(true)
-        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
         .build());
     VOID_SEA_BLEND_PIPELINE = RenderPipelines.register(
       RenderPipeline.builder()

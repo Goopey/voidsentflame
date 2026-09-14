@@ -148,6 +148,7 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
 //    this.distortionGradientBuffer.close();
 //    this.distortionGradientLayerBuffer.close();
     this.seaMeshBuffer.close();
+    // TODO : remove screenBuffer
     this.screenBuffer.close();
     this.bottomDistortionBuffer.close();
     this.positionBuffer.close();
@@ -175,9 +176,9 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
   //######################################################
 
   /**
-   * Main method. Called when creating the Void Sea visual effect. Manages calling renderPasses, checking dimension,
-   * passing textures.
-   * @param event the event bus event. Needed to
+   * Main method. Called when creating the Void Sea visual effect.
+   * Manages calling renderPasses, checking dimension, passing textures.
+   * @param event the event bus event.
    */
   public void render(RenderLevelStageEvent.AfterWeather event) {
     // Check if in Rubicon
@@ -249,6 +250,14 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
       () -> this.renderDistortion(cameraPos, matrix4fStack, this.blackTextureView, this.distortionTargetHandle)
     );
 
+    FramePass testPass = frameGraphBuilder.addPass("VoidSeaMeshDistortPass3");
+    testPass.requires(pass3);
+    this.distortionTargetHandle = testPass.readsAndWrites(this.distortionTargetHandle);
+    this.mainTargetHandle = testPass.readsAndWrites(this.mainTargetHandle);
+    testPass.executes(
+      () -> RenderHelper.blitAToB(this.distortionTargetHandle, this.mainTargetHandle)
+    );
+
     //TODO : Fix gradient
 //      FramePass pass4 = frameGraphBuilder.addPass("VoidSeaMeshDistortGradientPass4");
 //      pass4.requires(pass1);
@@ -257,27 +266,27 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
 //        () -> this.renderDistortionGradient(cameraPos, matrix4fStack, this.distortionGradientTargetHandle)
 //      );
 
-    FramePass pass5 = frameGraphBuilder.addPass("VoidSeaBlendPass5");
-    pass5.requires(pass2);
-    pass5.requires(pass3);
-//      pass5.requires(pass4);
-    this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
-    this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
-    this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
-    pass5.executes(
-      () -> this.renderBlitAndBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
-    );
+//    FramePass pass5 = frameGraphBuilder.addPass("VoidSeaBlendPass5");
+//    pass5.requires(pass2);
+//    pass5.requires(pass3);
+////      pass5.requires(pass4);
+//    this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
+//    this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
+//    this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
+//    pass5.executes(
+//      () -> this.renderBlitAndBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
+//    );
 
-    FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
-    pass6.requires(pass5);
-    this.mainTargetHandle = pass6.readsAndWrites(this.mainTargetHandle);
-    this.blendTargetHandle = pass6.readsAndWrites(this.blendTargetHandle);
-    this.seaTargetHandle = pass6.readsAndWrites(this.seaTargetHandle);
-    this.distortionTargetHandle = pass6.readsAndWrites(this.distortionTargetHandle);
-//      this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
-    pass6.executes(
-      () -> this.renderHeatWave(cameraPos, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
-    );
+//    FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
+//    pass6.requires(pass5);
+//    this.mainTargetHandle = pass6.readsAndWrites(this.mainTargetHandle);
+//    this.blendTargetHandle = pass6.readsAndWrites(this.blendTargetHandle);
+//    this.seaTargetHandle = pass6.readsAndWrites(this.seaTargetHandle);
+//    this.distortionTargetHandle = pass6.readsAndWrites(this.distortionTargetHandle);
+////      this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
+//    pass6.executes(
+//      () -> this.renderHeatWave(cameraPos, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
+//    );
 
     frameGraphBuilder.execute(this.resourcePool);
     matrix4fStack.popMatrix();
@@ -290,6 +299,7 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
 
   /**
    * This method manages drawing a textured mesh of the void sea at a fixed height in the world.
+   * Draws the actual sea itself and colors it.
    * @param cameraPos the position of the camera. Needed to place the void sea correctly vertically in the world.
    * @param matrix4fStack the stack of matrices to do projections with to correctly portray 3d objects
    * @param frame the frame of the texture to be used by the void sea. Called frame because we suppose it's animated
@@ -338,7 +348,9 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
   }
 
   /**
-   * A method similar to renderSea but without a depthBuffer. Helps build the part of the world distortion effects that will be applied later.
+   * A method similar to renderSea but without a depthBuffer.
+   * Helps build the part of the world distortion effects that will be applied later.
+   * Draws a black box that is offset from the void sea to determine where the screen should be wavy.
    * @param cameraPos the position of the camera/player. Used to lock the wave at the proper height in the world.
    * @param matrix4fStack the orientation of the camera and other things. Critical for objects to stay in their proper position/orientation.
    * @param texture the white texture
@@ -372,11 +384,8 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
     if (colorTextureView == null) { return; }
     // setup render pass and actually use it
     try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistortTop", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())) {
-      if (height > 0) {
-        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_PIPELINE_B);
-      } else {
-        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_PIPELINE_T);
-      }
+      renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_BOX_PIPELINE);
+
       RenderSystem.bindDefaultUniforms(renderPass);
       renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
       // See void_sea_mesh_vert.vsh
@@ -391,22 +400,20 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
     }
 
     // setup bottom sphere
-    try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistortBottom", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())) {
-      if (height > 0) {
-        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_PIPELINE_B);
-      } else {
-        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_PIPELINE_T);
+    if (height > 0) {
+      try (RenderPass renderPass = encoder.createRenderPass(() -> "VoidSeaDistortBottom", colorTextureView, OptionalInt.empty(), depthTextureView, OptionalDouble.empty())) {
+        renderPass.setPipeline(VFRenderPipelines.VOID_SEA_MESH_DISTORT_BOX_PIPELINE);
+        RenderSystem.bindDefaultUniforms(renderPass);
+        renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+        renderPass.setUniform(VFGpuBuffersNames.WORLD_POS.name, this.positionBuffer.currentBuffer());
+
+        renderPass.bindSampler("Sampler0", texture);
+        renderPass.bindSampler("Sampler1", texture);
+
+        renderPass.setVertexBuffer(0, this.bottomDistortionBuffer);
+        renderPass.setIndexBuffer(this.bottomDistortionBuffer, VertexFormat.IndexType.SHORT);
+        renderPass.draw(0, this.bottomDistortionIndex);
       }
-      RenderSystem.bindDefaultUniforms(renderPass);
-      renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
-      renderPass.setUniform(VFGpuBuffersNames.WORLD_POS.name, this.positionBuffer.currentBuffer());
-
-      renderPass.bindSampler("Sampler0", texture);
-      renderPass.bindSampler("Sampler1", texture);
-
-      renderPass.setVertexBuffer(0, this.bottomDistortionBuffer);
-      renderPass.setIndexBuffer(this.bottomDistortionBuffer, VertexFormat.IndexType.SHORT);
-      renderPass.draw(0, this.bottomDistortionIndex);
     }
   }
 
@@ -463,12 +470,12 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
 //  }
 
   /**
-   * The final pass. Manages mixing most finalized handles and applies a heatwave effect which makes the affected part of
-   * the screen wiggle.
+   * The final pass. Manages mixing most finalized handles and makes the screen wiggle where the distortionHandle is black.
    * @param cameraPos the position of the camera. Needed to position objects vertically and across chunks correctly.
    * @param writeTargetHandle the resourceHandle which contains the target where the mixed image will be written to
    * @param blendHandle the resourceHandle which contains a picture with preblended world and sa textures
    * @param seaHandle the resourceHandle which contains the picture of the void sea
+   * @param distortionHandle the resourceHandle which contains the part of the screen that is supposed to wave.
    */
   private void renderHeatWave(Vec3 cameraPos,ResourceHandle<RenderTarget> writeTargetHandle, ResourceHandle<TextureTarget> seaHandle, ResourceHandle<TextureTarget> blendHandle, ResourceHandle<TextureTarget> distortionHandle) {
     RenderTarget writeTarget = writeTargetHandle.get();
@@ -598,11 +605,11 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
     VertexFormat.Mode mode = VertexFormat.Mode.TRIANGLES;
     GpuBuffer gpuBuffer;
 
-    // 5 faces out of 6 with 6 vertices each
-    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * 5 * 6)) {
+    // 6 faces out of 6 with 6 vertices each
+    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(DefaultVertexFormat.BLOCK.getVertexSize() * 6 * 6)) {
       BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, mode, format);
 
-      VertexMeshHelper.putOpenCubeMeshVertex(
+      VertexMeshHelper.putCubeMeshVertex(
         bufferBuilder, VoidSeaConstants.OFFSET, (int) (VoidSeaConstants.HEAT_HEIGHT + 30), -VoidSeaConstants.OFFSET,
         VFRenderConsts.RubiconConsts.PACKED_LIGHT, VFRenderConsts.RubiconConsts.PACKED_OVERLAY
       );
