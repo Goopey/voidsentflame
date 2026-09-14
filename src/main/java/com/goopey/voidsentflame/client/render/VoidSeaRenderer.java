@@ -80,8 +80,6 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
 //  private int distortionGradientIndex;
 //  private final GpuBuffer distortionGradientLayerBuffer;
 //  private int distortionGradientLayerIndex;
-  private GpuBuffer screenBuffer;
-  private int screenIndex;
   private MappableRingBuffer positionBuffer;
   private MappableRingBuffer positionBuffer2;
   // blend targets
@@ -148,8 +146,6 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
 //    this.distortionGradientBuffer.close();
 //    this.distortionGradientLayerBuffer.close();
     this.seaMeshBuffer.close();
-    // TODO : remove screenBuffer
-    this.screenBuffer.close();
     this.bottomDistortionBuffer.close();
     this.positionBuffer.close();
     this.positionBuffer2.close();
@@ -163,7 +159,6 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
   public void onResourceManagerReload(@NotNull ResourceManager resourceManager) {
     this.getSprites();
     buildSea();
-    buildScreen();
     buildBottomDistortion();
 //    this.distortionGradientBuffer = buildDistortionGradientBox();
 //    this.distortionGradientLayerBuffer = buildDistortionGradientLayer();
@@ -250,13 +245,13 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
       () -> this.renderDistortion(cameraPos, matrix4fStack, this.blackTextureView, this.distortionTargetHandle)
     );
 
-    FramePass testPass = frameGraphBuilder.addPass("VoidSeaMeshDistortPass3");
-    testPass.requires(pass3);
-    this.distortionTargetHandle = testPass.readsAndWrites(this.distortionTargetHandle);
-    this.mainTargetHandle = testPass.readsAndWrites(this.mainTargetHandle);
-    testPass.executes(
-      () -> RenderHelper.blitAToB(this.distortionTargetHandle, this.mainTargetHandle)
-    );
+//    FramePass testPass = frameGraphBuilder.addPass("VoidSeaMeshDistortPass3");
+//    testPass.requires(pass3);
+//    this.distortionTargetHandle = testPass.readsAndWrites(this.distortionTargetHandle);
+//    this.mainTargetHandle = testPass.readsAndWrites(this.mainTargetHandle);
+//    testPass.executes(
+//      () -> RenderHelper.blitAToB(this.distortionTargetHandle, this.mainTargetHandle)
+//    );
 
     //TODO : Fix gradient
 //      FramePass pass4 = frameGraphBuilder.addPass("VoidSeaMeshDistortGradientPass4");
@@ -266,27 +261,27 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
 //        () -> this.renderDistortionGradient(cameraPos, matrix4fStack, this.distortionGradientTargetHandle)
 //      );
 
-//    FramePass pass5 = frameGraphBuilder.addPass("VoidSeaBlendPass5");
-//    pass5.requires(pass2);
-//    pass5.requires(pass3);
-////      pass5.requires(pass4);
-//    this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
-//    this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
-//    this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
-//    pass5.executes(
-//      () -> this.renderBlitAndBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
-//    );
+    FramePass pass5 = frameGraphBuilder.addPass("VoidSeaBlendPass5");
+    pass5.requires(pass2);
+    pass5.requires(pass3);
+//      pass5.requires(pass4);
+    this.seaTargetHandle = pass5.readsAndWrites(this.seaTargetHandle);
+    this.mainTargetHandle = pass5.readsAndWrites(this.mainTargetHandle);
+    this.blendTargetHandle = pass5.readsAndWrites(this.blendTargetHandle);
+    pass5.executes(
+      () -> this.renderBlitAndBlend(this.blendTargetHandle, this.seaTargetHandle, this.mainTargetHandle)
+    );
 
-//    FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
-//    pass6.requires(pass5);
-//    this.mainTargetHandle = pass6.readsAndWrites(this.mainTargetHandle);
-//    this.blendTargetHandle = pass6.readsAndWrites(this.blendTargetHandle);
-//    this.seaTargetHandle = pass6.readsAndWrites(this.seaTargetHandle);
-//    this.distortionTargetHandle = pass6.readsAndWrites(this.distortionTargetHandle);
-////      this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
-//    pass6.executes(
-//      () -> this.renderHeatWave(cameraPos, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
-//    );
+    FramePass pass6 = frameGraphBuilder.addPass("VoidSeaDistortPass6");
+    pass6.requires(pass5);
+    this.mainTargetHandle = pass6.readsAndWrites(this.mainTargetHandle);
+    this.blendTargetHandle = pass6.readsAndWrites(this.blendTargetHandle);
+    this.seaTargetHandle = pass6.readsAndWrites(this.seaTargetHandle);
+    this.distortionTargetHandle = pass6.readsAndWrites(this.distortionTargetHandle);
+//      this.distortionGradientTargetHandle = pass6.readsAndWrites(this.distortionGradientTargetHandle);
+    pass6.executes(
+      () -> this.renderHeatWave(cameraPos, this.mainTargetHandle, this.seaTargetHandle, this.blendTargetHandle, this.distortionTargetHandle)
+    );
 
     frameGraphBuilder.execute(this.resourcePool);
     matrix4fStack.popMatrix();
@@ -514,9 +509,9 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
       renderPass.bindSampler("SamplerWorld", colorTextureViewT);
       renderPass.bindSampler("SamplerHeatWave", colorTextureViewD);
 
-      renderPass.setVertexBuffer(0, this.screenBuffer);
-      renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);
-      renderPass.draw(0, this.screenIndex);
+      renderPass.setVertexBuffer(0, FullscreenQuadRenderer.INSTANCE.getQuad());
+      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), VertexFormat.IndexType.SHORT);
+      renderPass.draw(0, FullscreenQuadRenderer.INSTANCE.getIndex());
     }
   }
 
@@ -548,9 +543,9 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
       renderPass.bindSampler("SamplerSea", colorTextureViewS);
       renderPass.bindSampler("SamplerWorld", colorTextureViewW);
 
-      renderPass.setVertexBuffer(0, this.screenBuffer);
-      renderPass.setIndexBuffer(this.screenBuffer, VertexFormat.IndexType.SHORT);
-      renderPass.draw(0, this.screenIndex);
+      renderPass.setVertexBuffer(0, FullscreenQuadRenderer.INSTANCE.getQuad());
+      renderPass.setIndexBuffer(FullscreenQuadRenderer.INSTANCE.getQuad(), VertexFormat.IndexType.SHORT);
+      renderPass.draw(0, FullscreenQuadRenderer.INSTANCE.getIndex());
     }
   }
 
@@ -709,38 +704,6 @@ public class VoidSeaRenderer implements ResourceManagerReloadListener, AutoClose
 //
 //    return gpuBuffer;
 //  }
-
-  /**
-   * Fills a GpuBuffer with a Vertex Mesh shaped like a quad. Used to draw things straight across the screen.
-   */
-  private void buildScreen() {
-    VertexFormat format = DefaultVertexFormat.POSITION_TEX;
-    VertexFormat.Mode mode = VertexFormat.Mode.QUADS;
-    GpuBuffer gpuBuffer;
-
-    try (ByteBufferBuilder byteBufferBuilder = ByteBufferBuilder.exactlySized(6 * format.getVertexSize())) {
-      BufferBuilder builder = new BufferBuilder(byteBufferBuilder, mode, format);
-
-      putBufferVertex(builder, -1f, -1f, 0f, 0f, 0f);
-      putBufferVertex(builder, -1f, 1f, 0f, 0f, 1f);
-      putBufferVertex(builder, 1f, 1f, 0f, 1f, 1f);
-
-      putBufferVertex(builder, 1f, 1f, 0f, 1f, 1f);
-      putBufferVertex(builder, 1f, -1f, 0f, 1f, 0f);
-      putBufferVertex(builder, -1f, -1f, 0f, 0f, 0f);
-
-      try (MeshData meshdata = builder.buildOrThrow()) {
-        this.screenIndex = meshdata.drawState().indexCount();
-        gpuBuffer = RenderSystem.getDevice().createBuffer(
-          () -> "Distort quad",
-          GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_INDEX,
-          meshdata.vertexBuffer()
-        );
-      }
-    }
-
-    this.screenBuffer = gpuBuffer;
-  }
 
   //############################################
   //            HELPER METHODS
