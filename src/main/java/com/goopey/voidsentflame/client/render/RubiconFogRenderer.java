@@ -44,6 +44,7 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
   public static final ResourceLocation LOCATION = ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "shaders/" + NAME + ".reload");
   public static final RubiconFogRenderer INSTANCE = new RubiconFogRenderer();
   private static final int BOX_SIZE = 256;
+  public static final float FOG_DISTANCE = 64.f;
 
   private final CrossFrameResourcePool resourcePool = new CrossFrameResourcePool(3);
 
@@ -144,7 +145,7 @@ public class RubiconFogRenderer implements ResourceManagerReloadListener, AutoCl
     this.mainTargetHandle = pass2.readsAndWrites(this.mainTargetHandle);
     this.depthTargetHandle = pass2.readsAndWrites(this.depthTargetHandle);
     pass2.executes(
-      () -> RenderHelper.blitDepth(this.renderDistance, this.fov, 128.f, this.mainTargetHandle, this.depthTargetHandle)
+      () -> RenderHelper.blitDepth(this.renderDistance, this.fov, FOG_DISTANCE, this.mainTargetHandle, this.depthTargetHandle)
     );
 
     FramePass pass3 = frameGraphBuilder.addPass(VoidsentFlameMod.MODID + ":VoidFogSkyBoxBlackout");
