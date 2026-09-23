@@ -98,7 +98,7 @@ public class VFRenderPipelines {
         .withFragmentShader(ResourceLocation.fromNamespaceAndPath(VoidsentFlameMod.MODID, "core/void_sea_mesh_frag"))
         .withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
         .withColorWrite(true, false)
-        .withCull(true)
+        .withCull(false)
         .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         .build());
     VOID_SEA_MESH_DISTORTION_GRADIENT_PIPELINE = RenderPipelines.register(
