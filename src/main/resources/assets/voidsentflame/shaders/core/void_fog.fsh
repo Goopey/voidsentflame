@@ -10,7 +10,7 @@ out vec4 fragColor;
 
 const float FOG_START = 0.15;
 const float FOG_END = 0.30;
-const float FOG_MAX_STRENGTH = 0.40;
+const float FOG_MAX_STRENGTH = 0.60;
 const vec4 FOG_COLOR = vec4(0.2, 0.0, 0.1058823529 , 1.0);
 
 void main() {
